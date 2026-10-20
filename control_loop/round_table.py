@@ -68,10 +68,15 @@ def baseline_dirs(cell: Path, override: Path | None = None) -> list[Path]:
     # per-ordering layout: <root>/<ordering>/{baselines,prop_*,...}/<seed>_<defense>, where <root> is
     # results/v2 (Phase 1 control program) or results/phase2_claim_monitor (Phase 2); the arm baseline
     # is the sibling baselines/<seed>_<defense>/run* of the cell's parent directory
-    root = cell.resolve().parent.parent / "baselines" / f"{seed}_{defense}"
-    runs = sorted(d for d in root.glob("run*") if any(d.glob("*.eval"))) if root.is_dir() else []
-    if runs:
-        return runs
+    ordering_dir = cell.resolve().parent.parent
+    candidates = [ordering_dir / "baselines" / f"{seed}_{defense}"]
+    if ordering_dir.name in ("early", "late", "claimslast"):
+        # a Phase 2+ control cell under results/<phase>/<ordering>/ may share the Phase 1 arm baseline
+        candidates.append(REPO / "results" / "v2" / ordering_dir.name / "baselines" / f"{seed}_{defense}")
+    for root in candidates:
+        runs = sorted(d for d in root.glob("run*") if any(d.glob("*.eval"))) if root.is_dir() else []
+        if runs:
+            return runs
     # the 733/early block keeps its 2026-10-19 baseline in the v1 location
     bdir = REPO / "results" / "baselines" / f"{seed}_{defense}"
     dirs = [bdir] if bdir.exists() and any(bdir.glob("*.eval")) else []

@@ -345,3 +345,17 @@ signal.
 
 **Budget.** $5 at list price for (a) and (b) together, including one re-run of a transport-failed
 episode. Nothing beyond these twenty episodes is run under this section.
+
+### 16.13 After the §16.12 prerequisites (2026-10-20, recorded after the runs)
+
+Both ran as pre-registered (FINDINGS "§16.12(a)" and "§16.12(b)"); 20 episodes plus one smoke, $1.20
+of the $5 cap. (a) Prediction not matched, falsifier holds: two independent greedy agents reach a
+pair gain of +10.3 (none), +20.3 (prompt) and +12.1 (monitor) against the coalition cells' +40.2,
++36.5 and +42.9, outside every floor, because the second blind mover collides with the first on the
+same top ML ticket in 6 of 9 epochs and then never recovers. The pre-agreed split's contribution is
+collision avoidance, which is coordination; "coalition" stays the frame for 733 late, and Phase 3 is
+evaluated against this two-greedy baseline beside the clean one. (b) Fixed judge AUROC 0.50: no
+information at the claim, so the Phase 1 failure was observation, not protocol. Claim-context judge
+AUROC 0.74 / 0.79: signal at the second claim (criteria 2 and 3 as written, 0.97), inverted reading
+of criterion 3 on blind first claims (0.62). Phase 3 starts from the allocation-level observation.
+Nothing further is run under Phase 2; the write-up (README.md in this directory) follows.

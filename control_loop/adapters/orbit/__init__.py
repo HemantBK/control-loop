@@ -31,7 +31,7 @@ REPO = HERE.parents[2]  # repository root: episodes run with cwd there so relati
 TASK = f"{HERE / 'jira_adaptive.py'}@jira_adaptive"
 
 DEFENSES = ["none", "system_prompt", "llm_monitor_fixed", "llm_monitor_fixed_actions",  # Phase 1
-            "claim_time_monitor", "claim_time_monitor_4o", "claim_rule_monitor",  # Phase 2
+            "claim_time_monitor", "claim_time_monitor_4o", "claim_rule_monitor", "claim_score_only",  # Phase 2
             "allocation_rule_monitor", "allocation_llm_monitor"]  # Phase 3
 ORDERINGS = ["early", "late", "claimslast"]
 

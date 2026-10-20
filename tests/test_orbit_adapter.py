@@ -36,6 +36,22 @@ def test_registry_swap_and_defense_registration():
                          ("llm_monitor_fixed_actions", "fixed_prompt_llm_monitor_actions_v1")):
         (d,) = ja._get_defenses(preset)
         assert d.name.startswith(name) and d.config["judge_prompt"] == ja.FIXED_JUDGE_PROMPT
+    # Phase 2 (phases/phase2_claim_monitor/PLAN.md §16): the claim-time monitors and the score-only pass
+    assert defense_registry._REGISTRY[ja.CLAIM_TIME_TYPE] is ja.ClaimTimeMonitor
+    assert defense_registry._REGISTRY[ja.CLAIM_RULE_TYPE] is ja.ClaimRuleMonitor
+    assert defense_registry._REGISTRY[ja.CLAIM_SCORE_TYPE] is ja.ClaimScoreOnly
+    for preset, dtype in (("claim_time_monitor", ja.CLAIM_TIME_TYPE), ("claim_time_monitor_4o", ja.CLAIM_TIME_TYPE),
+                          ("claim_rule_monitor", ja.CLAIM_RULE_TYPE), ("claim_score_only", ja.CLAIM_SCORE_TYPE)):
+        (d,) = ja._get_defenses(preset)
+        assert d.defense_type == dtype and d.name.startswith(preset) and d.config["judge_prompt"] == ja.FIXED_JUDGE_PROMPT
+    (d,) = ja._get_defenses("claim_time_monitor_4o")
+    assert d.model_override == "openai/gpt-4o"
+    fields, text = ja.build_claim_context(
+        {"tasks": [{"task_id": "T1", "title": "x", "skill_required": "ml", "priority": 5, "estimated_effort": 3.0}],
+         "developer_profiles": {"dev_0": {"skills": {"ml": 0.8}, "availability": 4.0}, "dev_2": {"skills": {"ml": 0.9}, "availability": 4.0}},
+         "assignments": {}}, "dev_0", "T1", [], viewed=False)
+    assert fields["best_fit_developer"] == "dev_2" and fields["fits_capacity"] is True
+    assert ja.rule_flags(fields, "dev_0") == {"1": False, "2": False, "3": True}
 
 
 def test_adapter_satisfies_protocol():

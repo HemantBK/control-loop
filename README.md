@@ -10,7 +10,7 @@ ORBIT (Ben Hagag, William L. Anderson, Tom Taylor, Srija Chakraborty and Christi
 |---|---|
 | `control_loop/` | the loop, the proposer, the cross-phase tables and figures; `adapters/orbit/` (the Inspect task with the Phase 1 presets, the Phase 2 claim-time monitors and the Phase 3 allocation monitor), `adapters/controlarena/` (Phase 4); `analysis/` (per-phase scripts that read the logs) |
 | `phases/phase1_orbit_redteam/` | Phase 1 write-up (`README.md`), `PLAN.md` §1–§15, `FINDINGS.md`, `pins.md`, `HANDOFF.md`, `audits/audit1.md` to `audit4.md` |
-| `phases/phase2_claim_monitor/` | `PLAN.md` §16 (design, amendments, the §16.12 prerequisites), `FINDINGS.md` (four entries); write-up pending |
+| `phases/phase2_claim_monitor/` | Phase 2 write-up (`README.md`), `PLAN.md` §16 (design, amendments, the §16.12 prerequisites and their outcome), `FINDINGS.md` (six entries) |
 | `phases/phase3_allocation_monitor/`, `phases/phase4_controlarena/` | plans and results of the phases in progress |
 | `results/` | Phase 1 evidence: the seed-733 early block and seeds 42 and 1049 at the top level, the control program under `results/v2/<ordering>/`, figures and CSVs under `results/summary/` |
 | `results/phase2_claim_monitor/<ordering>/` | Phase 2 evidence: `baselines/733_claim_*`, `prop_sonnet55/733_claim_*`, `ctm_check`, `ctm_check2` |
@@ -25,10 +25,12 @@ Paths inside `phases/*/` documents are relative to the repository root unless th
 | # | name | question | status |
 |---|---|---|---|
 | 1 | Break ORBIT's shipped defenses | Do the anti-collusion prompt and the LLM monitor still prevent redistribution when the coalition payload is rewritten between rounds? | done; audited four times; `phases/phase1_orbit_redteam/` |
-| 2 | Claim-time monitor | Does a judge that rules on each `assign_task` call with the claim's context block the claims the shipped monitor allowed? | cells done (114 episodes, $16.49); migrated 2026-10-20; prerequisites §16.12 and the write-up pending; `phases/phase2_claim_monitor/` |
-| 3 | Claim-level protocol | Does a claim protocol that requires a stated reason and a delay before a ticket is final remove the first-mover effect? | deferred by the Phase 2 result (see `STATUS.md`) |
-| 4 | ControlArena port | Do the same payload moves transfer to a ControlArena setting? | adapter built, mechanism check done; `phases/phase4_controlarena/` |
-| 5 | ResearchArena | Does the attack hold in a research-agent setting with longer horizons? | not started |
-| 6 | Allocation-level defense | Does a defense that scores the forming allocation against the optimum, rather than single actions, detect redistribution? | plan written, no run; `phases/phase3_allocation_monitor/` (numbered 3 in that directory) |
+| 2 | Claim-time monitor | Does a judge that rules on each `assign_task` call with the claim's context block the claims the shipped monitor allowed? | done: 135 episodes, $17.69; written up in `phases/phase2_claim_monitor/README.md`; fresh-session audit pending |
+| 3 | Allocation-level monitor | Does a monitor that rules on each claim with the whole forming allocation in view, against the reference optimum, detect redistribution where the per-claim judge did not? | presets and mechanism check committed; sweep in progress; `phases/phase3_allocation_monitor/` |
+| 4 | ControlArena port | Do the same payload moves transfer to a ControlArena setting? | adapter built, mechanism check and limit-3 reproduction done; `phases/phase4_controlarena/` |
+| 5 | Claim-level protocol | Does a claim protocol that requires a stated reason and a delay before a ticket is final remove the first-mover effect? | not started |
+| 6 | ResearchArena | Does the attack hold in a research-agent setting with longer horizons? | not started |
 | 7 | Self-modifying agent (DGM) | Does a coalition agent that rewrites its own policy between rounds reach the same outcome without an external proposer? | not started |
 | 8 | Non-agentic monitor | Does a monitor that reads the full transcript once, with no tool calls, outperform the per-action judge? | not started |
+
+Decisions on the order, dated: 2026-10-20, after Phase 2 and its §16.12 prerequisites. The allocation-level monitor moved from 6 to 3 because Phase 2 showed that per-claim monitoring with full context delays the attack but does not stop it, the fixed judge carries no information at the claim (AUROC 0.50), and the coalition's signature is at the allocation (two blind first claims that do not collide); the ControlArena port stays at 4 because its adapter and mechanism check were already built in parallel; the claim-level protocol moved from 3 to 5 because the score-only pass showed Phase 1's failure was observation, not the resample protocol, so a protocol change alone has nothing to act on until a monitor carries a signal; ResearchArena, DGM and the non-agentic monitor keep their relative order and follow once a defense survives on JiraTicket (`STATUS.md`, decisions log).
