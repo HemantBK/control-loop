@@ -47,14 +47,22 @@ SERIES = {"clean": ("#2a78d6", "clean mean (8 epochs)"), "static": ("#eb6834", "
 INK, INK2, MUTED, SURFACE, GRID = "#0b0b0b", "#52514e", "#898781", "#fcfcfb", "#e6e5e1"
 
 
-def collect(rule: str) -> list[dict]:
+def cells_root(seed: str, ordering: str | None) -> Path:
+    """v1 layout for the seed-733 early block and seeds 42/1049; results/v2/<ordering> otherwise."""
+    if ordering is None or (seed == "733" and ordering == "early") or seed in ("42", "1049"):
+        return REPO / "results"
+    return REPO / "results" / "v2" / ordering
+
+
+def collect(rule: str, ordering: str | None = None, seeds: list[str] | None = None) -> list[dict]:
     recs = []
     for arm in ARMS:
-        for seed in SEEDS:
+        for seed in (seeds or SEEDS):
+            root = cells_root(seed, ordering)
             if arm == "llm_monitor_fixed":
-                cells = [(p, REPO / "results" / p / f"{seed}_{arm}") for p in ("prop_sonnet55", "prop_qwen3", "static_only")]
+                cells = [(p, root / p / f"{seed}_{arm}") for p in ("prop_sonnet55", "prop_qwen3", "static_only")]
             else:
-                cells = [(p, REPO / "results" / p / f"{seed}_{arm}") for p in ("prop_sonnet55", "prop_qwen3")]
+                cells = [(p, root / p / f"{seed}_{arm}") for p in ("prop_sonnet55", "prop_qwen3")]
             for prop, cell in cells:
                 if not (cell / "rounds.jsonl").exists():
                     continue
@@ -117,16 +125,19 @@ def _series(recs, arm, seed, series, measure):
     return st.mean(vals), (min(vals) if len(vals) > 1 else None), (max(vals) if len(vals) > 1 else None), (st.mean(outs) if outs else None)
 
 
-def draw(recs: list[dict], out: Path, measure: str, rule: str) -> Path:
+def draw(recs: list[dict], out: Path, measure: str, rule: str, seeds: list[str] | None = None,
+         notes: dict | None = None, suffix: str = "") -> Path:
+    seeds = seeds or SEEDS
+    notes = notes or SEED_NOTE
     if measure == "tickets":
         ylabel, title, fname, ylim = ("coalition tickets in final allocation (of 4)",
-                                      f"Coalition tickets by defense arm — validity rule: {rule}", f"tickets_by_defense_{rule}.png", (0, 4.4))
+                                      f"Coalition tickets by defense arm — validity rule: {rule}{suffix and ' — ordering ' + suffix}", f"tickets_by_defense_{rule}{suffix and '_' + suffix}.png", (0, 4.4))
     else:
         ylabel, title, fname, ylim = ("coalition reward minus the arm's clean mean (bar); outsiders' change (◇)",
-                                      f"Coalition and outsiders reward vs the arm's clean mean — validity rule: {rule}", f"gain_by_defense_{rule}.png", None)
-    fig, axes = plt.subplots(1, 3, figsize=(17, 5.8), sharey=True, facecolor=SURFACE)
+                                      f"Coalition and outsiders reward vs the arm's clean mean — validity rule: {rule}{suffix and ' — ordering ' + suffix}", f"gain_by_defense_{rule}{suffix and '_' + suffix}.png", None)
+    fig, axes = plt.subplots(1, len(seeds), figsize=(17, 5.8), sharey=True, facecolor=SURFACE)
     width, order = 0.19, ["clean", "static", "prop_sonnet55", "prop_qwen3"]
-    for ax, seed in zip(axes, SEEDS):
+    for ax, seed in zip(axes, seeds):
         ax.set_facecolor(SURFACE)
         for i, arm in enumerate(ARMS):
             for j, series in enumerate(order):
@@ -153,7 +164,7 @@ def draw(recs: list[dict], out: Path, measure: str, rule: str) -> Path:
         ax.axhline(0, color=INK2 if measure == "gain" else GRID, linewidth=1.0 if measure == "gain" else 0.8, zorder=2)
         ax.set_xticks(range(len(ARMS)))
         ax.set_xticklabels([LABEL[a] for a in ARMS], color=INK, fontsize=9)
-        ax.set_title(SEED_NOTE[seed], color=INK, fontsize=9.5, loc="left", pad=8)
+        ax.set_title(notes.get(seed, f"seed {seed}"), color=INK, fontsize=9.5, loc="left", pad=8)
         ax.grid(axis="y", color=GRID, linewidth=0.8, zorder=0)
         for sp in ("top", "right", "left"):
             ax.spines[sp].set_visible(False)
@@ -189,6 +200,15 @@ def main() -> None:
         for m in ("tickets", "gain"):
             print("wrote", draw(recs, out, m, rule))
         print("wrote", out / f"summary_{rule}.csv", f"({len(recs)} cells)")
+        # control program: one figure per ordering, seeds 733 / 512 / 101 (733 early = the v1 block)
+        v2_notes = {"733": "seed 733 — clean coalition above its optimal share", "512": "seed 512", "101": "seed 101"}
+        for ordering in ("early", "late", "claimslast"):
+            seeds = ["733", "512", "101"] if ordering != "claimslast" else ["733"]
+            recs2 = collect(rule, ordering, seeds)
+            if not recs2:
+                continue
+            for m in ("tickets", "gain"):
+                print("wrote", draw(recs2, out, m, rule, seeds, {k: f"{v} — {ordering}" for k, v in v2_notes.items()}, suffix=ordering))
 
 
 if __name__ == "__main__":

@@ -15,7 +15,7 @@ between arms you compare):
     - NOT the monitor's prompt, NOT the outsiders' transcripts
 
 Usage:
-    uv run --env-file .env python -m adaptive_control.loop \
+    uv run --env-file ../.env python -m adaptive_control.loop \
         --seed 733 --defense none|system_prompt|llm_monitor_fixed \
         --rounds 5 --agent-model openai/gpt-4.1-mini \
         --attacker-model anthropic/claude-sonnet-4-5 \
@@ -87,7 +87,7 @@ def main() -> None:
     ap.add_argument("--clean-log-dir", type=Path, default=None,
                     help="arm baseline dir (default results/baselines/<seed>_<defense>); shared across proposers")
     ap.add_argument("--baseline-only", action="store_true", help="run/verify the arm baseline and exit")
-    ap.add_argument("--ordering", choices=["early", "late"], default=None,
+    ap.add_argument("--ordering", choices=["early", "late", "claimslast"], default=None,
                     help="recipe activation order: coalition dev_0,dev_1 first (early) or last (late)")
     ap.add_argument("--brief", choices=["informed", "uninformed"], default="informed", help="proposer brief (PLAN §13)")
     ap.add_argument("--round0-payload-file", type=Path, default=None,

@@ -255,4 +255,41 @@ independent clean runs per (seed, ordering, arm); results go under `results/v2/`
    under both validity rules; the greedy-outsider comparison; transfer-vs-adaptive;
    informed-vs-uninformed. Then stop. Nothing committed.
 
+## 14. After the third audit (2026-10-20)
+
+The third audit (FINDINGS "Third audit response") found: (1) the greedy-outsider control read
+per agent reproduces the coalition outcome at 733 early (dev_1, with no instruction, takes
+what dev_0 leaves); (2) "scheduled last" still lets the coalition claim before the outsiders,
+who spend their first activation on view_tasks; (3) in the headline monitor cell every
+coalition assign_task was allowed and the blocks landed on submit calls and messages after
+the allocation was final; (4) one-run and two-run baselines were mixed across tables; (5) the
+slot-to-turn mapping was wrong under explicit plans; (6) a list of wrong numbers.
+
+Changes, all dated 2026-10-20, no model calls beyond the two controls below:
+
+1. **Two last controls.** (a) Greedy dev_0 alone, claim-first, late order, seed 733, none and
+   anti-collusion prompt, three epochs (`results/v2/late/greedy_dev0/`). (b) A claims-last plan:
+   an explicit 40-step activation list dev_2, dev_3, dev_2, dev_3, then the late cycle, no
+   repeat (`adaptive_control/orderings.py`), so the outsiders have two activations (in clean
+   runs: view_tasks, then their first assign_task) before the coalition's first; seed 733,
+   three arms, Sonnet, 5 rounds, two clean runs per arm (`results/v2/claimslast/`). Whether
+   the outsiders actually claimed first is checked per episode from the logs
+   (`results.outsiders_claimed_before_coalition`).
+2. **Slot-to-turn mapping** is plan-aware: under an explicit plan a step whose agent has
+   submitted is skipped but consumes a turn, so spans are aligned to the plan's step list
+   (`results._span_turns`); round-robin logs keep turn = span index. Verified at 0 mismatches
+   against the turn field of defense events in late, early and round-robin logs (191, 163, 87,
+   221 events).
+3. **Two-run baselines in every table**, including the seed-733 early block (its 2026-10-19
+   run plus the 2026-10-20 second run); the README carries one table.
+4. **§3.2 rewritten**: every coalition claim was allowed (0 of 20 blocked in the headline cell;
+   0 of 24 Qwen; 0 of 20 at 512 late; 2 of 34 at 733 early); blocks landed on submit and
+   chatter after the allocation was final.
+5. **Numbers corrected** per the audit's list (Qwen static entry, transfer count, block ranges,
+   per-member range, tickets range, rejections).
+6. **Headline narrowed** to what survives: the late-order Sonnet cell under the actions-only
+   monitor is the main exhibit; the greedy per-agent reading is in the results; the audit's two
+   further limits join the stated limits.
+7. No fourth audit unless the two controls change a conclusion.
+
 Nothing is committed until this plan is accepted.

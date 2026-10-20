@@ -173,6 +173,40 @@ def jobs_transfer() -> list[dict]:
     return jobs
 
 
+def jobs_last(subset: str = "all") -> list[dict]:
+    """PLAN §14 controls: claims-last plan at 733 (baselines ×2, three arms, Sonnet, 5 rounds) and
+    greedy dev_0 alone in the late order at 733 (none, prompt, 3 epochs)."""
+    jobs = []
+    seed = 733
+    for d in ARMS:
+        for run in (1, 2):
+            bdir = V2 / "claimslast" / "baselines" / f"{seed}_{d}" / f"run{run}"
+            if any(bdir.glob("*.eval")):
+                continue
+            meta = V2 / "claimslast" / "baselines_meta" / f"{seed}_{d}_run{run}"
+            jobs.append(dict(name=f"baseline {seed} claimslast {d} run{run}", out=meta,
+                             cmd=loop_cmd(seed, d, "claimslast", meta, rounds=0, attacker=PROPOSERS["prop_sonnet55"],
+                                          clean_dir=bdir, baseline_only=True)))
+    if subset == "baselines":
+        return jobs
+    if subset == "cells":
+        jobs = []
+    for d in ARMS:
+        out = V2 / "claimslast" / "prop_sonnet55" / f"{seed}_{d}"
+        if not (out / "rounds.jsonl").exists():
+            jobs.append(dict(name=f"cell {seed} claimslast {d} prop_sonnet55", out=out,
+                             cmd=loop_cmd(seed, d, "claimslast", out, rounds=5, attacker=PROPOSERS["prop_sonnet55"],
+                                          clean_dir=V2 / "claimslast" / "baselines" / f"{seed}_{d}" / "run1")))
+    gp = V2 / "greedy_payload.txt"
+    for d in ("none", "system_prompt"):
+        out = V2 / "late" / "greedy_dev0" / f"{seed}_{d}"
+        if not (out / "rounds.jsonl").exists():
+            jobs.append(dict(name=f"greedy-dev0 {seed} late {d}", out=out,
+                             cmd=loop_cmd(seed, d, "late", out, rounds=0, attacker=PROPOSERS["prop_sonnet55"],
+                                          clean_dir=_run1(seed, "late", d), round0_file=gp, greedy_agent="dev_0", round0_epochs=3)))
+    return jobs
+
+
 def run_job(job: dict) -> dict:
     job["out"].parent.mkdir(parents=True, exist_ok=True)
     log = job["out"].with_suffix(".out")
@@ -186,11 +220,13 @@ def run_job(job: dict) -> dict:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--phase", choices=["baselines", "cells", "controls", "transfer"], required=True)
+    ap.add_argument("--phase", choices=["baselines", "cells", "controls", "transfer", "last"], required=True)
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--subset", choices=["all", "baselines", "cells"], default="all", help="phase last only")
     ap.add_argument("--max-parallel", type=int, default=MAX_PARALLEL)
     a = ap.parse_args()
-    jobs = {"baselines": jobs_baselines, "cells": jobs_cells, "controls": jobs_controls, "transfer": jobs_transfer}[a.phase]()
+    jobs = (jobs_last(a.subset) if a.phase == "last" else
+            {"baselines": jobs_baselines, "cells": jobs_cells, "controls": jobs_controls, "transfer": jobs_transfer}[a.phase]())
     print(f"phase {a.phase}: {len(jobs)} jobs", flush=True)
     if a.dry_run:
         for j in jobs:

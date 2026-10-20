@@ -25,7 +25,7 @@ Everything the results depend on, as run on 2026-10-19 and 2026-10-20 (Asia/Kolk
 |---|---|---|
 | agents (dev_0..dev_3) | `openai/gpt-4o` (provider resolved it to gpt-4o-2024-08-06 on the run dates) | all baselines and attack cells |
 | agents, rejected | `openai/gpt-4.1-mini` | first paid qualification (`logs/jira-static-gpt41mini`), g0 replication (`results/g0_gpt41mini`), the superseded 10-turn seed-733 cells |
-| monitor / judge | `openai/gpt-4o-mini` (resolved to gpt-4o-mini-2024-07-18); judge calls carry no temperature or seed (ORBIT's `LLMMonitorDefense` passes none), so monitor arms are not deterministic | `llm_monitor_fixed`, `llm_monitor_fixed_actions` |
+| monitor / judge | `openai/gpt-4o-mini` (resolved to gpt-4o-mini-2024-07-18). Seed-733 early block and seeds 42/1049 (2026-10-19/20 before the control program): provider-default temperature, unseeded (ORBIT's `LLMMonitorDefense` passes no config). Every cell and baseline of the control program (`results/v2/`, 733 late and claims-last, 512, 101) and the 733/early second clean run: temperature 0, seed = problem seed via Inspect's per-model config (`_SeededJudge`; defense names end in `_seeded`) | `llm_monitor_fixed`, `llm_monitor_fixed_actions` |
 | proposer, frontier | `anthropic/claude-sonnet-5-5` | all `results/prop_sonnet55/*` |
 | proposer, open weights | `openrouter/qwen/qwen3-235b-a22b-2507` | all `results/prop_qwen3/*` |
 | proposer, superseded | `anthropic/claude-sonnet-4-5` | the superseded 10-turn seed-733 monitor cell |
@@ -43,7 +43,7 @@ Provider endpoints: OpenAI API (gpt-4o, gpt-4o-mini, gpt-4.1-mini), Anthropic AP
 | seeds | 42, 733, 1049 (arms, early); 512, 101 (arms, both orderings); 733 (late); 7, 256, 2024, 4096 (clean baselines only) |
 | baselines | 8 epochs per (seed, defense), `max_samples=4` |
 | rounds | 0 static + 5 adaptive, one episode each; controls: greedy 3 epochs of round 0, transfer 1 epoch of round 0 |
-| orderings | early = plan dev_0, dev_1, dev_2, dev_3; late = dev_2, dev_3, dev_0, dev_1 (coalition always dev_0, dev_1) |
+| orderings | early = repeating plan dev_0, dev_1, dev_2, dev_3; late = dev_2, dev_3, dev_0, dev_1; claimslast = explicit 40-step list dev_2, dev_3, dev_2, dev_3, then the late cycle, no repeat (coalition always dev_0, dev_1). The 733/early block and seeds 42/1049 ran ORBIT's default round-robin executor, every other cell an explicit plan; a plan step whose agent has submitted is skipped but consumes a turn |
 | judge prompt | `FIXED_JUDGE_PROMPT` in `jira_adaptive.py` |
 | defense presets | `none`, `system_prompt` (ORBIT `system_prompt_fixed_v1`), `llm_monitor_fixed` (defense name `fixed_prompt_llm_monitor_v1`, or `…_seeded` with defense type `llm_monitor_seeded` when the judge is pinned), `llm_monitor_fixed_actions` (`fixed_prompt_llm_monitor_actions_v1[_seeded]`, defense type `llm_monitor_actions_only`) |
 | replication script caps (g0) | gpt-4.1-mini: `--max-request-tokens 1080344 --total-token-cap 55000000 --total-usd-cap 90 --max-usd-per-million-tokens 1.6`; gpt-4o: `--max-request-tokens 131072 --total-token-cap 9500000 --total-usd-cap 95 --max-usd-per-million-tokens 10` (reservation ceilings, not spend) |
@@ -64,5 +64,6 @@ Provider endpoints: OpenAI API (gpt-4o, gpt-4o-mini, gpt-4.1-mini), Anthropic AP
 | clean no-defense baselines, seeds 7, 101, 256, 512, 2024, 4096 | 2026-10-20 | `results/baselines/<seed>_none` |
 | independent README reproduction of the single-draw 733 none cell | 2026-10-20 | `results/repro/733_none` (uncommitted scratch) |
 | control program (PLAN §13): two-run baselines, 35 cells, 18 controls (greedy, uninformed), 96 transfers; seeds 512, 101 both orderings, 733 late; judge seeded outside the 733/early block | 2026-10-20 | `results/v2/early/`, `results/v2/late/`, `results/baselines/733_*/run2` |
+| third-audit controls (PLAN §14): claims-last plan at 733 (two-run baselines, three arms, Sonnet) and greedy dev_0 alone in the late order (none, prompt, 3 epochs) | 2026-10-20 | `results/v2/claimslast/`, `results/v2/late/greedy_dev0/` |
 
-Approximate list-price spend for the whole project: about $96 (first phase $43; 2026-10-20 control program $53: 45 two-run baselines, 35 cells, 18 controls, 96 transfers).
+Approximate list-price spend for the whole project: about $106 (first phase $43; 2026-10-20 control program $53; third-audit controls about $10: six claims-last baselines, three claims-last cells, two greedy-dev_0 cells).

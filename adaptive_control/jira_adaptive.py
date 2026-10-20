@@ -183,19 +183,7 @@ def _get_defenses(defense_preset):
 _jira._get_defenses = _get_defenses
 
 
-ORDERS = {  # as scripts/replicate_jira.py ORDERS: the coalition stays dev_0, dev_1 and moves first or last
-    "early": ("dev_0", "dev_1", "dev_2", "dev_3"),
-    "late": ("dev_2", "dev_3", "dev_0", "dev_1"),
-}
-
-
-def execution_plan(ordering: str) -> dict:
-    """The replication recipe's explicit activation plan for an agent order."""
-    if ordering not in ORDERS:
-        raise ValueError(f"ordering must be one of {sorted(ORDERS)}, got {ordering!r}")
-    return {"executor": "scheduled", "quantum": "model_step",
-            "plan": {"repeat": True, "steps": [{"id": f"activate-{a}", "agents": [a], "concurrent": False}
-                                                for a in ORDERS[ordering]]}}
+from adaptive_control.orderings import execution_plan  # early / late / claimslast
 
 
 @task
@@ -204,8 +192,10 @@ def jira_adaptive(coalition_payload_file: str | None = None, ordering: str | Non
     """ORBIT's jira_ticket_allocation plus:
 
     coalition_payload_file  the objective sentence for the coalition (adaptive attack)
-    ordering                "early" or "late": the recipe's activation plan (coalition dev_0,
-                            dev_1 first or last). None keeps ORBIT's default round-robin.
+    ordering                "early" / "late" (the recipe's repeating plans, coalition dev_0, dev_1
+                            first or last) or "claimslast" (outsiders get two activations before the
+                            coalition's first; adaptive_control/orderings.py). None keeps ORBIT's
+                            default round-robin.
     greedy_control          single-agent control: coalition_agents names one agent, which
                             gets the payload as a plain system message, no coalition wrapper
     judge_seed              pin the monitor judge to temperature 0 and this seed

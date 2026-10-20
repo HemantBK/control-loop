@@ -51,8 +51,11 @@ class RunResult:
     block_turns_by_boundary: dict
     first_coalition_claim_turn: int | None
     first_coalition_claim_agent: str | None
+    first_outsider_claim_turn: int | None     # first successful assign_task by a non-coalition agent
+    outsiders_claimed_before_coalition: bool | None
     coalition_tickets: int | None
     total_tickets: int | None
+    final_owner: dict                    # ticket -> agent in the final allocation
     tasks_done: int | None
     coalition_reward: float
     outsiders_reward: float
@@ -84,6 +87,36 @@ def _num(x) -> float:
     return v
 
 
+def _span_turns(log, s) -> dict[str, tuple[str, int]]:
+    """Map each agent span to (agent, global turn).
+
+    Round-robin executor (no explicit plan, ORBIT's default; the 733/early block and seeds
+    42/1049): the k-th agent span is turn k (0 mismatches against 38,073 defense events).
+    Explicit plan (task arg ``ordering``): a step whose agent has already submitted is
+    skipped but still consumes a turn, so spans are aligned greedily to the plan's step
+    list: step k is assigned to the next unconsumed span if that span's agent is step k's
+    agent, otherwise the step is a skip with no span.
+    """
+    spans = [(e.id, e.name) for e in s.events if e.event == "span_begin" and e.type == "agent"]
+    ordering = (log.eval.task_args or {}).get("ordering")
+    if not ordering:
+        return {sid: (name, k) for k, (sid, name) in enumerate(spans)}
+    from adaptive_control.orderings import steps as plan_steps
+    plan = plan_steps(ordering, max_turns=max(len(spans), 40) + 8)
+    out: dict[str, tuple[str, int]] = {}
+    i = 0
+    for turn, agent in enumerate(plan):
+        if i >= len(spans):
+            break
+        sid, name = spans[i]
+        if name == agent:
+            out[sid] = (name, turn)
+            i += 1
+    for sid, name in spans[i:]:  # anything unaligned keeps a span index so nothing is silently dropped
+        out[sid] = (name, len(out))
+    return out
+
+
 def latest_log(log_dir: str | Path) -> str:
     logs = list_eval_logs(str(log_dir), recursive=False)
     if not logs:
@@ -101,7 +134,7 @@ def read_run(log_path: str | Path, epoch: int | None = None) -> RunResult:
     log = read_eval_log(str(log_path))
     if not log.samples:
         return RunResult(str(log_path), log.status, math.nan, math.nan, math.nan, 0, [], {}, {},
-                         None, None, None, None, None, math.nan, math.nan, {}, [], math.nan, math.nan, None,
+                         None, None, None, None, None, None, {}, None, math.nan, math.nan, {}, [], math.nan, math.nan, None,
                          math.nan, math.nan, math.nan, False, "no samples", False, False, [], math.nan, {"error": "no samples"})
     s = log.samples[0] if epoch is None else next(x for x in log.samples if x.epoch == epoch)
     scores = s.scores or {}
@@ -156,11 +189,9 @@ def read_run(log_path: str | Path, epoch: int | None = None) -> RunResult:
         coalition = [a.strip() for a in coalition.split(",") if a.strip()]
     if not coalition:
         coalition = ["dev_0", "dev_1"]  # clean run: the paired scorer's reference coalition
-    slot_of_span: dict[str, tuple[str, int]] = {}
-    for e in s.events:
-        if e.event == "span_begin" and e.type == "agent":
-            slot_of_span[e.id] = (e.name, len(slot_of_span))
+    slot_of_span = _span_turns(log, s)
     first_turn, first_agent = None, None
+    first_outsider_claim_turn = None
     final_owner: dict[str, str] = {}
     for e in s.events:
         if e.event == "tool" and e.function == "assign_task":
@@ -170,6 +201,8 @@ def read_run(log_path: str | Path, epoch: int | None = None) -> RunResult:
             m = re.match(r"Task (\S+) assigned to (\S+)\.", str(e.result or ""))
             if m:
                 final_owner[m.group(1)] = m.group(2)
+                if agent is not None and agent not in coalition and first_outsider_claim_turn is None:
+                    first_outsider_claim_turn = turn
     coalition_tickets = sum(1 for owner in final_owner.values() if owner in coalition)
     total_tickets = _num(jt.metadata.get("total_tasks")) if jt is not None and isinstance(jt.metadata, dict) else math.nan
     total_tickets = int(total_tickets) if total_tickets == total_tickets else (len(final_owner) or None)
@@ -206,8 +239,11 @@ def read_run(log_path: str | Path, epoch: int | None = None) -> RunResult:
         block_turns_by_boundary=turns_by_boundary,
         first_coalition_claim_turn=first_turn,
         first_coalition_claim_agent=first_agent,
+        first_outsider_claim_turn=first_outsider_claim_turn,
+        outsiders_claimed_before_coalition=(first_outsider_claim_turn < first_turn) if (first_turn is not None and first_outsider_claim_turn is not None) else (None if first_turn is None and first_outsider_claim_turn is None else first_outsider_claim_turn is not None and first_turn is None),
         coalition_tickets=coalition_tickets,
         total_tickets=total_tickets,
+        final_owner=dict(final_owner),
         tasks_done=tasks_done_v,
         coalition_reward=coalition_reward,
         outsiders_reward=outsiders_reward,

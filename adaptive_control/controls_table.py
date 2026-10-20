@@ -78,6 +78,52 @@ def _static_rows(cell: Path, rule: str) -> list[dict]:
     return out
 
 
+def render_greedy_per_agent(seeds: list[str], extra_dirs: tuple[str, ...] = ("greedy", "greedy_dev0")) -> str:
+    """Per-agent Δ (each agent's reward minus its own clean mean) for every greedy control cell,
+    so a gain by the greedy agent's neighbour is visible rather than netted into Δothers."""
+    from adaptive_control.results import latest_log, read_run
+    from inspect_ai.log import read_eval_log
+    out = ["### Greedy control, per agent (each agent minus its own two-run clean mean; mean over valid epochs)", ""]
+    for rule in RULES:
+        out += [f"#### Validity rule: {rule}", "",
+                "| seed | ordering | arm | greedy agent | valid | Δ dev_0 | Δ dev_1 | Δ dev_2 | Δ dev_3 | Δ(dev_0+dev_1) | tickets dev_0+dev_1 | team / opt |",
+                "|---|---|---|---|---|---|---|---|---|---|---|---|"]
+        for seed in seeds:
+            for ordering in ("early", "late", "claimslast"):
+                for sub in extra_dirs:
+                    for d in ("none", "system_prompt"):
+                        cell = V2 / ordering / sub / f"{seed}_{d}"
+                        if not (cell / "rounds.jsonl").exists():
+                            continue
+                        base = baseline_for(cell)
+                        if not base:
+                            continue
+                        pam = base["rules"][rule].get("per_agent_mean") or {}
+                        full = read_eval_log(str(latest_log(cell / "A0")))
+                        rows = []
+                        for smp in sorted(full.samples or [], key=lambda x: x.epoch):
+                            r = read_run(latest_log(cell / "A0"), epoch=smp.epoch)
+                            ok = r.valid_alloc if rule == "alloc" else r.valid_submit
+                            if ok:
+                                rows.append(r)
+                        agent = (rows or [read_run(latest_log(cell / "A0"))])[0].coalition[0]
+                        if not rows:
+                            out.append(f"| {seed} | {ordering} | {d} | {agent} | 0 | – | – | – | – | – | – | – |")
+                            continue
+                        d_ = {a: st.mean(r.per_agent_reward.get(a, 0.0) - pam.get(a, 0.0) for r in rows) for a in ("dev_0", "dev_1", "dev_2", "dev_3")}
+                        pair = d_["dev_0"] + d_["dev_1"]
+                        tk = st.mean(sum(1 for o in _final_owner(r).values() if o in ("dev_0", "dev_1")) for r in rows)
+                        topt = st.mean(r.team_reward / r.optimal_total_reward for r in rows if r.optimal_total_reward == r.optimal_total_reward)
+                        out.append(f"| {seed} | {ordering} | {d} | {agent} | {len(rows)}/{len(full.samples or [])} | {d_['dev_0']:+.1f} | {d_['dev_1']:+.1f} | {d_['dev_2']:+.1f} | {d_['dev_3']:+.1f} | {pair:+.1f} | {tk:.1f} | {topt * 100:.0f}% |")
+        out.append("")
+    out.append("The greedy agent's instruction stops it at two tickets; whether the other coalition member (with no instruction) picks up the rest is the per-agent reading the pooled table hid.")
+    return "\n".join(out)
+
+
+def _final_owner(r) -> dict:
+    return r.final_owner
+
+
 def render_greedy(seeds: list[str]) -> str:
     out = ["### Greedy-outsider control vs coalition cells (first mover gets the claim-first instruction alone)", ""]
     for rule in RULES:
@@ -177,11 +223,13 @@ def render_uninformed(seeds: list[str]) -> str:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--seeds", default="733,512,101")
-    ap.add_argument("--section", choices=["greedy", "transfer", "uninformed", "all"], default="all")
+    ap.add_argument("--section", choices=["greedy", "greedy_agents", "transfer", "uninformed", "all"], default="all")
     a = ap.parse_args()
     seeds = a.seeds.split(",")
     if a.section in ("greedy", "all"):
         print(render_greedy(seeds)); print()
+    if a.section in ("greedy_agents", "all"):
+        print(render_greedy_per_agent(seeds)); print()
     if a.section in ("transfer", "all"):
         print(render_transfer(seeds)); print()
     if a.section in ("uninformed", "all"):

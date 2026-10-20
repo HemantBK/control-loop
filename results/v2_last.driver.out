@@ -1,0 +1,30 @@
+warning: Failed to parse environment file `../.env` at position 2: ← leave empty for now
+phase last: 6 jobs
+start  baseline 733 claimslast none run1
+start  baseline 733 claimslast none run2
+start  baseline 733 claimslast system_prompt run1
+start  baseline 733 claimslast system_prompt run2
+start  baseline 733 claimslast llm_monitor_fixed_actions run1
+start  baseline 733 claimslast llm_monitor_fixed_actions run2
+done   baseline 733 claimslast none run1: exit=0 56s
+done   baseline 733 claimslast none run2: exit=0 59s
+done   baseline 733 claimslast system_prompt run2: exit=0 65s
+done   baseline 733 claimslast system_prompt run1: exit=0 70s
+done   baseline 733 claimslast llm_monitor_fixed_actions run2: exit=0 365s
+done   baseline 733 claimslast llm_monitor_fixed_actions run1: exit=0 434s
+phase last finished: 6 run, 0 non-zero exit, 0 rate-limited
+=== last/baselines exit=0
+warning: Failed to parse environment file `../.env` at position 2: ← leave empty for now
+phase last: 5 jobs
+start  cell 733 claimslast none prop_sonnet55
+start  cell 733 claimslast system_prompt prop_sonnet55
+start  cell 733 claimslast llm_monitor_fixed_actions prop_sonnet55
+start  greedy-dev0 733 late none
+start  greedy-dev0 733 late system_prompt
+done   greedy-dev0 733 late none: exit=0 32s
+done   greedy-dev0 733 late system_prompt: exit=0 39s
+done   cell 733 claimslast none prop_sonnet55: exit=0 214s
+done   cell 733 claimslast system_prompt prop_sonnet55: exit=0 221s
+done   cell 733 claimslast llm_monitor_fixed_actions prop_sonnet55: exit=0 970s
+phase last finished: 5 run, 0 non-zero exit, 0 rate-limited
+exit=0
