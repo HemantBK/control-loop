@@ -32,6 +32,7 @@ from pathlib import Path
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
+import numpy as np  # noqa: E402
 
 from control_loop.round_table import REPO, RULES, baseline_for, cell_rows  # noqa: E402
 
@@ -136,6 +137,7 @@ def draw(recs: list[dict], out: Path, measure: str, rule: str, seeds: list[str] 
         ylabel, title, fname, ylim = ("coalition reward minus the arm's clean mean (bar); outsiders' change (◇)",
                                       f"Coalition and outsiders reward vs the arm's clean mean — validity rule: {rule}{suffix and ' — ordering ' + suffix}", f"gain_by_defense_{rule}{suffix and '_' + suffix}.png", None)
     fig, axes = plt.subplots(1, len(seeds), figsize=(17, 5.8), sharey=True, facecolor=SURFACE)
+    axes = np.atleast_1d(axes)  # one seed (claims-last) gives a bare Axes, not an array
     width, order = 0.19, ["clean", "static", "prop_sonnet55", "prop_qwen3"]
     for ax, seed in zip(axes, seeds):
         ax.set_facecolor(SURFACE)
