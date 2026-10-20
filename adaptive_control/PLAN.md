@@ -322,6 +322,6 @@ within-floor round, and a list of wrong numbers and labels. Changes, dated 2026-
    early block; "five of five" restated as four identical seeded rounds plus one
    within-floor round, effective n = 2; limit 4 scoped to the arms measured; limit 6
    added in the audit's words; headline rewritten as the audit's assessment.
-5. **No further audit.** Open items are listed in README §7 "Known issues".
+5. **No further audit.** Open items are listed in README section 9 "Known issues".
 
 Nothing is committed until this plan is accepted.

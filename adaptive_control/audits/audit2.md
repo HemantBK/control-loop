@@ -1,8 +1,10 @@
-# Adversarial review of `adaptive_control/` (branch adaptive-redteam, commit 5cbea5e)
+# Adversarial review of `adaptive_control/` (branch adaptive-redteam, commit 75f1d3c)
 
 Reviewed 2026-10-20 from the repository and its `.eval` logs only. Nothing was edited. Scratch scripts and
 their outputs are in the reviewer's scratchpad (`verify.py`, `verify2.py`, `verify3.py`); every number
 below was re-derived from `results/**/*.eval` with `inspect_ai.log.read_eval_log`.
+
+Absolute paths of the author's machine are replaced below by `<clone root>` (this checkout) and `<home>`; nothing else in the report is changed.
 
 ## Findings, ranked by how much each changes a reader's conclusion
 
@@ -56,7 +58,7 @@ below was re-derived from `results/**/*.eval` with `inspect_ai.log.read_eval_log
 
 11. **Code: nothing that changes a reported number, several things to note.** `results.first_coalition_claim_turn` counts failed `assign_task` attempts (no round differs); the slot index diverges from the global turn once an agent hits its message cap and is skipped without a span (30–38 spans for 40 turns in 10+ episodes; 0 mismatches in 38,073 defense events, so early turns are safe); `clean_distribution` uses population sd over 8 epochs; `net_blocks_vs_mean` nets totals, not per agent; the "paired vs epoch 1" column means the cell's own clean episode for 733 cells and the arm baseline's epoch 1 for 42/1049; `results/baselines_meta/*/baseline.json` still hold submit-rule values (7/8, 6/8) and disagree with summary.csv; `ActionsOnlyLLMMonitor` records an allow event per input message, inflating `defense_activations`.
 
-12. **Reproducibility.** pins.md plus §8 suffice for the no-defense cell (the sibling session reproduced it). Missing: the resolved snapshots (responses say gpt-4o-2024-08-06 and gpt-4o-mini-2024-07-18); the judge's generation settings (provider default, unseeded); OpenRouter provider routing for Qwen; the `.env` one directory above the clone and absolute `/Users/hemant/...` paths inside logs; the parked `_733_llm_monitor_fixed_actions_tokenlimit60k/A0` log has no samples and crashes any script that reads `samples[0]`.
+12. **Reproducibility.** pins.md plus §8 suffice for the no-defense cell (the sibling session reproduced it). Missing: the resolved snapshots (responses say gpt-4o-2024-08-06 and gpt-4o-mini-2024-07-18); the judge's generation settings (provider default, unseeded); OpenRouter provider routing for Qwen; the `.env` one directory above the clone and absolute `<home>/...` paths inside logs; the parked `_733_llm_monitor_fixed_actions_tokenlimit60k/A0` log has no samples and crashes any script that reads `samples[0]`.
 
 ## Checked and held up
 

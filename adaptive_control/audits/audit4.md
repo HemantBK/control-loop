@@ -1,6 +1,8 @@
-# Fourth adversarial review of `adaptive_control/` (branch adaptive-redteam, commit 61a5650)
+# Fourth adversarial review of `adaptive_control/` (branch adaptive-redteam, commit 8e261b7)
 
 Reviewed 2026-10-20 from the repository and its `.eval` logs only. Nothing edited, no model calls, no new runs. Scratch scripts and their outputs are under `results/review_scratch/audit4/` (`inspect_cell.py`, `submit_check.py`, `halt_check2.py`, `strict_submit.py`, `turn_check.py`, `halt_check_all.txt`, `submit_check_all.txt`). Every number below was re-derived with `inspect_ai.log.read_eval_log` or by running the repo's own `round_table` / `controls_table` on the existing logs. The previous three audit notes in this folder were read first; findings they already made and the README already answers are not repeated except where the answer is still wrong.
+
+Absolute paths of the author's machine are replaced below by `<clone root>` (this checkout) and `<home>`; nothing else in the report is changed.
 
 ## Findings, ranked by how much each changes a reader's conclusion
 
@@ -34,7 +36,7 @@ Reviewed 2026-10-20 from the repository and its `.eval` logs only. Nothing edite
 
 9. **§3.3 and §3.4 small inaccuracies.** "101 early, all three arms: loss, −5 to −17" for Sonnet omits the submit-rule prompt row (+1.45, 3/5 valid, 33% redistribution). The transfer control "ten of twelve" and the uninformed numbers re-derive exactly. Limit 1's "733/Sonnet payload run once statically under the prompt scores +37.2" re-derives (+37.17, 4/4 tickets) and is the single strongest piece of evidence in the write-up that one static sentence does the whole job; it deserves a sentence in the headline paragraph, not only in a limit.
 
-10. **Reproducibility.** `pins.md` plus README §5 are sufficient for the main-exhibit cell (baseline `run1` exists, `baseline_dirs` resolves the two-run baseline for a `results/v2/late/repro_*` directory, judge seeding defaults to the problem seed). Gaps: reproducing the 733/early block needs `--judge-seed -1` and no `--ordering` (only `run_v2.legacy_block` knows this); `rounds.jsonl` and `baseline.json` store absolute `/Users/hemant/…` log paths (the tables re-derive from directories, so this is cosmetic); `uv add matplotlib anthropic` is already in the committed `pyproject.toml`/`uv.lock` and is redundant with `--locked`; the proposer is unseeded (finding 7); the `.env` is outside the clone.
+10. **Reproducibility.** `pins.md` plus README §5 are sufficient for the main-exhibit cell (baseline `run1` exists, `baseline_dirs` resolves the two-run baseline for a `results/v2/late/repro_*` directory, judge seeding defaults to the problem seed). Gaps: reproducing the 733/early block needs `--judge-seed -1` and no `--ordering` (only `run_v2.legacy_block` knows this); `rounds.jsonl` and `baseline.json` store absolute `<home>/…` log paths (the tables re-derive from directories, so this is cosmetic); `uv add matplotlib anthropic` is already in the committed `pyproject.toml`/`uv.lock` and is redundant with `--locked`; the proposer is unseeded (finding 7); the `.env` is outside the clone.
 
 ## Checked and held up
 
