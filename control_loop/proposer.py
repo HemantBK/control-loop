@@ -24,6 +24,16 @@ Design (see phases/phase1_orbit_redteam/PLAN.md):
   one); it is recorded here so the attacker's search space is explicit.
 * Every rejection (refusal, no attack, duplicate, unparseable output) is
   appended to rejections.jsonl with the raw model output.
+* Request log (2026-10-21, audit_codex X8). Each proposer call's line in
+  proposer_log.jsonl keeps what we asked for (`requested_temperature`,
+  `requested_seed`; lines written before 2026-10-21 hold the same values under
+  `temperature` and `seed`) and records what the provider request carried
+  (`sent`: model, temperature, seed, max_tokens, thinking, output_config, each
+  "not sent" when absent), read from the ModelCall that Inspect's provider
+  registers on the call's ModelEvent (`sent_source`). Inspect 0.3.263's
+  Anthropic provider never forwards `seed` and drops `temperature` for Claude
+  4.7+ (incl. Sonnet 5.5, Opus 5.5), so for those models the requested values
+  did not take effect; the OpenAI chat-completions path (gpt-4o) sends both.
 """
 from __future__ import annotations
 
@@ -191,6 +201,108 @@ def format_history(history: list[dict]) -> str:
     return "Previous rounds:\n\n" + "\n\n".join(lines) + "\n\nNext payload (JSON):"
 
 
+NOT_SENT = "not sent"
+SOURCE_MODEL_CALL = "ModelEvent.call.request"
+SOURCE_DERIVED = "derived: provider completion config (no ModelCall recorded)"
+SOURCE_UNAVAILABLE = "unavailable"
+
+
+def request_summary(request: dict | None) -> dict:
+    """The generation settings a provider request actually carries.
+
+    `request` is the kwargs dict Inspect's provider passes to the SDK's create call (as serialised
+    into ModelCall.request). Anthropic routes temperature/top_p/top_k through `extra_body`; OpenAI
+    puts them at top level. A setting absent from both is reported as NOT_SENT."""
+    if request is None:
+        return dict(model=NOT_SENT, temperature=NOT_SENT, seed=NOT_SENT, max_tokens=NOT_SENT,
+                    thinking=NOT_SENT, output_config=NOT_SENT)
+    body = request.get("extra_body") or {}
+
+    def pick(*keys: str):
+        for k in keys:
+            if k in request:
+                return request[k]
+            if k in body:
+                return body[k]
+        return NOT_SENT
+
+    return dict(model=pick("model"), temperature=pick("temperature"), seed=pick("seed"),
+                max_tokens=pick("max_tokens", "max_completion_tokens", "max_output_tokens"),
+                thinking=pick("thinking"), output_config=pick("output_config", "reasoning", "reasoning_effort"))
+
+
+def derive_request(api, config) -> dict | None:
+    """Offline reconstruction of the generation part of the request, from the provider's own code
+    (no client, no network). Used only when no ModelCall was recorded. Anthropic: AnthropicAPI.
+    completion_config; OpenAI chat completions: completion_params_completions. Other paths: None."""
+    from inspect_ai.model._providers.anthropic import AnthropicAPI
+    from inspect_ai.model._providers.openai import OpenAIAPI
+
+    if isinstance(api, AnthropicAPI):
+        params, extra_body, _headers, _betas = api.completion_config(config)
+        return params | ({"extra_body": extra_body} if extra_body else {})
+    if isinstance(api, OpenAIAPI) and not api.responses_api:
+        from inspect_ai.model._providers.openai_completions import completion_params_completions
+        return completion_params_completions(api, config, tools=False)
+    return None
+
+
+def _model_events_len() -> int | None:
+    try:
+        from inspect_ai.log import transcript
+        return len(transcript().events)
+    except Exception:  # logging must never change the proposer's behaviour
+        return None
+
+
+def _sent_request(model, events_before: int | None) -> tuple[dict | None, str]:
+    """The request of the call just made: the ModelCall Inspect's provider attached to this call's
+    ModelEvent (set_active_model_event_call, the dict handed to the SDK). Falls back to
+    derive_request when no ModelCall was recorded (cache hit, model-event sink, mock provider)."""
+    try:
+        from inspect_ai.event import ModelEvent
+        from inspect_ai.log import transcript
+
+        if events_before is None:
+            raise LookupError("no transcript")
+        new = list(transcript().events[events_before:])
+        calls = [e.call for e in new if isinstance(e, ModelEvent) and e.call is not None and e.call.request]
+        if calls:
+            return dict(calls[-1].request), SOURCE_MODEL_CALL
+    except Exception:  # logging must never change the proposer's behaviour
+        pass
+    try:
+        from inspect_ai.model import GenerateConfig
+
+        cfg = (model.config or GenerateConfig()).model_copy()
+        if cfg.max_tokens is None:  # as Model.generate does
+            cfg.max_tokens = model.api.max_tokens_for_config(cfg) or model.api.max_tokens()
+        req = derive_request(model.api, cfg)
+        if req is not None:
+            return req, SOURCE_DERIVED
+    except Exception:
+        pass
+    return None, SOURCE_UNAVAILABLE
+
+
+async def generate_logged(model, messages: list, log_file: Path, record: dict,
+                          requested_temperature, requested_seed) -> tuple[str, dict]:
+    """One proposer call: generate, then append one line to `log_file` with `record`'s fields, the
+    requested settings, the settings the request actually carried (`sent`) and their source.
+    Returns (raw completion, sent summary). The generate call itself is unchanged."""
+    before = _model_events_len()
+    out = await model.generate(messages)
+    raw = out.completion
+    request, source = _sent_request(model, before)
+    sent = request_summary(request)
+    with log_file.open("a", encoding="utf-8") as f:
+        f.write(json.dumps(dict(**record, requested_temperature=requested_temperature,
+                                requested_seed=requested_seed, sent=sent, sent_source=source,
+                                system=messages[0].content, user=[m.content for m in messages[1:]],
+                                raw=raw), default=str) + "\n")
+    return raw, sent
+
+
 async def propose(attacker_model: str, history: list[dict], round_index: int,
                   rejections_file: Path, num_tasks: int = 4, brief: str = "informed",
                   proposer_seed: int | None = None) -> dict:
@@ -199,27 +311,27 @@ async def propose(attacker_model: str, history: list[dict], round_index: int,
 
     from inspect_ai.model import GenerateConfig
 
-    # Pinned from 2026-10-20: temperature 0 and seed = proposer_seed (every earlier payload was
-    # produced at the provider's default temperature, unseeded, and is not reproducible).
+    # Requested from 2026-10-20: temperature 0 and seed = proposer_seed (every earlier payload was
+    # produced at the provider's default temperature, unseeded). Requested only: Inspect 0.3.263's
+    # Anthropic path sends neither for Claude 4.7+ (incl. Sonnet 5.5); see `sent` in the log.
     model = get_model(attacker_model, config=GenerateConfig(temperature=0, seed=proposer_seed) if proposer_seed is not None else None)
     previous = [h["payload"] for h in history]
     messages = [ChatMessageSystem(content=proposer_system(num_tasks, brief)), ChatMessageUser(content=format_history(history))]
     attempts = 0
     log_file = rejections_file.parent / "proposer_log.jsonl"
+    requested_temperature = 0 if proposer_seed is not None else "provider default"
+    sent: dict = request_summary(None)
     for attempt in range(2):
         attempts += 1
-        out = await model.generate(messages)
-        raw = out.completion
-        with log_file.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(dict(round=round_index, attempt=attempt + 1, model=attacker_model, brief=brief,
-                                    temperature=0 if proposer_seed is not None else "provider default",
-                                    seed=proposer_seed, system=messages[0].content,
-                                    user=[m.content for m in messages[1:]], raw=raw)) + "\n")
+        raw, sent = await generate_logged(model, messages, log_file,
+                                          dict(round=round_index, attempt=attempt + 1, model=attacker_model, brief=brief),
+                                          requested_temperature, proposer_seed)
         payload, moves, parsed = parse_output(raw)
         why = check_payload(payload, previous)
         if why is None:
             return dict(payload=payload, moves=moves, attempts=attempts, fallback=False,
-                        model=attacker_model, parsed_json=parsed, proposer_seed=proposer_seed)
+                        model=attacker_model, parsed_json=parsed, requested_seed=proposer_seed,
+                        sent_seed=sent["seed"], sent_temperature=sent["temperature"])
         with rejections_file.open("a", encoding="utf-8") as f:
             f.write(json.dumps(dict(round=round_index, attempt=attempt + 1, kind=why,
                                     model=attacker_model, raw=raw)) + "\n")
@@ -229,4 +341,5 @@ async def propose(attacker_model: str, history: list[dict], round_index: int,
         f.write(json.dumps(dict(round=round_index, attempt=0, kind="fallback_mutation",
                                 model=attacker_model, moves=moves, payload=payload)) + "\n")
     return dict(payload=payload, moves=moves, attempts=attempts, fallback=True,
-                model=attacker_model, parsed_json=False)
+                model=attacker_model, parsed_json=False, requested_seed=proposer_seed,
+                sent_seed=sent["seed"], sent_temperature=sent["temperature"])

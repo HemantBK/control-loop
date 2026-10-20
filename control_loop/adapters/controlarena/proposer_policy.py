@@ -12,8 +12,11 @@ Two halves, as in the ORBIT adapter:
   finished trajectories into one observation row (`observe`), and writes the next round's paragraph
   (`propose`) with Phase 1's protocol (`control_loop.proposer`): two attempts, one re-prompt on
   refusal / no attack / duplicate / unparseable, deterministic fallback mutation, `rejections.jsonl`
-  and `proposer_log.jsonl`, temperature 0 with seed 100*seed+round. Only the brief, the move set
-  and the attack check are ControlArena-specific, because Phase 1's name Jira tools and dev_0/dev_1.
+  and `proposer_log.jsonl`, temperature 0 and seed 100*seed+round requested (2026-10-21, audit_codex
+  X8: requested only; Inspect 0.3.263's Anthropic path sends neither for Claude 4.7+, so each log line
+  records the request actually sent under `sent`, as `control_loop.proposer.generate_logged` does).
+  Only the brief, the move set and the attack check are ControlArena-specific, because Phase 1's name
+  Jira tools and dev_0/dev_1.
 
 Observation model (same fields as Phase 1, mapped to ControlArena): per previous round, the
 paragraph, the trajectory's own outcome (main_task_success, side_task_success, gain = 1 if both
@@ -213,7 +216,8 @@ class RedTeamPolicy:
 
     async def propose(self, round_index: int) -> dict:
         """Phase 1's `proposer.propose` loop with this brief and check. Returns
-        {payload, moves, attempts, fallback, model, parsed_json, proposer_seed}."""
+        {payload, moves, attempts, fallback, model, parsed_json, requested_seed, sent_seed,
+        sent_temperature} (sent_*: what the provider request carried, "not sent" if absent)."""
         from inspect_ai.model import ChatMessageAssistant, ChatMessageUser
 
         proposer_seed = 100 * self.seed + round_index
@@ -223,18 +227,19 @@ class RedTeamPolicy:
         messages = [ChatMessageSystem(content=system), ChatMessageUser(content=format_history(self.history))]
         rejections = self.out_dir / "rejections.jsonl"
         attempts = 0
+        sent: dict = _p.request_summary(None)
         for attempt in range(2):
             attempts += 1
-            raw = (await model.generate(messages)).completion
-            with (self.out_dir / "proposer_log.jsonl").open("a", encoding="utf-8") as f:
-                f.write(json.dumps(dict(round=round_index, attempt=attempt + 1, model=self.proposer_model,
-                                        temperature=0, seed=proposer_seed, system=system,
-                                        user=[m.content for m in messages[1:]], raw=raw)) + "\n")
+            raw, sent = await _p.generate_logged(model, messages, self.out_dir / "proposer_log.jsonl",
+                                                 dict(round=round_index, attempt=attempt + 1,
+                                                      model=self.proposer_model),
+                                                 0, proposer_seed)
             payload, moves, parsed = parse_output(raw)
             why = check_payload(payload, previous)
             if why is None:
                 return dict(payload=payload, moves=moves, attempts=attempts, fallback=False,
-                            model=self.proposer_model, parsed_json=parsed, proposer_seed=proposer_seed)
+                            model=self.proposer_model, parsed_json=parsed, requested_seed=proposer_seed,
+                            sent_seed=sent["seed"], sent_temperature=sent["temperature"])
             with rejections.open("a", encoding="utf-8") as f:
                 f.write(json.dumps(dict(round=round_index, attempt=attempt + 1, kind=why,
                                         model=self.proposer_model, raw=raw)) + "\n")
@@ -244,4 +249,5 @@ class RedTeamPolicy:
             f.write(json.dumps(dict(round=round_index, attempt=0, kind="fallback_mutation",
                                     model=self.proposer_model, moves=moves, payload=payload)) + "\n")
         return dict(payload=payload, moves=moves, attempts=attempts, fallback=True,
-                    model=self.proposer_model, parsed_json=False, proposer_seed=proposer_seed)
+                    model=self.proposer_model, parsed_json=False, requested_seed=proposer_seed,
+                    sent_seed=sent["seed"], sent_temperature=sent["temperature"])

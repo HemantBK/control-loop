@@ -58,3 +58,28 @@ def run_eval(log_dir: Path, agent_model: str, seed: int, extra_t: list[str],
     print("$", " ".join(cmd), flush=True)
     subprocess.run(cmd, cwd=REPO, env=dict(os.environ), check=False)
     return latest_log(log_dir)
+
+
+def sent_settings(log_path: str | Path) -> dict:
+    """Per model, the seed and temperature the provider requests in an .eval log actually carried
+    (each ModelEvent's call.request, via `control_loop.proposer.request_summary`), with the number of
+    recorded calls. Added 2026-10-21 (audit_codex X8): `inspect eval --seed` is a request; Inspect
+    0.3.263's Anthropic provider never sends seed and drops temperature for Claude 4.7+, so reports
+    state what was sent instead of the requested seed alone. Reads the local log only."""
+    from inspect_ai.event import ModelEvent
+    from inspect_ai.log import read_eval_log
+
+    from control_loop.proposer import request_summary
+
+    out: dict[str, dict] = {}
+    for sample in read_eval_log(str(log_path)).samples or []:
+        for e in sample.events:
+            if not isinstance(e, ModelEvent) or e.call is None or not e.call.request:
+                continue
+            sent = request_summary(e.call.request)
+            row = out.setdefault(e.model, dict(calls=0, seed=set(), temperature=set()))
+            row["calls"] += 1
+            row["seed"].add(str(sent["seed"]))
+            row["temperature"].add(str(sent["temperature"]))
+    return {m: dict(calls=r["calls"], seed=sorted(r["seed"]), temperature=sorted(r["temperature"]))
+            for m, r in out.items()}

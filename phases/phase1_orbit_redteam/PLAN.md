@@ -315,6 +315,11 @@ within-floor round, and a list of wrong numbers and labels. Changes, dated 2026-
    temperature, unseeded, no prompt/raw log. From now: temperature 0, seed = 100 ×
    problem seed + round, and `proposer_log.jsonl` with system prompt, user message and
    raw output per round.
+   [Correction 2026-10-21, audit_codex X8 (phases/phase2_claim_monitor/audits/audit_codex.md):
+   requested, not sent. Inspect 0.3.263's Anthropic provider never forwards `seed` and drops
+   `temperature` for Claude 4.7+ (`.venv/lib/python3.13/site-packages/inspect_ai/model/_providers/anthropic.py`, `completion_config`, lines 988–1032), so the
+   Sonnet 5.5 proposer stays unseeded at the provider default; R3 is not met for it. The
+   log records the request actually sent (`sent`) from 2026-10-21. README section 9.]
 4. **Corrections**: claims-last plan description (three activations per outsider,
    coalition first activation at turns 6–7); §3.2 false-positive numbers; 512's "three
    rounds"; §3.3's 101 early prompt row; sd and floor labels; "first claim" = first

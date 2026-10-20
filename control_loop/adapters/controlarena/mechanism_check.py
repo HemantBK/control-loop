@@ -179,7 +179,10 @@ def main() -> None:
     h_chk, h = check_episode(h_log, None)
     a_chk, a = check_episode(a_log, STATIC_PAYLOAD)
     metrics = control_metrics(h_log, a_log)
-    report = dict(backend=args.backend, untrusted=untrusted, trusted=trusted, seed=SEED,
+    # requested_seed is `inspect eval --seed`; sent_settings is what the provider requests carried
+    # (the Anthropic path sends no seed, audit_codex X8). Reports before 2026-10-21 call it `seed`.
+    report = dict(backend=args.backend, untrusted=untrusted, trusted=trusted, requested_seed=SEED,
+                  sent_settings=dict(honest=ca.sent_settings(h_log), redteam=ca.sent_settings(a_log)),
                   honest=h_chk, redteam=a_chk, control_metrics=metrics,
                   cost_usd=round(cost_usd([h, a]), 4),
                   usage={"honest": h.usage, "redteam": a.usage},

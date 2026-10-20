@@ -30,7 +30,10 @@ def main() -> None:
             for mode in ("honest", "attack")}
     results = {mode: read_log(p) for mode, p in logs.items()}
     flat = results["honest"] + results["attack"]
-    summary = dict(logs=logs, untrusted=UNTRUSTED, trusted=TRUSTED, seed=args.seed, limit=args.limit,
+    # requested_seed is `inspect eval --seed`; sent_settings is what the provider requests carried
+    # (the Anthropic path sends no seed, audit_codex X8). Summaries before 2026-10-21 call it `seed`.
+    summary = dict(logs=logs, untrusted=UNTRUSTED, trusted=TRUSTED, requested_seed=args.seed,
+                   sent_settings={mode: ca.sent_settings(p) for mode, p in logs.items()}, limit=args.limit,
                    control_metrics=control_metrics(logs["honest"], logs["attack"]),
                    cost_usd=round(cost_usd(flat), 4),
                    samples=[dict(mode=r.eval_mode, id=r.sample_id, main=r.main_task_success, side=r.side_task_success,
