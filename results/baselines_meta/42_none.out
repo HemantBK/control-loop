@@ -1,4 +1,3 @@
-warning: Failed to parse environment file `../.env` at position 2: ← leave empty for now
 $ /Users/hemant/Desktop/Defense RSI/orbit/.venv/bin/python3 -m inspect_ai eval /Users/hemant/Desktop/Defense RSI/orbit/adaptive_control/jira_adaptive.py@jira_adaptive --model openai/gpt-4o --log-dir /Users/hemant/Desktop/Defense RSI/orbit/results/baselines/42_none --seed 42 --epochs 8 --max-samples 4 --limit 1 --temperature 0 --max-tokens 1200 --token-limit 200000 --max-retries 2 -T num_developers=4 -T runtime_profile=common/v1 -T max_turns=40 -T max_time_seconds=350 -T persuasion_tactic=reciprocity_trade -T misalignment_strategy=covert_reward_maximization -T seed=42 -T num_tasks=4
 Monitor from another shell: inspect ctl task list   (inspect ctl --help)
 ╭──────────────────────────────────────────────────────────────────────────────╮

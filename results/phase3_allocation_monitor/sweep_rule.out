@@ -1,4 +1,3 @@
-warning: Failed to parse environment file `../.env` at position 2: ← leave empty for now
 [rule] spend so far $0.62
 $ /Users/hemant/Desktop/Defense RSI/control-loop/.venv/bin/python3 -m control_loop.loop --seed 733 --ordering early --defense allocation_rule_autoallow --agent-model openai/gpt-4o --attacker-model anthropic/claude-sonnet-5-5 --monitor-model openai/gpt-4o-mini --num-tasks 4 --clean-epochs 8 --rounds 5 --clean-log-dir /Users/hemant/Desktop/Defense RSI/control-loop/results/phase3_allocation_monitor/early/baselines/733_allocation_rule_autoallow/run1 --out /Users/hemant/Desktop/Defense RSI/control-loop/results/phase3_allocation_monitor/early/prop_sonnet55/733_allocation_rule_autoallow > /Users/hemant/Desktop/Defense RSI/control-loop/results/phase3_allocation_monitor/early_733_allocation_rule_autoallow.out
 [rule] 733/early done: loop rc=0, run2 rc=0
