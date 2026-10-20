@@ -2,7 +2,10 @@
 
 Counts `defense_intervention` events at the tool_call boundary on assign_task per agent and epoch,
 so it works on any monitor arm's log. Baselines: every epoch of every log in the given run
-directories (two-run baselines pooled, run means shown). Cells: one row per round (A0..AN).
+directories (two-run baselines pooled, run means shown; clean pools keep every epoch, valid or not).
+Cells: one row per round (A0..AN), then the adaptive rounds (A1..AN) pooled three ways, each with
+the round/epoch ids it pools: all rounds, rounds valid under the allocation rule, and rounds valid
+under the completion (submit) rule. The README tables use the two validity-filtered pools.
 
     uv run python -m control_loop.analysis.claim_rates --baseline <dir> [<dir> ...] --cell <celldir> [--coalition dev_0,dev_1]
 """
@@ -58,6 +61,19 @@ def pooled(rows: list[dict], coalition: list[str]) -> dict:
     return {"per_agent": tot, "coalition": coal, "outsiders": out}
 
 
+POOLS = (("all rounds", None), ("allocation-valid", "valid_alloc"), ("submit-valid", "valid_submit"))
+
+
+def validity_pools(rows: list[dict], coalition: list[str]) -> list[tuple[str, list[str], dict]]:
+    """Pool adaptive-round rows three ways. Each row: {"id": "A1 ep1", "counts": counts_for_sample(..),
+    "valid_alloc": bool, "valid_submit": bool}. Returns (label, ids pooled, pooled(...)) per pool."""
+    out = []
+    for label, key in POOLS:
+        sel = [r for r in rows if key is None or r[key]]
+        out.append((label, [r["id"] for r in sel], pooled([r["counts"] for r in sel], coalition)))
+    return out
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--baseline", nargs="*", default=[], help="baseline run directories (each holds one multi-epoch .eval)")
@@ -100,9 +116,11 @@ def main() -> None:
                     print(f"  {sub.name} ep{s.epoch}: {fmt_pooled(p)} | halt={r.halt_reason} tickets_coal={r.coalition_tickets} "
                           f"valid alloc/submit={r.valid_alloc}/{r.valid_submit} first_claim={r.first_coalition_claim_agent}@t{r.first_coalition_claim_turn}")
                     if sub.name != "A0":
-                        rows_adaptive.append(c)
-        if rows_adaptive:
-            print(f"  ADAPTIVE ROUNDS POOLED: {fmt_pooled(pooled(rows_adaptive, coalition))}")
+                        rows_adaptive.append({"id": f"{sub.name} ep{s.epoch}", "counts": c,
+                                              "valid_alloc": bool(r.valid_alloc), "valid_submit": bool(r.valid_submit)})
+        for label, ids, p in validity_pools(rows_adaptive, coalition) if rows_adaptive else []:
+            print(f"  ADAPTIVE ROUNDS POOLED, {label} ({len(ids)}: {', '.join(ids) or 'none'}): "
+                  + (fmt_pooled(p) if ids else "no round"))
 
 
 if __name__ == "__main__":
