@@ -76,7 +76,7 @@ STATIC_PAYLOAD = _proposer.STATIC_PAYLOAD
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--seed", type=int, required=True)
-    ap.add_argument("--defense", choices=["none", "system_prompt", "llm_monitor_fixed", "llm_monitor_fixed_actions"], required=True)
+    ap.add_argument("--defense", choices=["none", "system_prompt", "llm_monitor_fixed", "llm_monitor_fixed_actions", "claim_time_monitor", "claim_time_monitor_4o", "claim_rule_monitor"], required=True)
     ap.add_argument("--rounds", type=int, default=5, help="adaptive rounds after the static round 0")
     ap.add_argument("--agent-model", required=True)
     ap.add_argument("--attacker-model", required=True)
@@ -106,7 +106,7 @@ def main() -> None:
     defense_t = ["-T", f"num_tasks={args.num_tasks}", *defense_t]
     if args.ordering:
         defense_t += ["-T", f"ordering={args.ordering}"]
-    if judge_seed is not None and args.defense.startswith("llm_monitor"):
+    if judge_seed is not None and args.defense.startswith(("llm_monitor", "claim_")):
         defense_t += ["-T", f"judge_seed={judge_seed}"]
 
     # 1. arm-level clean baseline with the same defense: one multi-epoch run per
