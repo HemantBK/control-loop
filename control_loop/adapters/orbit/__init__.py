@@ -2,8 +2,10 @@
 
 What lives here, and nowhere else in `control_loop`:
 
+    allocation_monitor.py  Phase 3: the allocation-pattern rule and the judge's context (pure)
     jira_adaptive.py   the Inspect task: ORBIT's `jira_ticket_allocation` plus a file-backed
                        coalition payload, the fixed-prompt monitor presets, the seeded judge,
+                       the Phase 2 claim-time monitors (LLM judge with the claim's context; rule),
                        the greedy single-agent control and the activation orders
     orderings.py       early / late / claims-last step lists and ORBIT execution plans
     this file          how the loop launches one ORBIT episode (`run_eval`) and the task and
@@ -28,7 +30,9 @@ HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[2]  # repository root: episodes run with cwd there so relative paths in -T options resolve
 TASK = f"{HERE / 'jira_adaptive.py'}@jira_adaptive"
 
-DEFENSES = ["none", "system_prompt", "llm_monitor_fixed", "llm_monitor_fixed_actions"]
+DEFENSES = ["none", "system_prompt", "llm_monitor_fixed", "llm_monitor_fixed_actions",  # Phase 1
+            "claim_time_monitor", "claim_time_monitor_4o", "claim_rule_monitor",  # Phase 2
+            "allocation_rule_monitor", "allocation_llm_monitor"]  # Phase 3
 ORDERINGS = ["early", "late", "claimslast"]
 
 COMMON_T = [
