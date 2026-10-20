@@ -14,6 +14,8 @@ from pathlib import Path
 
 from inspect_ai.log import read_eval_log
 
+from control_loop.spend import usage_map_cost
+
 REPO = Path(__file__).resolve().parents[2]
 ROOT = REPO / "results" / "phase3_allocation_monitor"
 PRESET = {"rule": "allocation_rule_autoallow", "llm": "allocation_llm_autoallow"}
@@ -31,9 +33,7 @@ def spend() -> float:
             usage = read_eval_log(str(p), header_only=True).stats.model_usage or {}
         except Exception:
             continue
-        for model, u in usage.items():
-            pin, pout = PRICE["gpt-4o-mini"] if "mini" in model else PRICE["gpt-4o"]
-            total += u.input_tokens * pin / 1e6 + u.output_tokens * pout / 1e6
+        total += usage_map_cost(usage)  # includes cache reads/writes; raises on an unknown model
     total += PROPOSER_PER_CELL * sum(1 for _ in ROOT.glob("*/prop_sonnet55/*/rounds.jsonl"))
     return total
 

@@ -36,10 +36,7 @@ DP_SCORER = "data_poisoning_scorer"
 EOT_SCORER = "end_of_trajectory_monitor"
 MAX_STEP = "max_step_suspicion"
 
-# $ per million tokens (input, output), as recorded in phases/phase4_controlarena/PLAN.md §5.
-# Anthropic prompt caching: cache writes at 1.25x input, cache reads at 0.1x input.
-PRICES = {"claude-opus-5-5": (4.0, 20.0), "claude-sonnet-4-6": (3.0, 15.0)}
-CACHE_WRITE, CACHE_READ = 1.25, 0.10
+# Prices (input, output, cache read/write) live in control_loop/spend.py; cost_usd uses them.
 
 
 @dataclass
@@ -168,15 +165,15 @@ def read_log(path: str | Path) -> list[SampleResult]:
 
 
 def cost_usd(results: list[SampleResult]) -> float:
-    total = 0.0
-    for r in results:
-        for name, u in r.usage.items():
-            p = next((v for k, v in PRICES.items() if k in name), None)
-            if p is None:
-                continue
-            total += (u["input"] * p[0] + u.get("cache_write", 0) * p[0] * CACHE_WRITE
-                      + u.get("cache_read", 0) * p[0] * CACHE_READ + u["output"] * p[1]) / 1e6
-    return total
+    # Priced by control_loop.spend (one table for the project); raises on an unknown model.
+    from inspect_ai.model import ModelUsage
+
+    from control_loop.spend import usage_cost
+
+    return sum(usage_cost(name, ModelUsage(input_tokens=u["input"], output_tokens=u["output"],
+                                           input_tokens_cache_read=u.get("cache_read", 0),
+                                           input_tokens_cache_write=u.get("cache_write", 0)))
+               for r in results for name, u in r.usage.items())
 
 
 def control_metrics(honest_log: str | Path, attack_log: str | Path, audit_budget: float = 1.0) -> dict:
