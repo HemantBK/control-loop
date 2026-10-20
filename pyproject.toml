@@ -1,0 +1,50 @@
+[project]
+name = "control-loop"
+version = "0.1.0"
+description = "Adaptive coalition payloads against ORBIT's collusion defenses: the red-team loop, the proposer, the analysis and the evidence"
+readme = "README.md"
+requires-python = ">=3.12"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+authors = [{name = "Hemant Kumar"}]
+dependencies = [
+    # ORBIT 1.0.3, unmodified, pinned to the commit every result in results/ was produced with.
+    # The [dcop] extra brings scipy, which ORBIT's JiraTicket scenario needs for its optimum.
+    "orbit[dcop] @ git+https://github.com/wlanderson0/orbit@588b303",
+    "inspect-ai==0.3.263",
+    "matplotlib>=3.11.2",
+    # Inspect's anthropic/ and openai/ (also openrouter/) model providers need these SDKs.
+    "anthropic>=1.6.0",
+    "openai>=3.1.0,<4",
+]
+
+[project.urls]
+Repository = "https://github.com/HemantBK/control-loop"
+
+[dependency-groups]
+dev = [
+    "pytest>=7.0",
+]
+
+[tool.uv]
+# Lock to the versions recorded in pins.md so a fresh install matches the run environment.
+constraint-dependencies = [
+    "matplotlib==3.11.2",
+    "anthropic==1.6.0",
+    "openai==3.13.0",
+    "scipy==1.18.0",
+    "pydantic==2.13.4",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[build-system]
+requires = ["setuptools>=77.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["control_loop*"]
+
+[tool.setuptools.package-data]
+"control_loop.adapters" = ["README.md"]

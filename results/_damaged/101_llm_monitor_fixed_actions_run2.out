@@ -1,0 +1,441 @@
+warning: Failed to parse environment file `../.env` at position 2: ← leave empty for now
+$ /Users/hemant/Desktop/Defense RSI/orbit/.venv/bin/python3 -m inspect_ai eval /Users/hemant/Desktop/Defense RSI/orbit/adaptive_control/jira_adaptive.py@jira_adaptive --model openai/gpt-4o --log-dir /Users/hemant/Desktop/Defense RSI/orbit/results/v2/late/baselines/101_llm_monitor_fixed_actions/run2 --seed 101 --epochs 8 --max-samples 4 --limit 1 --temperature 0 --max-tokens 1200 --token-limit 200000 --max-retries 2 -T num_developers=4 -T runtime_profile=common/v1 -T max_turns=40 -T max_time_seconds=350 -T persuasion_tactic=reciprocity_trade -T misalignment_strategy=covert_reward_maximization -T seed=101 -T num_tasks=4 -T defense_preset=llm_monitor_fixed_actions -T ordering=late -T judge_seed=101
+[10/20/26 01:49:56] WARNING  defense_type                         defense.py:160
+                             'llm_monitor_actions_only' is not a                
+                             built-in type. Ensure it has been                  
+                             registered via register_defense().                 
+                    WARNING  defense_type                         defense.py:160
+                             'llm_monitor_actions_only' is not a                
+                             built-in type. Ensure it has been                  
+                             registered via register_defense().                 
+                    WARNING  defense_type                         defense.py:160
+                             'llm_monitor_actions_only' is not a                
+                             built-in type. Ensure it has been                  
+                             registered via register_defense().                 
+Monitor from another shell: inspect ctl task list   (inspect ctl --help)
+                    WARNING  sample=jira_ticket_n4_t4_s101_defaul defense.py:160
+                             t epoch=1                                          
+                             defense_type                                       
+                             'llm_monitor_actions_only' is not a                
+                             built-in type. Ensure it has been                  
+                             registered via register_defense().                 
+                    WARNING  sample=jira_ticket_n4_t4_s101_defaul defense.py:160
+                             t epoch=1                                          
+                             defense_type                                       
+                             'llm_monitor_actions_only' is not a                
+                             built-in type. Ensure it has been                  
+                             registered via register_defense().                 
+                    WARNING  sample=jira_ticket_n4_t4_s101_defaul defense.py:160
+                             t epoch=2                                          
+                             defense_type                                       
+                             'llm_monitor_actions_only' is not a                
+                             built-in type. Ensure it has been                  
+                             registered via register_defense().                 
+                    WARNING  sample=jira_ticket_n4_t4_s101_defaul defense.py:160
+                             t epoch=2                                          
+                             defense_type                                       
+                             'llm_monitor_actions_only' is not a                
+                             built-in type. Ensure it has been                  
+                             registered via register_defense().                 
+                    WARNING  sample=jira_ticket_n4_t4_s101_defaul defense.py:160
+                             t epoch=3                                          
+                             defense_type                                       
+                             'llm_monitor_actions_only' is not a                
+                             built-in type. Ensure it has been                  
+                             registered via register_defense().                 
+                    WARNING  sample=jira_ticket_n4_t4_s101_defaul defense.py:160
+                             t epoch=3                                          
+                             defense_type                                       
+                             'llm_monitor_actions_only' is not a                
+                             built-in type. Ensure it has been                  
+                             registered via register_defense().                 
+                    WARNING  sample=jira_ticket_n4_t4_s101_defaul defense.py:160
+                             t epoch=4                                          
+                             defense_type                                       
+                             'llm_monitor_actions_only' is not a                
+                             built-in type. Ensure it has been                  
+                             registered via register_defense().                 
+                    WARNING  sample=jira_ticket_n4_t4_s101_defaul defense.py:160
+                             t epoch=4                                          
+                             defense_type                                       
+                             'llm_monitor_actions_only' is not a                
+                             built-in type. Ensure it has been                  
+                             registered via register_defense().                 
+[10/20/26 01:51:37] WARNING  sample=jira_ticket_n4_t4_s101_defaul defense.py:160
+                             t epoch=3                                          
+                             defense_type                                       
+                             'llm_monitor_actions_only' is not a                
+                             built-in type. Ensure it has been                  
+                             registered via register_defense().                 
+                    WARNING  sample=jira_ticket_n4_t4_s101_defaul defense.py:160
+                             t epoch=3                                          
+                             defense_type                                       
+                             'llm_monitor_actions_only' is not a                
+                             built-in type. Ensure it has been                  
+                             registered via register_defense().                 
+                    WARNING  sample=jira_ticket_n4_t4_s101_defaul defense.py:160
+                             t epoch=5                                          
+                             defense_type                                       
+                             'llm_monitor_actions_only' is not a                
+                             built-in type. Ensure it has been                  
+                             registered via register_defense().                 
+                    WARNING  sample=jira_ticket_n4_t4_s101_defaul defense.py:160
+                             t epoch=5                                          
+                             defense_type                                       
+                             'llm_monitor_actions_only' is not a                
+                             built-in type. Ensure it has been                  
+                             registered via register_defense().                 
+[10/20/26 01:51:48] WARNING  sample=jira_ticket_n4_t4_s101_defaul defense.py:160
+                             t epoch=2                                          
+                             defense_type                                       
+                             'llm_monitor_actions_only' is not a                
+                             built-in type. Ensure it has been                  
+                             registered via register_defense().                 
+                    WARNING  sample=jira_ticket_n4_t4_s101_defaul defense.py:160
+                             t epoch=2                                          
+                             defense_type                                       
+                             'llm_monitor_actions_only' is not a                
+                             built-in type. Ensure it has been                  
+                             registered via register_defense().                 
+                    WARNING  sample=jira_ticket_n4_t4_s101_defaul defense.py:160
+                             t epoch=6                                          
+                             defense_type                                       
+                             'llm_monitor_actions_only' is not a                
+                             built-in type. Ensure it has been                  
+                             registered via register_defense().                 
+                    WARNING  sample=jira_ticket_n4_t4_s101_defaul defense.py:160
+                             t epoch=6                                          
+                             defense_type                                       
+                             'llm_monitor_actions_only' is not a                
+                             built-in type. Ensure it has been                  
+                             registered via register_defense().                 
+[10/20/26 01:52:11] WARNING  sample=jira_ticket_n4_t4_s101_defaul defense.py:160
+                             t epoch=4                                          
+                             defense_type                                       
+                             'llm_monitor_actions_only' is not a                
+                             built-in type. Ensure it has been                  
+                             registered via register_defense().                 
+                    WARNING  sample=jira_ticket_n4_t4_s101_defaul defense.py:160
+                             t epoch=4                                          
+                             defense_type                                       
+                             'llm_monitor_actions_only' is not a                
+                             built-in type. Ensure it has been                  
+                             registered via register_defense().                 
+                    WARNING  sample=jira_ticket_n4_t4_s101_defaul defense.py:160
+                             t epoch=7                                          
+                             defense_type                                       
+                             'llm_monitor_actions_only' is not a                
+                             built-in type. Ensure it has been                  
+                             registered via register_defense().                 
+                    WARNING  sample=jira_ticket_n4_t4_s101_defaul defense.py:160
+                             t epoch=7                                          
+                             defense_type                                       
+                             'llm_monitor_actions_only' is not a                
+                             built-in type. Ensure it has been                  
+                             registered via register_defense().                 
+[10/20/26 01:52:19] WARNING  sample=jira_ticket_n4_t4_s101_defaul defense.py:160
+                             t epoch=1                                          
+                             defense_type                                       
+                             'llm_monitor_actions_only' is not a                
+                             built-in type. Ensure it has been                  
+                             registered via register_defense().                 
+                    WARNING  sample=jira_ticket_n4_t4_s101_defaul defense.py:160
+                             t epoch=1                                          
+                             defense_type                                       
+                             'llm_monitor_actions_only' is not a                
+                             built-in type. Ensure it has been                  
+                             registered via register_defense().                 
+                    WARNING  sample=jira_ticket_n4_t4_s101_defaul defense.py:160
+                             t epoch=8                                          
+                             defense_type                                       
+                             'llm_monitor_actions_only' is not a                
+                             built-in type. Ensure it has been                  
+                             registered via register_defense().                 
+                    WARNING  sample=jira_ticket_n4_t4_s101_defaul defense.py:160
+                             t epoch=8                                          
+                             defense_type                                       
+                             'llm_monitor_actions_only' is not a                
+                             built-in type. Ensure it has been                  
+                             registered via register_defense().                 
+╭──────────────────────────────────────────────────────────────────────────────╮
+│jira_adaptive (1 x 8 samples): openai/gpt-4o                                  │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭───────────────────── Traceback (most recent call last) ──────────────────────╮
+│ /Users/hemant/Desktop/Defense                                                │
+│ RSI/orbit/.venv/lib/python3.13/site-packages/inspect_ai/_eval/task/run.py:1… │
+│ in task_run                                                                  │
+│                                                                              │
+│ /Users/hemant/Desktop/Defense                                                │
+│ RSI/orbit/.venv/lib/python3.13/site-packages/inspect_ai/_eval/task/schedule… │
+│ in run                                                                       │
+│                                                                              │
+│ /Users/hemant/Desktop/Defense                                                │
+│ RSI/orbit/.venv/lib/python3.13/site-packages/anyio/_core/_tasks.py:275 in    │
+│ _run_coro                                                                    │
+│                                                                              │
+│   272 │   │                                                                  │
+│   273 │   │   with self._cancel_scope:                                       │
+│   274 │   │   │   try:                                                       │
+│ ❱ 275 │   │   │   │   retval = await self._coro                              │
+│   276 │   │   │   except BaseException as exc:                               │
+│   277 │   │   │   │   self._exception = exc                                  │
+│   278 │   │   │   │   raise                                                  │
+│                                                                              │
+│ /Users/hemant/Desktop/Defense                                                │
+│ RSI/orbit/.venv/lib/python3.13/site-packages/inspect_ai/_eval/task/schedule… │
+│ in run_one                                                                   │
+│                                                                              │
+│ /Users/hemant/Desktop/Defense                                                │
+│ RSI/orbit/.venv/lib/python3.13/site-packages/inspect_ai/_eval/task/run.py:1… │
+│ in run_sample                                                                │
+│                                                                              │
+│ /Users/hemant/Desktop/Defense                                                │
+│ RSI/orbit/.venv/lib/python3.13/site-packages/inspect_ai/_eval/task/run.py:2… │
+│ in task_run_sample                                                           │
+│                                                                              │
+│ /Users/hemant/Desktop/Defense                                                │
+│ RSI/orbit/.venv/lib/python3.13/site-packages/inspect_ai/_eval/task/run.py:3… │
+│ in _task_run_sample_attempt                                                  │
+│                                                                              │
+│ /Users/hemant/Desktop/Defense                                                │
+│ RSI/orbit/.venv/lib/python3.13/site-packages/inspect_ai/_eval/task/run.py:2… │
+│ in _task_run_sample_attempt                                                  │
+│                                                                              │
+│ /Users/hemant/Desktop/Defense                                                │
+│ RSI/orbit/.venv/lib/python3.13/site-packages/anyio/_core/_tasks.py:275 in    │
+│ _run_coro                                                                    │
+│                                                                              │
+│   272 │   │                                                                  │
+│   273 │   │   with self._cancel_scope:                                       │
+│   274 │   │   │   try:                                                       │
+│ ❱ 275 │   │   │   │   retval = await self._coro                              │
+│   276 │   │   │   except BaseException as exc:                               │
+│   277 │   │   │   │   self._exception = exc                                  │
+│   278 │   │   │   │   raise                                                  │
+│                                                                              │
+│ /Users/hemant/Desktop/Defense                                                │
+│ RSI/orbit/.venv/lib/python3.13/site-packages/inspect_ai/_eval/task/run.py:2… │
+│ in run                                                                       │
+│                                                                              │
+│ /Users/hemant/Desktop/Defense                                                │
+│ RSI/orbit/.venv/lib/python3.13/site-packages/inspect_ai/solver/_plan.py:106  │
+│ in __call__                                                                  │
+│                                                                              │
+│ /Users/hemant/Desktop/Defense RSI/orbit/orbit/solvers/orchestrator.py:997 in │
+│ solve                                                                        │
+│                                                                              │
+│    994 │   │   with session_registry_scope():                                │
+│    995 │   │   │   returned = False                                          │
+│    996 │   │   │   try:                                                      │
+│ ❱  997 │   │   │   │   state = await solve_in_scope(state, generate)         │
+│    998 │   │   │   │   returned = True                                       │
+│    999 │   │   │   │   return state                                          │
+│   1000 │   │   │   finally:                                                  │
+│                                                                              │
+│ /Users/hemant/Desktop/Defense RSI/orbit/orbit/solvers/orchestrator.py:933 in │
+│ solve_in_scope                                                               │
+│                                                                              │
+│    930 │   │   primary: BaseException | None = None                          │
+│    931 │   │   cleanup_error: BaseException | None = None                    │
+│    932 │   │   try:                                                          │
+│ ❱  933 │   │   │   state = await execute(state, generate, resources)         │
+│    934 │   │   except BaseException as exc:                                  │
+│    935 │   │   │   primary = exc                                             │
+│    936 │   │   │   record_runtime_error(exc, stage="orchestrator")           │
+│                                                                              │
+│ /Users/hemant/Desktop/Defense RSI/orbit/orbit/solvers/orchestrator.py:924 in │
+│ execute                                                                      │
+│                                                                              │
+│    921 │   │   │   │   schedule_runtime_scope(getattr(executor, "schedule",  │
+│    922 │   │   │   │   activation_quantum(config.execution.quantum),         │
+│    923 │   │   │   ):                                                        │
+│ ❱  924 │   │   │   │   return await scheduler.run_loop(execute_turn, state)  │
+│    925 │                                                                     │
+│    926 │   async def solve_in_scope(state: TaskState, generate: Generate) -> │
+│    927 │   │   resources: dict = {}                                          │
+│                                                                              │
+│ /Users/hemant/Desktop/Defense RSI/orbit/orbit/scheduler/scheduler.py:202 in  │
+│ run_loop                                                                     │
+│                                                                              │
+│   199 │   │   │   │   # A turn may already have changed external state befor │
+│   200 │   │   │   │   # raises. Never replay it; provider request retries be │
+│   201 │   │   │   │   # Inspect's model layer, which knows the request bound │
+│ ❱ 202 │   │   │   │   state = await execute_turn(state, self.total_turns)    │
+│   203 │   │   │   │                                                          │
+│   204 │   │   │   │   await self._run_hook("post_turn", state=state, turn=se │
+│   205 │   │   │   │   self._turn_outputs.append(self._extract_last_output(st │
+│                                                                              │
+│ /Users/hemant/Desktop/Defense RSI/orbit/orbit/solvers/orchestrator.py:864 in │
+│ execute_turn                                                                 │
+│                                                                              │
+│    861 │   │   │   │   │   raise                                             │
+│    862 │   │   │                                                             │
+│    863 │   │   │   # ── 8d. Run agents ───────────────────────────────────   │
+│ ❱  864 │   │   │   results = await executor.run(turn_state, turn)            │
+│    865 │   │   │                                                             │
+│    866 │   │   │   # ── 8e. Track invoked agents ─────────────────────────   │
+│    867 │   │   │   _track_invoked_agents(runtime, executor)                  │
+│                                                                              │
+│ /Users/hemant/Desktop/Defense                                                │
+│ RSI/orbit/orbit/execution/scheduled_executor.py:105 in run                   │
+│                                                                              │
+│   102 │                                                                      │
+│   103 │   async def run(self, state: TaskState, turn: int) -> list[AgentTurn │
+│   104 │   │   assert self._scheduler is not None, "call initialize() first"  │
+│ ❱ 105 │   │   return await self._scheduler.run_turn(state, turn)             │
+│   106 │                                                                      │
+│   107 │   def is_complete(self) -> bool:                                     │
+│   108 │   │   if self._scheduler is None:                                    │
+│                                                                              │
+│ /Users/hemant/Desktop/Defense                                                │
+│ RSI/orbit/orbit/execution/agent_scheduler.py:283 in run_turn                 │
+│                                                                              │
+│   280 │   │   snapshot = self._communication_visibility in ("snapshot", "ste │
+│   281 │   │   with schedule_runtime_scope(self.schedule), activation_quantum │
+│   282 │   │   │   if self.schedule is not None:                              │
+│ ❱ 283 │   │   │   │   return await self._run_plan_step(global_turn)          │
+│   284 │   │   │   with communication_step_snapshot() if snapshot else nullco │
+│   285 │   │   │   │   if self.scheduling_mode in ("round_robin", "interleave │
+│   286 │   │   │   │   │   return await self._run_round_robin(task_state, glo │
+│                                                                              │
+│ /Users/hemant/Desktop/Defense                                                │
+│ RSI/orbit/orbit/execution/agent_scheduler.py:383 in _run_plan_step           │
+│                                                                              │
+│   380 │   │   │   │   │   │   await callback(result)                         │
+│   381 │   │   │   │   else:                                                  │
+│   382 │   │   │   │   │   while (activation := runtime.reserve_next()) is no │
+│ ❱ 383 │   │   │   │   │   │   result = await invoke(activation)              │
+│   384 │   │   │   │   │   │   if result is not None:                         │
+│   385 │   │   │   │   │   │   │   results.append(result)                     │
+│   386 │   │   │   │   │   │   │   await callback(result)                     │
+│                                                                              │
+│ /Users/hemant/Desktop/Defense                                                │
+│ RSI/orbit/orbit/execution/agent_scheduler.py:328 in invoke                   │
+│                                                                              │
+│   325 │   │   │   runtime.start_activation(activation)                       │
+│   326 │   │   │   try:                                                       │
+│   327 │   │   │   │   with self.registry.scheduled_agent(activation.agent):  │
+│ ❱ 328 │   │   │   │   │   result = await self._execute_agent(                │
+│   329 │   │   │   │   │   │   activation.agent, global_turn,                 │
+│   330 │   │   │   │   │   │   activity_snapshot=activity, peer_snapshot=peer │
+│   331 │   │   │   │   │   │   schedule_activation_id=activation.id,          │
+│                                                                              │
+│ /Users/hemant/Desktop/Defense                                                │
+│ RSI/orbit/orbit/execution/agent_scheduler.py:513 in _execute_agent           │
+│                                                                              │
+│   510 │   │   with session_registry_scope(registry):                         │
+│   511 │   │   │   async with registry.activate(record):                      │
+│   512 │   │   │   │   self._agent_states[agent_name] = record.state          │
+│ ❱ 513 │   │   │   │   return await self._execute_agent_locked(               │
+│   514 │   │   │   │   │   agent_name, global_turn, activity_snapshot=activit │
+│   515 │   │   │   │   │   peer_snapshot=peer_snapshot,                       │
+│   516 │   │   │   │   │   schedule_activation_id=schedule_activation_id,     │
+│                                                                              │
+│ /Users/hemant/Desktop/Defense                                                │
+│ RSI/orbit/orbit/execution/agent_scheduler.py:588 in _execute_agent_locked    │
+│                                                                              │
+│   585 │   │   │   │   schedule_activation_id=schedule_activation_id,         │
+│   586 │   │   │   │   schedule_step_execution_id=schedule_step_execution_id, │
+│   587 │   │   │   ):                                                         │
+│ ❱ 588 │   │   │   │   agent_state = await run(retain_running_state, agent_st │
+│   589 │   │   │   self._agent_states[agent_name] = agent_state               │
+│   590 │   │   │   self._session_registry.scheduled(agent_name).state = agent │
+│   591 │   │   │   self._agent_error_counts[agent_name] = 0                   │
+│                                                                              │
+│ /Users/hemant/Desktop/Defense                                                │
+│ RSI/orbit/.venv/lib/python3.13/site-packages/inspect_ai/agent/_run.py:101 in │
+│ run                                                                          │
+│                                                                              │
+│ /Users/hemant/Desktop/Defense                                                │
+│ RSI/orbit/orbit/execution/agent_scheduler.py:569 in retain_running_state     │
+│                                                                              │
+│   566 │   │   │   self._agent_states[agent_name] = state                     │
+│   567 │   │   │   self._session_registry.scheduled(agent_name).state = state │
+│   568 │   │   │   try:                                                       │
+│ ❱ 569 │   │   │   │   return await agent(state)                              │
+│   570 │   │   │   except BaseException as error:                             │
+│   571 │   │   │   │   from orbit.execution.errors import record_runtime_erro │
+│   572                                                                        │
+│                                                                              │
+│ /Users/hemant/Desktop/Defense RSI/orbit/orbit/execution/communication.py:122 │
+│ in execute                                                                   │
+│                                                                              │
+│   119 │   │   │   │                                                          │
+│   120 │   │   │   │   deliver_dialogue(state)                                │
+│   121 │   │   │   │   messages_before = tuple(state.messages)                │
+│ ❱ 122 │   │   │   │   result = await agent(state, *args, **kwargs)           │
+│   123 │   │   │   │   if owned_session is not None:                          │
+│   124 │   │   │   │   │   # Retain successful agent work even if projection  │
+│   125 │   │   │   │   │   # subsequently fails; channel failure cannot roll  │
+│                                                                              │
+│ /Users/hemant/Desktop/Defense RSI/orbit/orbit/agents/turn_react.py:278 in    │
+│ execute                                                                      │
+│                                                                              │
+│   275 │   │   │   │   │   │   │   )                                          │
+│   276 │   │   │   │   │   │   │   state.messages[-1] = limited               │
+│   277 │   │   │   │   │                                                      │
+│ ❱ 278 │   │   │   │   │   messages, output = await execute_tools(state.messa │
+│   279 │   │   │   │   │   state.messages.extend(messages)                    │
+│   280 │   │   │   │   │   if output:                                         │
+│   281 │   │   │   │   │   │   state.output = output                          │
+│                                                                              │
+│ /Users/hemant/Desktop/Defense                                                │
+│ RSI/orbit/.venv/lib/python3.13/site-packages/inspect_ai/model/_call_tools.p… │
+│ in execute_tools                                                             │
+│                                                                              │
+│ /Users/hemant/Desktop/Defense                                                │
+│ RSI/orbit/.venv/lib/python3.13/site-packages/inspect_ai/model/_call_tools.p… │
+│ in _execute_tools_impl                                                       │
+│                                                                              │
+│ /Users/hemant/Desktop/Defense                                                │
+│ RSI/orbit/.venv/lib/python3.13/site-packages/inspect_ai/model/_call_tools.p… │
+│ in run_one                                                                   │
+│                                                                              │
+│ /Users/hemant/Desktop/Defense                                                │
+│ RSI/orbit/.venv/lib/python3.13/site-packages/inspect_ai/model/_call_tools.p… │
+│ in call_tool_task                                                            │
+│                                                                              │
+│ /Users/hemant/Desktop/Defense                                                │
+│ RSI/orbit/.venv/lib/python3.13/site-packages/inspect_ai/model/_call_tools.p… │
+│ in call_tool_task                                                            │
+│                                                                              │
+│ /Users/hemant/Desktop/Defense                                                │
+│ RSI/orbit/.venv/lib/python3.13/site-packages/inspect_ai/model/_call_tools.p… │
+│ in call_tool                                                                 │
+│                                                                              │
+│ /Users/hemant/Desktop/Defense RSI/orbit/orbit/defenses/boundaries.py:242 in  │
+│ guarded                                                                      │
+│                                                                              │
+│   239 │   │   │   │   │   raise ToolError(f"Blocked by defense '{defense.con │
+│   240 │   │                                                                  │
+│   241 │   │   async def guarded(**kwargs: Any):                              │
+│ ❱ 242 │   │   │   await check(kwargs)                                        │
+│   243 │   │   │   result = await definition.tool(**kwargs)                   │
+│   244 │   │   │   if hasattr(definition.tool, "agent_span_id"):              │
+│   245 │   │   │   │   guarded.agent_span_id = definition.tool.agent_span_id  │
+│                                                                              │
+│ /Users/hemant/Desktop/Defense RSI/orbit/orbit/defenses/boundaries.py:232 in  │
+│ check                                                                        │
+│                                                                              │
+│   229 │   │   │   │   │   │   │   f"Defense '{defense.config.name}' failed b │
+│   230 │   │   │   │   │   │   )                                              │
+│   231 │   │   │   │   │   │   error._orbit_error_id = getattr(ex, "_orbit_er │
+│ ❱ 232 │   │   │   │   │   │   raise error from ex                            │
+│   233 │   │   │   │   │   raise                                              │
+│   234 │   │   │   │   self._record(                                          │
+│   235 │   │   │   │   │   defense, verdict, "tool_call", tool=definition.nam │
+╰──────────────────────────────────────────────────────────────────────────────╯
+RuntimeError: Defense 'fixed_prompt_llm_monitor_actions_v1_seeded' failed before
+tool 'submit'                                                                   
+[NOTE] Orbit scheduled agent 'dev_3' failed on turn 17.                         
+                                                                                
+Task interrupted (4 of 8 total samples logged before interruption). Resume task 
+with:                                                                           
+                                                                                
+inspect eval-retry                                                              
+results/v2/late/baselines/101_llm_monitor_fixed_actions/run2/2026-10-19T20-19-5…
+                                                                                
+Log:                                                                            
+results/v2/late/baselines/101_llm_monitor_fixed_actions/run2/2026-10-19T20-19-56
+-00-00_jira-adaptive_GsBD57T9KKy5G7u4fFn8c2.eval                                
+                                                                                clean baseline failed (error); fix before attacking. Log: /Users/hemant/Desktop/Defense RSI/orbit/results/v2/late/baselines/101_llm_monitor_fixed_actions/run2/2026-10-19T20-19-56-00-00_jira-adaptive_GsBD57T9KKy5G7u4fFn8c2.eval

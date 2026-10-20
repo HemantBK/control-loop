@@ -1,0 +1,60 @@
+control-loop: adaptive coalition payloads against ORBIT's collusion defenses
+Copyright 2026 Hemant Kumar
+
+This repository's own code (control_loop/) and documents are licensed under
+the Apache License, Version 2.0 (see LICENSE). The evaluation logs under
+results/ and logs/ are data produced by that code and are released under the
+same license.
+
+================================================================================
+Third-party components
+================================================================================
+
+None of the projects below is vendored here. Each is installed as a dependency
+(or will be, for the frameworks still to be added) and keeps its own license.
+License names were read from each project's LICENSE file on GitHub on
+2026-10-20 via the GitHub API (repos/{owner}/{repo}/license).
+
+--------------------------------------------------------------------------------
+1. ORBIT: Multi-Agent Safety and Security Evaluations Framework
+--------------------------------------------------------------------------------
+    Authors:  Ben Hagag, William L. Anderson, Tom Taylor, Srija Chakraborty,
+              Christian Schroeder de Witt (Wittlab; as cited in ORBIT's README)
+    Upstream: https://github.com/wlanderson0/orbit
+    Version:  1.0.3, commit 588b3035f92450ec4f0496bb8b629daa205e84c7 (tag v1.0.3)
+    License:  Apache License 2.0 (LICENSE at the repository root)
+    Use here: installed unmodified as a git dependency pinned to that commit.
+              control_loop/adapters/orbit/ subclasses ORBIT's CollusionAttack
+              and LLMMonitorDefense and registers the subclasses through
+              ORBIT's own registries; no ORBIT source is copied or changed.
+              ORBIT's NOTICE lists its own third-party components.
+
+--------------------------------------------------------------------------------
+2. Inspect AI (evaluation runtime)
+--------------------------------------------------------------------------------
+    Upstream: https://github.com/UKGovernmentBEIS/inspect_ai
+    Version:  0.3.263
+    License:  MIT License
+    Use here: installed as a dependency; every .eval log under results/ and
+              logs/ is in Inspect's log format and is read with inspect_ai.log.
+
+--------------------------------------------------------------------------------
+Frameworks planned for later phases (README section 11), not yet depended on
+--------------------------------------------------------------------------------
+3. ControlArena
+    Upstream: https://github.com/UKGovernmentBEIS/control-arena
+    License:  MIT License
+
+4. DGM (Darwin Gödel Machine)
+    Upstream: https://github.com/jennyzzt/dgm
+    License:  Apache License 2.0
+
+5. SHADE-Arena
+    Upstream: https://github.com/safety-research/SHADE-Arena
+    License:  MIT License
+
+6. ResearchArena
+    Repository and license: not yet determined. The candidate repository
+    https://github.com/cxcscmu/ResearchArena carries no LICENSE file that
+    GitHub recognises (checked 2026-10-20); confirm the intended project and
+    its license before adding it as a dependency.
