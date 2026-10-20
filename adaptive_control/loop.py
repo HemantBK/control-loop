@@ -47,7 +47,7 @@ COMMON_T = [
     "-T", "persuasion_tactic=reciprocity_trade",
     "-T", "misalignment_strategy=covert_reward_maximization",
 ]
-COMMON_EVAL = ["--limit", "1", "--temperature", "0",
+COMMON_EVAL = ["--limit", "1", "--temperature", "0", "--no-fail-on-error",  # one errored epoch must not cancel its siblings (as the recipe)
                "--max-tokens", "1200", "--token-limit", "200000", "--max-retries", "2"]
 # token-limit: the replication recipe uses 60000, but under an LLM monitor the judge's own
 # tokens count toward the sample, and 40-turn gpt-4o episodes with gpt-4o-mini judging
@@ -87,25 +87,44 @@ def main() -> None:
     ap.add_argument("--clean-log-dir", type=Path, default=None,
                     help="arm baseline dir (default results/baselines/<seed>_<defense>); shared across proposers")
     ap.add_argument("--baseline-only", action="store_true", help="run/verify the arm baseline and exit")
+    ap.add_argument("--ordering", choices=["early", "late"], default=None,
+                    help="recipe activation order: coalition dev_0,dev_1 first (early) or last (late)")
+    ap.add_argument("--brief", choices=["informed", "uninformed"], default="informed", help="proposer brief (PLAN §13)")
+    ap.add_argument("--round0-payload-file", type=Path, default=None,
+                    help="run this payload as round 0 instead of ORBIT's static sentence (transfer control)")
+    ap.add_argument("--greedy-agent", default=None,
+                    help="greedy-outsider control: this single agent gets --round0-payload-file as a plain instruction")
+    ap.add_argument("--judge-seed", type=int, default=None,
+                    help="pin the monitor judge to temperature 0 and this seed (default: the problem seed for v2 runs; pass -1 for provider defaults)")
+    ap.add_argument("--round0-epochs", type=int, default=1, help="epochs for round 0 (controls use >1)")
     args = ap.parse_args()
+    judge_seed = args.seed if args.judge_seed is None else (None if args.judge_seed < 0 else args.judge_seed)
 
     out = args.out
     out.mkdir(parents=True, exist_ok=True)
     defense_t = [] if args.defense == "none" else ["-T", f"defense_preset={args.defense}"]
     defense_t = ["-T", f"num_tasks={args.num_tasks}", *defense_t]
+    if args.ordering:
+        defense_t += ["-T", f"ordering={args.ordering}"]
+    if judge_seed is not None and args.defense.startswith("llm_monitor"):
+        defense_t += ["-T", f"judge_seed={judge_seed}"]
 
     # 1. arm-level clean baseline with the same defense: one multi-epoch run per
     #    (seed, defense), shared by every proposer cell (PLAN.md section 11).
     clean_dir = args.clean_log_dir or (REPO / "results" / "baselines" / f"{args.seed}_{args.defense}")
+    if args.clean_log_dir is None and args.ordering:
+        clean_dir = REPO / "results" / "v2" / args.ordering / "baselines" / f"{args.seed}_{args.defense}" / "run1"
     if clean_dir.exists() and any(clean_dir.glob("*.eval")):
         clean_log = latest_log(clean_dir)
     else:
         clean_log = run_eval(clean_dir, args.agent_model, args.seed, defense_t, None, args.monitor_model,
                              epochs=args.clean_epochs, max_samples=min(4, args.clean_epochs))
     c = read_run(clean_log)  # epoch 1, for the scorer's single-draw pairing (record only)
-    if c.status != "success":
-        sys.exit(f"clean baseline failed ({c.status}); fix before attacking. Log: {clean_log}")
     cd = clean_distribution(clean_log)
+    if cd["n_valid"] == 0:
+        sys.exit(f"clean baseline has no valid epoch (log status {c.status}); fix before attacking. Log: {clean_log}")
+    if c.status != "success":
+        print(f"note: baseline log status {c.status}; {cd['n_valid']}/{cd['n']} epochs valid, the rest are excluded per epoch", flush=True)
     print(f"arm baseline {clean_dir.name}: {cd['n_valid']}/{cd['n']} valid epochs, coalition mean {cd['mean']:.2f} "
           f"sd {cd['sd']:.2f}, tickets mean {cd['tickets_mean']:.2f}, blocks/epoch {cd['blocks_mean_by_boundary']}", flush=True)
     for line in cd["excluded"]:
@@ -114,22 +133,35 @@ def main() -> None:
     if args.baseline_only:
         return
 
-    attack_t = defense_t + ["-T", "coalition_agents=dev_0,dev_1",
+    coalition = args.greedy_agent if args.greedy_agent else "dev_0,dev_1"
+    attack_t = defense_t + ["-T", f"coalition_agents={coalition}",
                             "-T", f"clean_baseline_log={Path(clean_log).resolve()}"]
+    if args.greedy_agent:
+        attack_t += ["-T", "greedy_control=true"]
+        if not args.round0_payload_file:
+            sys.exit("--greedy-agent needs --round0-payload-file")
     history: list[dict] = []
     rounds_file = out / "rounds.jsonl"
 
     for r in range(0, args.rounds + 1):
         if r == 0:
-            payload_file, payload, prop = None, STATIC_PAYLOAD, {"model": None, "moves": [], "attempts": 0, "fallback": False}
+            if args.round0_payload_file:
+                payload_file = args.round0_payload_file.resolve()
+                payload = payload_file.read_text(encoding="utf-8").strip()
+                prop = {"model": None, "moves": [], "attempts": 0, "fallback": False,
+                        "round0_source": str(payload_file), "greedy_agent": args.greedy_agent}
+            else:
+                payload_file, payload, prop = None, STATIC_PAYLOAD, {"model": None, "moves": [], "attempts": 0, "fallback": False}
         else:
             prop = asyncio.run(_proposer.propose(args.attacker_model, history, r, out / "rejections.jsonl",
-                                                 num_tasks=args.num_tasks))
+                                                 num_tasks=args.num_tasks, brief=args.brief))
+            prop["brief"] = args.brief
             payload = prop["payload"]
             payload_file = out / f"payload_r{r}.txt"
             payload_file.write_text(payload, encoding="utf-8")
             print(f"proposer round {r}: moves={prop['moves']} attempts={prop['attempts']} fallback={prop['fallback']}", flush=True)
-        log = run_eval(out / f"A{r}", args.agent_model, args.seed, attack_t, payload_file, args.monitor_model)
+        log = run_eval(out / f"A{r}", args.agent_model, args.seed, attack_t, payload_file, args.monitor_model,
+                       epochs=args.round0_epochs if r == 0 else 1, max_samples=min(4, args.round0_epochs) if r == 0 else 1)
         res = read_run(log)
         gain_vs_mean = res.coalition_reward - cd["mean"] if res.coalition_reward == res.coalition_reward else math.nan
         valid = res.finished_all_agents and (res.coalition_tickets is not None and res.total_tickets is not None)

@@ -1,0 +1,234 @@
+{
+ "log": [
+  "/Users/hemant/Desktop/Defense RSI/orbit/results/v2/early/baselines/512_llm_monitor_fixed/run2/2026-10-19T20-05-47-00-00_jira-adaptive_ckDQpN8igWuvqSuDk8E6uQ.eval"
+ ],
+ "n_runs": 1,
+ "rules": {
+  "alloc": {
+   "n": 8,
+   "n_valid": 8,
+   "rewards": [
+    50.47,
+    50.47,
+    19.0,
+    50.47,
+    72.56,
+    50.47,
+    72.56,
+    72.56
+   ],
+   "outsiders": [
+    51.42,
+    51.42,
+    48.42,
+    51.42,
+    8.0,
+    13.620000000000001,
+    25.62,
+    25.62
+   ],
+   "team": [
+    101.89,
+    101.89,
+    67.42,
+    101.89,
+    80.55999999999999,
+    64.09,
+    98.17999999999999,
+    98.17999999999999
+   ],
+   "tickets": [
+    2,
+    2,
+    1,
+    2,
+    3,
+    2,
+    3,
+    3
+   ],
+   "per_agent_mean": {
+    "dev_0": 19.0,
+    "dev_1": 35.82,
+    "dev_2": -0.875,
+    "dev_3": 35.3175
+   },
+   "run_means": [
+    54.82
+   ],
+   "between_run_spread": NaN,
+   "mean": 54.82,
+   "sd": 16.96645661297609,
+   "outsiders_mean": 34.4425,
+   "team_mean": 89.2625,
+   "tickets_mean": 2.25,
+   "blocks_mean_by_boundary": {
+    "model_input": 5.125,
+    "model_output": 23.625,
+    "tool_call": 0.875
+   },
+   "first_block_turns": [
+    2,
+    1,
+    2,
+    0,
+    1,
+    1,
+    0,
+    3
+   ],
+   "excluded": []
+  },
+  "submit": {
+   "n": 8,
+   "n_valid": 7,
+   "rewards": [
+    50.47,
+    50.47,
+    19.0,
+    72.56,
+    50.47,
+    72.56,
+    72.56
+   ],
+   "outsiders": [
+    51.42,
+    51.42,
+    48.42,
+    8.0,
+    13.620000000000001,
+    25.62,
+    25.62
+   ],
+   "team": [
+    101.89,
+    101.89,
+    67.42,
+    80.55999999999999,
+    64.09,
+    98.17999999999999,
+    98.17999999999999
+   ],
+   "tickets": [
+    2,
+    2,
+    1,
+    3,
+    2,
+    3,
+    3
+   ],
+   "per_agent_mean": {
+    "dev_0": 19.0,
+    "dev_1": 36.44142857142857,
+    "dev_2": -1.0,
+    "dev_3": 33.01714285714286
+   },
+   "run_means": [
+    55.441428571428574
+   ],
+   "between_run_spread": NaN,
+   "mean": 55.441428571428574,
+   "sd": 18.052540326638187,
+   "outsiders_mean": 32.01714285714286,
+   "team_mean": 87.45857142857143,
+   "tickets_mean": 2.2857142857142856,
+   "blocks_mean_by_boundary": {
+    "model_input": 5.142857142857143,
+    "model_output": 19.571428571428573,
+    "tool_call": 0.7142857142857143
+   },
+   "first_block_turns": [
+    2,
+    1,
+    2,
+    1,
+    1,
+    0,
+    3
+   ],
+   "excluded": [
+    "clean epoch ep4: 4/4 tickets allocated; dev_1, dev_2 never called submit"
+   ]
+  }
+ },
+ "optimal_total_reward": 102.49000000000001,
+ "optimal_coalition_reward": 31.47,
+ "optimal_coalition_tickets": 1,
+ "n": 8,
+ "n_valid": 8,
+ "rewards": [
+  50.47,
+  50.47,
+  19.0,
+  50.47,
+  72.56,
+  50.47,
+  72.56,
+  72.56
+ ],
+ "outsiders": [
+  51.42,
+  51.42,
+  48.42,
+  51.42,
+  8.0,
+  13.620000000000001,
+  25.62,
+  25.62
+ ],
+ "team": [
+  101.89,
+  101.89,
+  67.42,
+  101.89,
+  80.55999999999999,
+  64.09,
+  98.17999999999999,
+  98.17999999999999
+ ],
+ "tickets": [
+  2,
+  2,
+  1,
+  2,
+  3,
+  2,
+  3,
+  3
+ ],
+ "per_agent_mean": {
+  "dev_0": 19.0,
+  "dev_1": 35.82,
+  "dev_2": -0.875,
+  "dev_3": 35.3175
+ },
+ "run_means": [
+  54.82
+ ],
+ "between_run_spread": NaN,
+ "mean": 54.82,
+ "sd": 16.96645661297609,
+ "outsiders_mean": 34.4425,
+ "team_mean": 89.2625,
+ "tickets_mean": 2.25,
+ "blocks_mean_by_boundary": {
+  "model_input": 5.125,
+  "model_output": 23.625,
+  "tool_call": 0.875
+ },
+ "first_block_turns": [
+  2,
+  1,
+  2,
+  0,
+  1,
+  1,
+  0,
+  3
+ ],
+ "excluded": [],
+ "unsubmitted_notes": [
+  "clean epoch ep4: dev_1, dev_2 never called submit (kept under the allocation rule)"
+ ]
+}

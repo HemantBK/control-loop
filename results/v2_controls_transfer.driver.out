@@ -1,0 +1,236 @@
+warning: Failed to parse environment file `../.env` at position 2: ← leave empty for now
+phase controls: 18 jobs
+start  greedy 733 early none agent=dev_0
+start  greedy 733 early system_prompt agent=dev_0
+start  greedy 733 late none agent=dev_2
+start  greedy 733 late system_prompt agent=dev_2
+start  greedy 512 early none agent=dev_0
+start  greedy 512 early system_prompt agent=dev_0
+done   greedy 512 early none agent=dev_0: exit=0 32s
+start  greedy 512 late none agent=dev_2
+done   greedy 733 late none agent=dev_2: exit=0 33s
+start  greedy 512 late system_prompt agent=dev_2
+done   greedy 733 early none agent=dev_0: exit=0 33s
+start  greedy 101 early none agent=dev_0
+done   greedy 733 early system_prompt agent=dev_0: exit=0 40s
+start  greedy 101 early system_prompt agent=dev_0
+done   greedy 733 late system_prompt agent=dev_2: exit=0 40s
+start  greedy 101 late none agent=dev_2
+done   greedy 512 early system_prompt agent=dev_0: exit=0 41s
+start  greedy 101 late system_prompt agent=dev_2
+done   greedy 101 early none agent=dev_0: exit=0 34s
+start  uninformed 733 early none
+done   greedy 512 late none agent=dev_2: exit=0 38s
+start  uninformed 733 early system_prompt
+done   greedy 512 late system_prompt agent=dev_2: exit=0 39s
+start  uninformed 733 early llm_monitor_fixed_actions
+done   greedy 101 late none agent=dev_2: exit=0 31s
+start  uninformed 512 early none
+done   greedy 101 early system_prompt agent=dev_0: exit=0 41s
+start  uninformed 512 early system_prompt
+done   greedy 101 late system_prompt agent=dev_2: exit=0 44s
+start  uninformed 512 early llm_monitor_fixed_actions
+done   uninformed 512 early none: exit=0 216s
+done   uninformed 733 early none: exit=0 225s
+done   uninformed 733 early system_prompt: exit=0 258s
+done   uninformed 512 early system_prompt: exit=0 297s
+done   uninformed 512 early llm_monitor_fixed_actions: exit=0 607s
+done   uninformed 733 early llm_monitor_fixed_actions: exit=0 811s
+phase controls finished: 18 run, 0 non-zero exit, 0 rate-limited
+=== controls exit=0
+warning: Failed to parse environment file `../.env` at position 2: ← leave empty for now
+phase transfer: 96 jobs
+start  transfer early from 733/prop_sonnet55 -> 733 system_prompt
+start  transfer early from 733/prop_sonnet55 -> 733 llm_monitor_fixed_actions
+start  transfer early from 733/prop_sonnet55 -> 512 none
+start  transfer early from 733/prop_sonnet55 -> 512 system_prompt
+start  transfer early from 733/prop_sonnet55 -> 512 llm_monitor_fixed_actions
+start  transfer early from 733/prop_sonnet55 -> 101 none
+done   transfer early from 733/prop_sonnet55 -> 512 none: exit=0 25s
+start  transfer early from 733/prop_sonnet55 -> 101 system_prompt
+done   transfer early from 733/prop_sonnet55 -> 101 none: exit=0 28s
+start  transfer early from 733/prop_sonnet55 -> 101 llm_monitor_fixed_actions
+done   transfer early from 733/prop_sonnet55 -> 733 system_prompt: exit=0 38s
+start  transfer early from 733/prop_qwen3 -> 733 system_prompt
+done   transfer early from 733/prop_sonnet55 -> 512 system_prompt: exit=0 43s
+start  transfer early from 733/prop_qwen3 -> 733 llm_monitor_fixed_actions
+done   transfer early from 733/prop_sonnet55 -> 101 system_prompt: exit=0 44s
+start  transfer early from 733/prop_qwen3 -> 512 none
+done   transfer early from 733/prop_sonnet55 -> 733 llm_monitor_fixed_actions: exit=0 71s
+start  transfer early from 733/prop_qwen3 -> 512 system_prompt
+done   transfer early from 733/prop_qwen3 -> 512 none: exit=0 26s
+start  transfer early from 733/prop_qwen3 -> 512 llm_monitor_fixed_actions
+done   transfer early from 733/prop_qwen3 -> 733 system_prompt: exit=0 63s
+start  transfer early from 733/prop_qwen3 -> 101 none
+done   transfer early from 733/prop_sonnet55 -> 512 llm_monitor_fixed_actions: exit=0 107s
+start  transfer early from 733/prop_qwen3 -> 101 system_prompt
+done   transfer early from 733/prop_sonnet55 -> 101 llm_monitor_fixed_actions: exit=0 85s
+start  transfer early from 733/prop_qwen3 -> 101 llm_monitor_fixed_actions
+done   transfer early from 733/prop_qwen3 -> 512 system_prompt: exit=0 45s
+start  transfer early from 512/prop_sonnet55 -> 733 none
+done   transfer early from 733/prop_qwen3 -> 101 none: exit=0 33s
+start  transfer early from 512/prop_sonnet55 -> 733 system_prompt
+done   transfer early from 733/prop_qwen3 -> 101 system_prompt: exit=0 34s
+start  transfer early from 512/prop_sonnet55 -> 733 llm_monitor_fixed_actions
+done   transfer early from 512/prop_sonnet55 -> 733 none: exit=0 26s
+start  transfer early from 512/prop_sonnet55 -> 512 system_prompt
+done   transfer early from 512/prop_sonnet55 -> 733 system_prompt: exit=0 33s
+start  transfer early from 512/prop_sonnet55 -> 512 llm_monitor_fixed_actions
+done   transfer early from 512/prop_sonnet55 -> 512 system_prompt: exit=0 39s
+start  transfer early from 512/prop_sonnet55 -> 101 none
+done   transfer early from 512/prop_sonnet55 -> 101 none: exit=0 25s
+start  transfer early from 512/prop_sonnet55 -> 101 system_prompt
+done   transfer early from 733/prop_qwen3 -> 733 llm_monitor_fixed_actions: exit=0 177s
+start  transfer early from 512/prop_sonnet55 -> 101 llm_monitor_fixed_actions
+done   transfer early from 733/prop_qwen3 -> 101 llm_monitor_fixed_actions: exit=0 121s
+start  transfer early from 512/prop_qwen3 -> 733 none
+done   transfer early from 512/prop_sonnet55 -> 101 system_prompt: exit=0 32s
+start  transfer early from 512/prop_qwen3 -> 733 system_prompt
+done   transfer early from 512/prop_sonnet55 -> 733 llm_monitor_fixed_actions: exit=0 113s
+start  transfer early from 512/prop_qwen3 -> 733 llm_monitor_fixed_actions
+done   transfer early from 512/prop_qwen3 -> 733 none: exit=0 22s
+start  transfer early from 512/prop_qwen3 -> 512 system_prompt
+done   transfer early from 512/prop_qwen3 -> 733 system_prompt: exit=0 36s
+start  transfer early from 512/prop_qwen3 -> 512 llm_monitor_fixed_actions
+done   transfer early from 733/prop_qwen3 -> 512 llm_monitor_fixed_actions: exit=0 186s
+start  transfer early from 512/prop_qwen3 -> 101 none
+done   transfer early from 512/prop_qwen3 -> 512 system_prompt: exit=0 38s
+start  transfer early from 512/prop_qwen3 -> 101 system_prompt
+done   transfer early from 512/prop_sonnet55 -> 512 llm_monitor_fixed_actions: exit=0 131s
+start  transfer early from 512/prop_qwen3 -> 101 llm_monitor_fixed_actions
+done   transfer early from 512/prop_qwen3 -> 101 none: exit=0 21s
+start  transfer early from 101/prop_sonnet55 -> 733 none
+done   transfer early from 512/prop_sonnet55 -> 101 llm_monitor_fixed_actions: exit=0 89s
+start  transfer early from 101/prop_sonnet55 -> 733 system_prompt
+done   transfer early from 512/prop_qwen3 -> 101 system_prompt: exit=0 35s
+start  transfer early from 101/prop_sonnet55 -> 733 llm_monitor_fixed_actions
+done   transfer early from 101/prop_sonnet55 -> 733 none: exit=0 30s
+start  transfer early from 101/prop_sonnet55 -> 512 none
+done   transfer early from 101/prop_sonnet55 -> 733 system_prompt: exit=0 31s
+start  transfer early from 101/prop_sonnet55 -> 512 system_prompt
+done   transfer early from 101/prop_sonnet55 -> 512 none: exit=0 28s
+start  transfer early from 101/prop_sonnet55 -> 512 llm_monitor_fixed_actions
+done   transfer early from 512/prop_qwen3 -> 733 llm_monitor_fixed_actions: exit=0 116s
+start  transfer early from 101/prop_sonnet55 -> 101 system_prompt
+done   transfer early from 512/prop_qwen3 -> 101 llm_monitor_fixed_actions: exit=0 82s
+start  transfer early from 101/prop_sonnet55 -> 101 llm_monitor_fixed_actions
+done   transfer early from 101/prop_sonnet55 -> 512 system_prompt: exit=0 39s
+start  transfer early from 101/prop_qwen3 -> 733 none
+done   transfer early from 512/prop_qwen3 -> 512 llm_monitor_fixed_actions: exit=0 111s
+start  transfer early from 101/prop_qwen3 -> 733 system_prompt
+done   transfer early from 101/prop_sonnet55 -> 101 system_prompt: exit=0 35s
+start  transfer early from 101/prop_qwen3 -> 733 llm_monitor_fixed_actions
+done   transfer early from 101/prop_qwen3 -> 733 none: exit=0 29s
+start  transfer early from 101/prop_qwen3 -> 512 none
+done   transfer early from 101/prop_qwen3 -> 733 system_prompt: exit=0 43s
+start  transfer early from 101/prop_qwen3 -> 512 system_prompt
+done   transfer early from 101/prop_qwen3 -> 512 none: exit=0 29s
+start  transfer early from 101/prop_qwen3 -> 512 llm_monitor_fixed_actions
+done   transfer early from 101/prop_qwen3 -> 512 system_prompt: exit=0 40s
+start  transfer early from 101/prop_qwen3 -> 101 system_prompt
+done   transfer early from 101/prop_sonnet55 -> 512 llm_monitor_fixed_actions: exit=0 116s
+start  transfer early from 101/prop_qwen3 -> 101 llm_monitor_fixed_actions
+done   transfer early from 101/prop_sonnet55 -> 101 llm_monitor_fixed_actions: exit=0 123s
+start  transfer late from 733/prop_sonnet55 -> 733 system_prompt
+done   transfer early from 101/prop_qwen3 -> 733 llm_monitor_fixed_actions: exit=0 97s
+start  transfer late from 733/prop_sonnet55 -> 733 llm_monitor_fixed_actions
+done   transfer early from 101/prop_qwen3 -> 101 system_prompt: exit=0 43s
+start  transfer late from 733/prop_sonnet55 -> 512 none
+done   transfer early from 101/prop_sonnet55 -> 733 llm_monitor_fixed_actions: exit=0 191s
+start  transfer late from 733/prop_sonnet55 -> 512 system_prompt
+done   transfer late from 733/prop_sonnet55 -> 733 system_prompt: exit=0 31s
+start  transfer late from 733/prop_sonnet55 -> 512 llm_monitor_fixed_actions
+done   transfer late from 733/prop_sonnet55 -> 512 none: exit=0 25s
+start  transfer late from 733/prop_sonnet55 -> 101 none
+done   transfer early from 101/prop_qwen3 -> 512 llm_monitor_fixed_actions: exit=0 105s
+start  transfer late from 733/prop_sonnet55 -> 101 system_prompt
+done   transfer late from 733/prop_sonnet55 -> 512 system_prompt: exit=0 36s
+start  transfer late from 733/prop_sonnet55 -> 101 llm_monitor_fixed_actions
+done   transfer late from 733/prop_sonnet55 -> 101 none: exit=0 27s
+start  transfer late from 733/prop_qwen3 -> 733 system_prompt
+done   transfer late from 733/prop_sonnet55 -> 101 system_prompt: exit=0 36s
+start  transfer late from 733/prop_qwen3 -> 733 llm_monitor_fixed_actions
+done   transfer early from 101/prop_qwen3 -> 101 llm_monitor_fixed_actions: exit=0 116s
+start  transfer late from 733/prop_qwen3 -> 512 none
+done   transfer late from 733/prop_qwen3 -> 733 system_prompt: exit=0 36s
+start  transfer late from 733/prop_qwen3 -> 512 system_prompt
+done   transfer late from 733/prop_qwen3 -> 512 none: exit=0 21s
+start  transfer late from 733/prop_qwen3 -> 512 llm_monitor_fixed_actions
+done   transfer late from 733/prop_sonnet55 -> 733 llm_monitor_fixed_actions: exit=0 132s
+start  transfer late from 733/prop_qwen3 -> 101 none
+done   transfer late from 733/prop_qwen3 -> 512 system_prompt: exit=0 38s
+start  transfer late from 733/prop_qwen3 -> 101 system_prompt
+done   transfer late from 733/prop_sonnet55 -> 512 llm_monitor_fixed_actions: exit=0 128s
+start  transfer late from 733/prop_qwen3 -> 101 llm_monitor_fixed_actions
+done   transfer late from 733/prop_qwen3 -> 101 none: exit=0 32s
+start  transfer late from 512/prop_sonnet55 -> 733 none
+done   transfer late from 733/prop_sonnet55 -> 101 llm_monitor_fixed_actions: exit=0 120s
+start  transfer late from 512/prop_sonnet55 -> 733 system_prompt
+done   transfer late from 733/prop_qwen3 -> 733 llm_monitor_fixed_actions: exit=0 103s
+start  transfer late from 512/prop_sonnet55 -> 733 llm_monitor_fixed_actions
+done   transfer late from 733/prop_qwen3 -> 101 system_prompt: exit=0 47s
+start  transfer late from 512/prop_sonnet55 -> 512 system_prompt
+done   transfer late from 512/prop_sonnet55 -> 733 none: exit=0 29s
+start  transfer late from 512/prop_sonnet55 -> 512 llm_monitor_fixed_actions
+done   transfer late from 512/prop_sonnet55 -> 733 system_prompt: exit=0 33s
+start  transfer late from 512/prop_sonnet55 -> 101 none
+done   transfer late from 512/prop_sonnet55 -> 512 system_prompt: exit=0 31s
+start  transfer late from 512/prop_sonnet55 -> 101 system_prompt
+done   transfer late from 512/prop_sonnet55 -> 101 none: exit=0 25s
+start  transfer late from 512/prop_sonnet55 -> 101 llm_monitor_fixed_actions
+done   transfer late from 512/prop_sonnet55 -> 101 system_prompt: exit=0 40s
+start  transfer late from 512/prop_qwen3 -> 733 none
+done   transfer late from 733/prop_qwen3 -> 101 llm_monitor_fixed_actions: exit=0 108s
+start  transfer late from 512/prop_qwen3 -> 733 system_prompt
+done   transfer late from 733/prop_qwen3 -> 512 llm_monitor_fixed_actions: exit=0 161s
+start  transfer late from 512/prop_qwen3 -> 733 llm_monitor_fixed_actions
+done   transfer late from 512/prop_sonnet55 -> 512 llm_monitor_fixed_actions: exit=0 80s
+start  transfer late from 512/prop_qwen3 -> 512 system_prompt
+done   transfer late from 512/prop_qwen3 -> 733 none: exit=0 29s
+start  transfer late from 512/prop_qwen3 -> 512 llm_monitor_fixed_actions
+done   transfer late from 512/prop_qwen3 -> 512 system_prompt: exit=0 38s
+start  transfer late from 512/prop_qwen3 -> 101 none
+done   transfer late from 512/prop_qwen3 -> 733 system_prompt: exit=0 49s
+start  transfer late from 512/prop_qwen3 -> 101 system_prompt
+done   transfer late from 512/prop_qwen3 -> 101 none: exit=0 34s
+start  transfer late from 512/prop_qwen3 -> 101 llm_monitor_fixed_actions
+done   transfer late from 512/prop_sonnet55 -> 733 llm_monitor_fixed_actions: exit=0 171s
+start  transfer late from 101/prop_sonnet55 -> 733 none
+done   transfer late from 512/prop_qwen3 -> 512 llm_monitor_fixed_actions: exit=0 76s
+start  transfer late from 101/prop_sonnet55 -> 733 system_prompt
+done   transfer late from 512/prop_qwen3 -> 101 system_prompt: exit=0 44s
+start  transfer late from 101/prop_sonnet55 -> 733 llm_monitor_fixed_actions
+done   transfer late from 512/prop_sonnet55 -> 101 llm_monitor_fixed_actions: exit=0 128s
+start  transfer late from 101/prop_sonnet55 -> 512 none
+done   transfer late from 512/prop_qwen3 -> 733 llm_monitor_fixed_actions: exit=0 103s
+start  transfer late from 101/prop_sonnet55 -> 512 system_prompt
+done   transfer late from 101/prop_sonnet55 -> 733 none: exit=0 27s
+start  transfer late from 101/prop_sonnet55 -> 512 llm_monitor_fixed_actions
+done   transfer late from 101/prop_sonnet55 -> 512 none: exit=0 22s
+start  transfer late from 101/prop_sonnet55 -> 101 system_prompt
+done   transfer late from 101/prop_sonnet55 -> 733 system_prompt: exit=0 31s
+start  transfer late from 101/prop_sonnet55 -> 101 llm_monitor_fixed_actions
+done   transfer late from 101/prop_sonnet55 -> 512 system_prompt: exit=0 30s
+start  transfer late from 101/prop_qwen3 -> 733 none
+done   transfer late from 101/prop_sonnet55 -> 101 system_prompt: exit=0 37s
+start  transfer late from 101/prop_qwen3 -> 733 system_prompt
+done   transfer late from 101/prop_qwen3 -> 733 none: exit=0 26s
+start  transfer late from 101/prop_qwen3 -> 733 llm_monitor_fixed_actions
+done   transfer late from 512/prop_qwen3 -> 101 llm_monitor_fixed_actions: exit=0 110s
+start  transfer late from 101/prop_qwen3 -> 512 none
+done   transfer late from 101/prop_sonnet55 -> 733 llm_monitor_fixed_actions: exit=0 96s
+start  transfer late from 101/prop_qwen3 -> 512 system_prompt
+done   transfer late from 101/prop_qwen3 -> 733 system_prompt: exit=0 38s
+start  transfer late from 101/prop_qwen3 -> 512 llm_monitor_fixed_actions
+done   transfer late from 101/prop_sonnet55 -> 512 llm_monitor_fixed_actions: exit=0 89s
+start  transfer late from 101/prop_qwen3 -> 101 system_prompt
+done   transfer late from 101/prop_qwen3 -> 512 none: exit=0 21s
+start  transfer late from 101/prop_qwen3 -> 101 llm_monitor_fixed_actions
+done   transfer late from 101/prop_qwen3 -> 512 system_prompt: exit=0 31s
+done   transfer late from 101/prop_qwen3 -> 101 system_prompt: exit=0 37s
+done   transfer late from 101/prop_qwen3 -> 512 llm_monitor_fixed_actions: exit=0 75s
+done   transfer late from 101/prop_qwen3 -> 733 llm_monitor_fixed_actions: exit=0 106s
+done   transfer late from 101/prop_sonnet55 -> 101 llm_monitor_fixed_actions: exit=0 146s
+done   transfer late from 101/prop_qwen3 -> 101 llm_monitor_fixed_actions: exit=0 82s
+phase transfer finished: 96 run, 0 non-zero exit, 0 rate-limited
+exit=0
