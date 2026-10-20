@@ -1,4 +1,4 @@
-"""Charts and CSV from the arm-baseline tables (PLAN.md sections 11 and 12).
+"""Charts and CSV from the arm-baseline tables (phases/phase1_orbit_redteam/PLAN.md sections 11 and 12).
 
   uv run --locked python -m control_loop.plot results results/summary
 

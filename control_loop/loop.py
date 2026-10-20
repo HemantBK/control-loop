@@ -76,11 +76,11 @@ def main() -> None:
     defense_t = ["-T", f"num_tasks={args.num_tasks}", *defense_t]
     if args.ordering:
         defense_t += ["-T", f"ordering={args.ordering}"]
-    if judge_seed is not None and args.defense.startswith("llm_monitor"):
+    if judge_seed is not None and args.defense.startswith(("llm_monitor", "claim_", "allocation_")):
         defense_t += ["-T", f"judge_seed={judge_seed}"]
 
     # 1. arm-level clean baseline with the same defense: one multi-epoch run per
-    #    (seed, defense), shared by every proposer cell (PLAN.md section 11).
+    #    (seed, defense), shared by every proposer cell (phases/phase1_orbit_redteam/PLAN.md section 11).
     clean_dir = args.clean_log_dir or (REPO / "results" / "baselines" / f"{args.seed}_{args.defense}")
     if args.clean_log_dir is None and args.ordering:
         clean_dir = REPO / "results" / "v2" / args.ordering / "baselines" / f"{args.seed}_{args.defense}" / "run1"

@@ -3,7 +3,7 @@
 `control_loop` is a red-team loop (`loop.py`), a payload proposer (`proposer.py`) and an analysis
 (`results.py`, `round_table.py`, `controls_table.py`, `plot.py`). None of those should know which
 benchmark framework runs the episode. Everything that does know lives in one package per framework
-under `control_loop/adapters/`. One adapter exists, `orbit/`; five are planned (README section 11):
+under `control_loop/adapters/`. One adapter exists, `orbit/`; five are planned (the phase table in the root `README.md`):
 ControlArena, ResearchArena, DGM, SHADE-Arena, and ORBIT itself for scenarios other than JiraTicket.
 
 ## What an adapter provides
@@ -84,4 +84,4 @@ coalition agents' system prompts.
    give `results.read_run` a way to dispatch on the log type (today it assumes Inspect).
 4. Record the framework's license in `NOTICE` by reading its LICENSE file, not from memory.
 5. Add a no-API smoke test beside `tests/test_orbit_adapter.py`.
-6. Pre-register the cell design in `PLAN.md` before any paid run (HANDOFF section 5).
+6. Pre-register the cell design in the phase's `phases/<phase>/PLAN.md` before any paid run (`phases/phase1_orbit_redteam/HANDOFF.md` section 5).

@@ -1,5 +1,5 @@
 """Round tables against arm-level clean baselines, under both validity rules, with
-redistribution as the attack criterion (PLAN.md sections 11 and 12).
+redistribution as the attack criterion (phases/phase1_orbit_redteam/PLAN.md sections 11 and 12).
 
   python -m control_loop.round_table CELL [CELL ...]            one table per cell
   python -m control_loop.round_table --arm DEFENSE [--seeds ..] [--proposers ..]
@@ -59,19 +59,20 @@ def _first_block(turns_by_boundary: dict, actions_only: bool):
 
 
 def baseline_dirs(cell: Path, override: Path | None = None) -> list[Path]:
-    """Baseline run directories for a cell. v2 layout: results/v2/<ordering>/baselines/<seed>_<defense>/run*;
-    v1 layout: results/baselines/<seed>_<defense>. Transfer and greedy cells share the arm baseline."""
+    """Baseline run directories for a cell. Per-ordering layout: <root>/<ordering>/baselines/<seed>_<defense>/run*
+    (results/v2 and results/phase2_claim_monitor); v1 layout: results/baselines/<seed>_<defense>. Transfer and
+    greedy cells share the arm baseline."""
     if override:
         return [override]
     seed, defense = cell.name.split("_", 1)
-    parts = cell.resolve().parts
-    if "v2" in parts:
-        ordering = parts[parts.index("v2") + 1]
-        root = REPO / "results" / "v2" / ordering / "baselines" / f"{seed}_{defense}"
-        runs = sorted(d for d in root.glob("run*") if any(d.glob("*.eval")))
-        if runs:
-            return runs
-        # the 733/early block keeps its 2026-10-19 baseline in the v1 location
+    # per-ordering layout: <root>/<ordering>/{baselines,prop_*,...}/<seed>_<defense>, where <root> is
+    # results/v2 (Phase 1 control program) or results/phase2_claim_monitor (Phase 2); the arm baseline
+    # is the sibling baselines/<seed>_<defense>/run* of the cell's parent directory
+    root = cell.resolve().parent.parent / "baselines" / f"{seed}_{defense}"
+    runs = sorted(d for d in root.glob("run*") if any(d.glob("*.eval"))) if root.is_dir() else []
+    if runs:
+        return runs
+    # the 733/early block keeps its 2026-10-19 baseline in the v1 location
     bdir = REPO / "results" / "baselines" / f"{seed}_{defense}"
     dirs = [bdir] if bdir.exists() and any(bdir.glob("*.eval")) else []
     dirs += sorted(d for d in bdir.glob("run*") if any(d.glob("*.eval"))) if bdir.exists() else []

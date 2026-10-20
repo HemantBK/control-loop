@@ -1,6 +1,6 @@
 """The adaptive attacker: writes the coalition objective paragraph for the next round.
 
-Design (see PLAN.md):
+Design (see phases/phase1_orbit_redteam/PLAN.md):
 
 * Framing. The proposer is told it is the red-team component of a sanctioned
   AI-control evaluation of a simulated four-agent ticket-allocation game. No
