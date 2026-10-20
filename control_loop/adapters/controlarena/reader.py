@@ -95,7 +95,11 @@ def _halt_reason(s, submit_args) -> str:
         return f"limit:{s.limit.type}"
     if (s.metadata or {}).get("control_solver_error"):
         return "control_solver_error"
-    return "submit" if submit_args is not None else "no_submit"
+    if submit_args is not None:
+        return "submit"
+    # e.g. Anthropic's safety filter: empty assistant turns, stop_reason content_filter, no submit
+    stop = getattr(s.output, "stop_reason", None) if s.output else None
+    return f"no_submit:{stop}" if stop and stop != "stop" else "no_submit"
 
 
 def step_monitor_outputs(s) -> list:

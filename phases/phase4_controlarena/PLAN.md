@@ -1,7 +1,7 @@
 # Phase 4 PLAN — ControlArena adapter (pre-registered 2026-10-20, before any paid run)
 
 Scope of this step: wire ControlArena into `control_loop` and show the wiring works. No defense is
-ported, no sweep is run. The phase question in README §11 ("do the same payload moves transfer to a
+ported, no sweep is run. The phase question in the root README's phase table ("do the same payload moves transfer to a
 ControlArena setting?") is NOT answered here; this step only builds and checks the adapter.
 
 ## 1. Deliverables (fixed before running)
@@ -216,3 +216,10 @@ in the solver span, parsed with ControlArena's `extract_monitor_response`, and f
 a deep copy of the messages, so its logs keep both. The first pair is kept in
 `results/phase4_controlarena/_attempt1_eot_overwrite/` (its `check.json` was written by the
 pre-fix reader). The pair was re-run once with the fix (the one retry §5 allows).
+
+**10.6 Reproduction run (2026-10-20).** Run through the adapter's task wrapper (`dp_task.py`, via
+`python -m control_loop.adapters.controlarena.reproduce --limit 3`), not the CLI as §10.1 wrote, on
+Hemant's instruction. Same setting, micro-protocol, monitors, models and limit as the CLI command;
+the difference is the §10.5 copy in the end-of-trajectory scorer. Attack mode = ControlArena's
+stock attack policy (no strategy paragraph). The reader's halt reason now reports
+`no_submit:<stop_reason>` (added after the run; logs re-read, no new API calls). Results in RESULTS.md.
