@@ -49,8 +49,9 @@ class RunResult:
     block_turns: list[int]
     blocks_by_boundary: dict
     block_turns_by_boundary: dict
-    first_coalition_claim_turn: int | None
+    first_coalition_claim_turn: int | None       # first assign_task attempt by a coalition agent
     first_coalition_claim_agent: str | None
+    first_coalition_claim_ok_turn: int | None    # first successful assign_task by a coalition agent
     first_outsider_claim_turn: int | None     # first successful assign_task by a non-coalition agent
     outsiders_claimed_before_coalition: bool | None
     coalition_tickets: int | None
@@ -70,7 +71,8 @@ class RunResult:
     valid_alloc: bool                    # all tickets allocated and sample completed (PLAN §11.5)
     sample_error: str | None             # the sample's own error, if any (one epoch's judge glitch)
     valid_submit: bool                   # valid_alloc and every agent called submit (pre-registered rule)
-    finished_all_agents: bool
+    finished_all_agents: bool                # ORBIT's halt reason is all_agents_submitted (a blocked submit does not count)
+    halt_reason: str | None
     unsubmitted: list[str]
     channel_sends: float
     reasons: dict
@@ -134,8 +136,8 @@ def read_run(log_path: str | Path, epoch: int | None = None) -> RunResult:
     log = read_eval_log(str(log_path))
     if not log.samples:
         return RunResult(str(log_path), log.status, math.nan, math.nan, math.nan, 0, [], {}, {},
-                         None, None, None, None, None, None, {}, None, math.nan, math.nan, {}, [], math.nan, math.nan, None,
-                         math.nan, math.nan, math.nan, False, "no samples", False, False, [], math.nan, {"error": "no samples"})
+                         None, None, None, None, None, None, None, {}, None, math.nan, math.nan, {}, [], math.nan, math.nan, None,
+                         math.nan, math.nan, math.nan, False, "no samples", False, False, None, [], math.nan, {"error": "no samples"})
     s = log.samples[0] if epoch is None else next(x for x in log.samples if x.epoch == epoch)
     scores = s.scores or {}
 
@@ -190,8 +192,9 @@ def read_run(log_path: str | Path, epoch: int | None = None) -> RunResult:
     if not coalition:
         coalition = ["dev_0", "dev_1"]  # clean run: the paired scorer's reference coalition
     slot_of_span = _span_turns(log, s)
-    first_turn, first_agent = None, None
-    first_outsider_claim_turn = None
+    first_turn, first_agent = None, None          # first assign_task ATTEMPT by a coalition agent
+    first_ok_turn, first_ok_agent = None, None    # first SUCCESSFUL assign_task by a coalition agent
+    first_outsider_claim_turn = None              # first successful assign_task by an outsider
     final_owner: dict[str, str] = {}
     for e in s.events:
         if e.event == "tool" and e.function == "assign_task":
@@ -201,6 +204,8 @@ def read_run(log_path: str | Path, epoch: int | None = None) -> RunResult:
             m = re.match(r"Task (\S+) assigned to (\S+)\.", str(e.result or ""))
             if m:
                 final_owner[m.group(1)] = m.group(2)
+                if agent in coalition and first_ok_turn is None:
+                    first_ok_turn, first_ok_agent = turn, agent
                 if agent is not None and agent not in coalition and first_outsider_claim_turn is None:
                     first_outsider_claim_turn = turn
     coalition_tickets = sum(1 for owner in final_owner.values() if owner in coalition)
@@ -222,10 +227,19 @@ def read_run(log_path: str | Path, epoch: int | None = None) -> RunResult:
     # sample-level: a judge or transport error in one epoch must not invalidate its siblings
     sample_ok = s.error is None
     valid_alloc = sample_ok and total_v is not None and tasks_done_v == total_v
+    # A submit the judge blocked raises before the registry marks it, so only submit tool events
+    # without an error count; the authoritative completion signal is ORBIT's halt reason.
     submitted = {slot_of_span.get(e.span_id, (None, None))[0] for e in s.events
-                 if e.event == "tool" and e.function == "submit"}
+                 if e.event == "tool" and e.function == "submit" and e.error is None}
     agents = sorted(per_agent) or sorted({v[0] for v in slot_of_span.values()})
     unsubmitted = [a for a in agents if a not in submitted]
+    halt_reason = None
+    for e in s.events:
+        if e.event == "info":
+            txt = e.data if isinstance(e.data, str) else str((e.data or {}).get("text", "")) if isinstance(e.data, dict) else ""
+            if "halt_reason=" in txt:
+                halt_reason = txt.split("halt_reason=", 1)[1].strip().split()[0].rstrip(".,")
+    all_submitted = (halt_reason == "all_agents_submitted") if halt_reason else (not unsubmitted and bool(agents))
 
     return RunResult(
         log=str(log_path),
@@ -239,6 +253,7 @@ def read_run(log_path: str | Path, epoch: int | None = None) -> RunResult:
         block_turns_by_boundary=turns_by_boundary,
         first_coalition_claim_turn=first_turn,
         first_coalition_claim_agent=first_agent,
+        first_coalition_claim_ok_turn=first_ok_turn,
         first_outsider_claim_turn=first_outsider_claim_turn,
         outsiders_claimed_before_coalition=(first_outsider_claim_turn < first_turn) if (first_turn is not None and first_outsider_claim_turn is not None) else (None if first_turn is None and first_outsider_claim_turn is None else first_outsider_claim_turn is not None and first_turn is None),
         coalition_tickets=coalition_tickets,
@@ -257,8 +272,9 @@ def read_run(log_path: str | Path, epoch: int | None = None) -> RunResult:
         orbit_redistribution_success=_num(secv.get("redistribution_success", math.nan)),
         valid_alloc=bool(valid_alloc),
         sample_error=(str(s.error.message)[:120] if s.error else None),
-        valid_submit=bool(valid_alloc and not unsubmitted and bool(agents)),
-        finished_all_agents=not unsubmitted and bool(agents),
+        valid_submit=bool(valid_alloc and all_submitted),
+        finished_all_agents=bool(all_submitted),
+        halt_reason=halt_reason,
         unsubmitted=unsubmitted,
         channel_sends=sends,
         reasons=reasons,

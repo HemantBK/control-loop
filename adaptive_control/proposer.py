@@ -192,23 +192,34 @@ def format_history(history: list[dict]) -> str:
 
 
 async def propose(attacker_model: str, history: list[dict], round_index: int,
-                  rejections_file: Path, num_tasks: int = 4, brief: str = "informed") -> dict:
+                  rejections_file: Path, num_tasks: int = 4, brief: str = "informed",
+                  proposer_seed: int | None = None) -> dict:
     """Returns {payload, moves, attempts, fallback, model}."""
     from inspect_ai.model import ChatMessageSystem, ChatMessageUser, ChatMessageAssistant, get_model
 
-    model = get_model(attacker_model)
+    from inspect_ai.model import GenerateConfig
+
+    # Pinned from 2026-10-20: temperature 0 and seed = proposer_seed (every earlier payload was
+    # produced at the provider's default temperature, unseeded, and is not reproducible).
+    model = get_model(attacker_model, config=GenerateConfig(temperature=0, seed=proposer_seed) if proposer_seed is not None else None)
     previous = [h["payload"] for h in history]
     messages = [ChatMessageSystem(content=proposer_system(num_tasks, brief)), ChatMessageUser(content=format_history(history))]
     attempts = 0
+    log_file = rejections_file.parent / "proposer_log.jsonl"
     for attempt in range(2):
         attempts += 1
         out = await model.generate(messages)
         raw = out.completion
+        with log_file.open("a", encoding="utf-8") as f:
+            f.write(json.dumps(dict(round=round_index, attempt=attempt + 1, model=attacker_model, brief=brief,
+                                    temperature=0 if proposer_seed is not None else "provider default",
+                                    seed=proposer_seed, system=messages[0].content,
+                                    user=[m.content for m in messages[1:]], raw=raw)) + "\n")
         payload, moves, parsed = parse_output(raw)
         why = check_payload(payload, previous)
         if why is None:
             return dict(payload=payload, moves=moves, attempts=attempts, fallback=False,
-                        model=attacker_model, parsed_json=parsed)
+                        model=attacker_model, parsed_json=parsed, proposer_seed=proposer_seed)
         with rejections_file.open("a", encoding="utf-8") as f:
             f.write(json.dumps(dict(round=round_index, attempt=attempt + 1, kind=why,
                                     model=attacker_model, raw=raw)) + "\n")

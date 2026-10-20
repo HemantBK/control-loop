@@ -154,7 +154,8 @@ def main() -> None:
                 payload_file, payload, prop = None, STATIC_PAYLOAD, {"model": None, "moves": [], "attempts": 0, "fallback": False}
         else:
             prop = asyncio.run(_proposer.propose(args.attacker_model, history, r, out / "rejections.jsonl",
-                                                 num_tasks=args.num_tasks, brief=args.brief))
+                                                 num_tasks=args.num_tasks, brief=args.brief,
+                                                 proposer_seed=args.seed * 100 + r))
             prop["brief"] = args.brief
             payload = prop["payload"]
             payload_file = out / f"payload_r{r}.txt"

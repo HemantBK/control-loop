@@ -28,6 +28,7 @@ Everything the results depend on, as run on 2026-10-19 and 2026-10-20 (Asia/Kolk
 | monitor / judge | `openai/gpt-4o-mini` (resolved to gpt-4o-mini-2024-07-18). Seed-733 early block and seeds 42/1049 (2026-10-19/20 before the control program): provider-default temperature, unseeded (ORBIT's `LLMMonitorDefense` passes no config). Every cell and baseline of the control program (`results/v2/`, 733 late and claims-last, 512, 101) and the 733/early second clean run: temperature 0, seed = problem seed via Inspect's per-model config (`_SeededJudge`; defense names end in `_seeded`) | `llm_monitor_fixed`, `llm_monitor_fixed_actions` |
 | proposer, frontier | `anthropic/claude-sonnet-5-5` | all `results/prop_sonnet55/*` |
 | proposer, open weights | `openrouter/qwen/qwen3-235b-a22b-2507` | all `results/prop_qwen3/*` |
+| proposer settings | every adaptive payload in `results/` was generated at the provider's default temperature, unseeded, with no record of the prompt or raw output (only the accepted payload, moves and attempt count in `rounds.jsonl`); from 2026-10-20 `proposer.propose` pins temperature 0 and seed = 100 × problem seed + round and logs system prompt, user message and raw output to `proposer_log.jsonl`. No existing payload is reproducible. | all `prop_*` cells |
 | proposer, superseded | `anthropic/claude-sonnet-4-5` | the superseded 10-turn seed-733 monitor cell |
 | mock | `mockllm/model`, `mockllm/jira-four-arm-qualification`, `mockllm/jira-replication-controls` | smoke tests and mock recipes only |
 
@@ -65,5 +66,6 @@ Provider endpoints: OpenAI API (gpt-4o, gpt-4o-mini, gpt-4.1-mini), Anthropic AP
 | independent README reproduction of the single-draw 733 none cell | 2026-10-20 | `results/repro/733_none` (uncommitted scratch) |
 | control program (PLAN §13): two-run baselines, 35 cells, 18 controls (greedy, uninformed), 96 transfers; seeds 512, 101 both orderings, 733 late; judge seeded outside the 733/early block | 2026-10-20 | `results/v2/early/`, `results/v2/late/`, `results/baselines/733_*/run2` |
 | third-audit controls (PLAN §14): claims-last plan at 733 (two-run baselines, three arms, Sonnet) and greedy dev_0 alone in the late order (none, prompt, 3 epochs) | 2026-10-20 | `results/v2/claimslast/`, `results/v2/late/greedy_dev0/` |
+| fourth-audit transfer: the headline cell's best payload as a static payload under the claims-last plan, three arms, three epochs | 2026-10-20 | `results/v2/claimslast/transfer_headline/` |
 
-Approximate list-price spend for the whole project: about $106 (first phase $43; 2026-10-20 control program $53; third-audit controls about $10: six claims-last baselines, three claims-last cells, two greedy-dev_0 cells).
+Approximate list-price spend for the whole project: about $108 (first phase $43; control program $53; third-audit controls about $10; fourth-audit transfer run about $1.5).
