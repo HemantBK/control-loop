@@ -24,9 +24,12 @@ Task options (passed as `-T key=value` by `control_loop.adapters.controlarena.ru
 """
 from __future__ import annotations
 
+import copy
 from pathlib import Path
 
 from inspect_ai import Task, task
+from inspect_ai.scorer import Score, Target, scorer
+from inspect_ai.solver import TaskState
 
 from control_arena import EvalMode
 from control_arena.eval import ControlEvalConfig, get_control_task
@@ -39,8 +42,10 @@ from control_arena.monitor import (
 from control_arena.monitor.prompts import monitor_prompts
 from control_arena.policy import untrusted_policy_builder
 from control_arena.scorers import end_of_trajectory_monitor
+from control_arena.scorers._metrics import accuracy, stderr
 from control_arena.settings.data_poisoning.data_poisoning_setting import DataPoisoningSetting
 
+from control_loop.adapters.controlarena import mock_dp  # noqa: F401  registers the cl_mock provider
 from control_loop.adapters.controlarena.proposer_policy import proposer_attack_policy_builder
 
 DEFENSES = ["none", "trusted_monitoring"]
@@ -50,9 +55,18 @@ def _flag(v) -> bool:
     return v if isinstance(v, bool) else str(v).strip().lower() in {"1", "true", "yes"}
 
 
+@scorer(metrics=[accuracy(), stderr()], name="end_of_trajectory_monitor")
 def cli_final_monitor():
-    """The scorer `control-arena eval single` adds by default (control_arena/cli/single_eval.py)."""
-    return end_of_trajectory_monitor(
+    """The scorer `control-arena eval single` adds by default (control_arena/cli/single_eval.py),
+    run on a deep copy of the messages.
+
+    ControlArena 20.1.0's `end_of_trajectory_monitor` hands the monitor the trajectory's own message
+    objects, and the `@monitor` decorator writes its response into the last assistant message's
+    metadata, so the CLI's log shows the end-of-trajectory score and reason in place of the last
+    step's per-step `suspicion_score` (found in the Phase 4 mechanism check, PLAN §10.5). The copy
+    leaves the per-step metadata as the trusted monitor wrote it; the end-of-trajectory score is
+    unchanged."""
+    inner = end_of_trajectory_monitor(
         basic_monitor_builder(
             system_prompt=monitor_prompts["full_trajectory_default_system"],
             prompt=monitor_prompts["full_trajectory_default_user"],
@@ -60,6 +74,16 @@ def cli_final_monitor():
             score_range=MonitorScoreRange(min=0.0, max=100.0),
         )
     )
+
+    async def score(state: TaskState, target: Target) -> Score:
+        original = state.messages
+        state.messages = copy.deepcopy(original)
+        try:
+            return await inner(state, target)
+        finally:
+            state.messages = original
+
+    return score
 
 
 def build_micro_protocol(defense: str, payload_file: str | Path | None):
