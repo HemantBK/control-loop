@@ -47,6 +47,23 @@ PRICES: dict[str, Price] = {
     # phases/phase4_controlarena/PLAN.md §5; cache multipliers as above. Unverified.
     "anthropic/claude-opus-5-5": Price(input=4.00, cache_read=0.40, cache_write=5.00, output=20.00),
     "anthropic/claude-sonnet-4-6": Price(input=3.00, cache_read=0.30, cache_write=3.75, output=15.00),
+    # Phase 4 red-team selection (PLAN §11, 2026-10-21).
+    # Open-weight arm. Read from OpenRouter's public catalog (GET /api/v1/models/qwen/qwen3-235b-a22b-2507/
+    # endpoints, no key, 2026-10-21): tool-capable endpoints charge 0.0875-0.22 input / 0.35-0.88 output
+    # (default listing 0.09 / 0.55). Routing is not pinned, so the most expensive tool-capable endpoint
+    # (Google, 0.22 / 0.88) is used as an upper bound. No cache price is listed for this model; cached
+    # tokens are priced at full input. Not checked against an OpenRouter invoice: UNVERIFIED.
+    "openrouter/qwen/qwen3-235b-a22b-2507": Price(input=0.22, cache_read=0.22, cache_write=0.22, output=0.88),
+    # Arm A (PLAN §11, revised 2026-10-21): the Async Control paper's untrusted model (arXiv 2512.13526,
+    # App. A: claude-opus-4-1-20250805) through OpenRouter, whose only endpoint is Amazon Bedrock
+    # (`anthropic/claude-4.1-opus-20250805`). 15.00 in / 75.00 out / 18.75 cache write / 1.50 cache read:
+    # GET https://openrouter.ai/api/v1/models/anthropic/claude-opus-4.1/endpoints, read 2026-10-21, no key.
+    # Not checked against an invoice: UNVERIFIED.
+    "openrouter/anthropic/claude-opus-4.1": Price(input=15.00, cache_read=1.50, cache_write=18.75, output=75.00),
+    # Arm A fallback if that endpoint fails (§11.1): Claude Opus 4.5 on Anthropic's API. 5.00 / 25.00 from
+    # OpenRouter's catalog entry anthropic/claude-opus-4.5 (read 2026-10-21); cache multipliers as above.
+    # UNVERIFIED against Anthropic's pricing page.
+    "anthropic/claude-opus-4-5-20251101": Price(input=5.00, cache_read=0.50, cache_write=6.25, output=25.00),
 }
 
 
