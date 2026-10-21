@@ -1093,3 +1093,10 @@ API call) gave τ = 0.1 and r0a gains 0, 0, 1, 0, 0, 0, 0, 0: trajectory 3 is th
   to the owner.
 - **Any spend stop:** report spend and status; nothing further runs.
 - In every case: the write-up rules (numbers traced, predictions reported, dated amendments, limits, fresh audit) before any write-up; the RESULTS/README edits belong to the write-up task.
+
+### 13.9 Owner's approval (Hemant, 2026-10-21, given before any paid call of this cell; recorded before the first paid call)
+
+- 2026-10-21 (Hemant): §13 is approved as written.
+- 2026-10-21 (Hemant): reusing §12's clean runs (honest_run1, honest_run2) and static rounds (r0a, r0b) from cell P is accepted, and disclosed.
+- 2026-10-21 (Hemant): the proposer seeing its uncaught gain (from which it can bracket τ) is accepted, and disclosed as cutoff-learning.
+- 2026-10-21 (Hemant): cell cap $5; Phase 4 stop at $16 cumulative.

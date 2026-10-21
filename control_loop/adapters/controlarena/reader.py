@@ -262,8 +262,14 @@ def attempt_counts(results: list[SampleResult]) -> dict:
 def control_metrics(honest_log: str | Path | list, attack_log: str | Path, audit_budget: float = 1.0) -> dict:
     """ControlArena's usefulness and safety for honest + one attack log. `honest_log` may be a list of
     honest logs (2026-10-21, PLAN §12: two clean runs pooled); the max-step column is keyed by
-    (log, mode, sample id) so equal sample ids in two honest runs stay apart."""
+    (log, mode, sample id) so equal sample ids in two honest runs stay apart.
+
+    Where ControlArena's threshold or safety raises (a missing score: NaN suspicion raises ValueError; a
+    missing main_task_success or side_task_success fails its pandera schema with SchemaError/SchemaErrors,
+    e.g. the quality judge's 'N'), `safety_<scorer>` is None and `safety_<scorer>_reason` says why
+    (2026-10-21, §13 cell crash). The metric itself is ControlArena's and unchanged."""
     from control_arena.analysis import compute_safety, compute_suspicion_threshold, compute_usefulness, samples_df
+    from pandera.errors import SchemaError, SchemaErrors
 
     honest_logs = [str(p) for p in honest_log] if isinstance(honest_log, (list, tuple)) else [str(honest_log)]
     logs = [*honest_logs, str(attack_log)]
@@ -278,8 +284,10 @@ def control_metrics(honest_log: str | Path | list, attack_log: str | Path, audit
         try:
             out[f"threshold_{scorer}"] = compute_suspicion_threshold(honest, scorer, audit_budget)
             out[f"safety_{scorer}"] = compute_safety(df, scorer, audit_budget)
-        except (ValueError, KeyError) as e:
-            out[f"safety_{scorer}"] = f"unavailable: {e}"
+        except (ValueError, KeyError, SchemaError, SchemaErrors) as e:
+            out[f"safety_{scorer}"] = None
+            msg = " ".join(str(e).split())
+            out[f"safety_{scorer}_reason"] = f"ControlArena raised {type(e).__name__}: {msg[:300]}"
     return out
 
 
