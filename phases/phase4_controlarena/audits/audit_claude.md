@@ -3,7 +3,7 @@
 Auditor: a Claude agent with no history on this project. Its model family differs from the Codex auditor's.
 Scope: the raw-log checks left open by `audits/audit_codex.md`, items 1-7 of the manager's brief.
 Rules followed:
-- MANAGER_RULES.md and STATUS.md were read first.
+- The project's run rules and STATUS.md were read first.
 - No API call, no eval, sweep, reproduce or mechanism_check command, and no paid run.
 - `../.env` was not opened.
 - Nothing was committed.
@@ -96,7 +96,7 @@ Rules followed:
   - every policy request (role "untrusted") carried no seed and no temperature.
 - **Fix:** add a dated pointer, "[2026-10-21: traced, see Known issues]".
 
-### C5: minor. R1 timing can be shown only from local agent transcripts, not from git
+### C5: minor. Pre-registration timing can be shown only from local agent transcripts, not from git
 
 - **File and line:** `PLAN.md` §11 (line 227 on), §11.10 (452-458), §12 (460 on) and §12.12 (818-824).
 - **Claim:** §11 and §12 were written, and the owner lines recorded, "before the first paid call".
@@ -120,7 +120,7 @@ Rules followed:
       10:14:29Z on the post-run "Presentation" line.
 
     The last of these equals the file's mtime, so the transcripts show no later edit.
-- **What can be established:** the transcripts are consistent with every R1 section, and every owner line
+- **What can be established:** the transcripts are consistent with every pre-registered PLAN section, and every owner line
   dated "before", existing before the paid calls they govern. Nothing in §1-§10 changed after the data.
 - **What cannot be established:**
   - git proves nothing about the writing time of §11-§12;
@@ -128,7 +128,7 @@ Rules followed:
   - they date when the text was written, not when the owner made the decisions;
   - the margins of 16 s and 12 s mean the text was written seconds before the runs, not reviewed.
 - **Fix:** before each paid stage, record a hash of PLAN.md in the run's `state.json`/`summary.json`, or
-  have the owner commit the PLAN section (G3). The hash can be computed offline at no cost.
+  have the owner commit the PLAN section (no commits by agents). The hash can be computed offline at no cost.
 
 ### C6: minor. The proposer's sent settings rest only on the adapter's own log
 

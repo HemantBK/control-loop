@@ -141,8 +141,8 @@ def main() -> None:
     print(table(rows))
     if args.out:
         args.out.parent.mkdir(parents=True, exist_ok=True)
-        args.out.write_text(json.dumps(dict(args={k: str(v) for k, v in vars(args).items()}, rows=rows),
-                                       indent=2, default=str), encoding="utf-8")
+        from control_loop.paths import write_json
+        write_json(args.out, dict(args={k: str(v) for k, v in vars(args).items()}, rows=rows))   # repo-relative paths only
 
 
 if __name__ == "__main__":

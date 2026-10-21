@@ -318,7 +318,7 @@ within-floor round, and a list of wrong numbers and labels. Changes, dated 2026-
    [Correction 2026-10-21, audit_codex X8 (phases/phase2_claim_monitor/audits/audit_codex.md):
    requested, not sent. Inspect 0.3.263's Anthropic provider never forwards `seed` and drops
    `temperature` for Claude 4.7+ (`.venv/lib/python3.13/site-packages/inspect_ai/model/_providers/anthropic.py`, `completion_config`, lines 988–1032), so the
-   Sonnet 5.5 proposer stays unseeded at the provider default; R3 is not met for it. The
+   Sonnet 5.5 proposer stays unseeded at the provider default; it is not seeded at temperature 0. The
    log records the request actually sent (`sent`) from 2026-10-21. README section 9.]
 4. **Corrections**: claims-last plan description (three activations per outsider,
    coalition first activation at turns 6–7); §3.2 false-positive numbers; 512's "three

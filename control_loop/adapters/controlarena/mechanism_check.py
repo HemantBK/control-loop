@@ -29,6 +29,7 @@ import zipfile
 from pathlib import Path
 
 from control_loop.adapters import controlarena as ca
+from control_loop.paths import rel, write_json
 
 OUT = ca.REPO / "results" / "phase4_controlarena" / "mechanism_check"
 MODELS = {"mock": ("cl_mock/dp", "cl_mock/dp"),
@@ -189,7 +190,7 @@ def main() -> None:
                   redteam_observation=red.observe(0, STATIC_PAYLOAD, a))
     if args.backend == "mock":
         report["proposer_smoke"] = asyncio.run(red.propose(1))
-    (out / "check.json").write_text(json.dumps(report, indent=2, default=str), encoding="utf-8")
+    write_json(out / "check.json", report)   # repo-relative paths only
 
     print("\n" + step_table([h, a]) + "\n")
     for k in ("honest", "redteam"):
@@ -197,7 +198,7 @@ def main() -> None:
         print(f"{k}: policy calls {c['policy_calls']}, instruction delivered {c['instruction_delivered']}, "
               f"monitor scored every step {c['monitor_scored_every_step']}, reader==raw {c['reader_matches_raw']}")
     print("control metrics:", json.dumps(metrics, default=str))
-    print(f"cost ${report['cost_usd']:.4f}  ->  {out / 'check.json'}")
+    print(f"cost ${report['cost_usd']:.4f}  ->  {rel(out / 'check.json')}")
 
 
 if __name__ == "__main__":

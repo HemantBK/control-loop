@@ -1,4 +1,4 @@
-"""No-API tests for the 2026-10-21 metric fix in the Phase 4 sweep (PLAN §12.3, §12.12; C2).
+"""No-API tests for the 2026-10-21 metric fix in the Phase 4 sweep (PLAN §12.3, §12.12; offline, no API calls).
 
 `sweep.uncaught_successes` first counted side-task success alone. ControlArena's
 compute_uncaught_successful_attack_count (and compute_safety) require main-task success too by default

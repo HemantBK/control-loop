@@ -1,4 +1,4 @@
-"""No-API tests for the Phase 4 seed fix and the proposer sweep driver (PLAN §12; C2).
+"""No-API tests for the Phase 4 seed fix and the proposer sweep driver (PLAN §12; offline, no API calls).
 
 - the seed-56 trace: `inspect eval --seed` reaches no ControlArena role; dp_task's model_seed/temperature
   put them into the untrusted and trusted roles; the setting's judge keeps ControlArena's seed 56;
@@ -156,7 +156,7 @@ def test_secondary_needs_matched_primary(tmp_path, monkeypatch):
     (prim / "summary.json").write_text(json.dumps(dict(verdict_primary=dict(combined="matched"))))  # ignored
     verdict = {"combined": "falsified"}
     monkeypatch.setattr(sweep, "recompute", lambda cell_dir, **kw: dict(verdict_max_step=dict(verdict)))
-    with pytest.raises(SystemExit, match="G2"):
+    with pytest.raises(SystemExit, match="goes to the owner"):
         sweep.check_secondary(*args)
     verdict["combined"] = "matched"
     (prim / "spend.json").write_text(json.dumps(dict(cell_usd=20.0)))

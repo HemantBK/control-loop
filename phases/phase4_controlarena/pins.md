@@ -6,7 +6,7 @@ Everything the Phase 4 results depend on, as run on 2026-10-20 and 2026-10-21 (e
 
 | item | value |
 |---|---|
-| ControlArena | `control-arena` 20.1.0 from PyPI (released 2026-10-13; tag v20.1.0 = commit `3fdee428a30911e76d892b2440ea94d1f8395b39`; wheel sha256 `e1a9a515a04380574aec40b4cee9763bff715046c4a932ae32170a934b71ae89` in `uv.lock`), MIT, unmodified (R5); optional extra `controlarena` in `pyproject.toml` |
+| ControlArena | `control-arena` 20.1.0 from PyPI (released 2026-10-13; tag v20.1.0 = commit `3fdee428a30911e76d892b2440ea94d1f8395b39`; wheel sha256 `e1a9a515a04380574aec40b4cee9763bff715046c4a932ae32170a934b71ae89` in `uv.lock`), MIT, unmodified (adapters only); optional extra `controlarena` in `pyproject.toml` |
 | inspect-ai | 0.3.263 (recorded in every eval header) |
 | other versions | Python 3.13.14 (`.venv`), uv 0.11.25, anthropic SDK 1.6.0, openai SDK 3.13.0 (as `../phase1_orbit_redteam/pins.md`) |
 | this package, as run | eval headers record the repository revision as dirty in every Phase 4 eval: mechanism check (both pairs) at `df96590`, `--limit 3` reproduction at `f10c15f`, selection and cell P at `c95b7a8`. The selection and sweep code (`reproduce.py` options, `dp_task.py` `framing`/`model_seed`/`temperature`, `sweep.py`, `seed_trace.py`, the reader's attempt labels, the `spend.py` prices, the metric fix and the X1 gate fix) is uncommitted at the time of writing, so a clean checkout of `c95b7a8` cannot run them (README section 10) |
@@ -61,4 +61,4 @@ List price from `control_loop.spend` (unverified prices) over each log's `stats.
 | cell P proposer (7 calls) | 2026-10-21 | `results/phase4_controlarena/sweep/qwen3_733/redteam/proposer_log.jsonl` | – | $0.0632 |
 | **Phase 4 total** | | | **22 (+2 mock)** | **$5.9747** |
 
-$5.9747 is exact from the logs. The earlier $5.9739 (`qwen3_733/spend.json`, `RESULTS.md`, STATUS) rounded the 2026-10-20 part: it carried $1.18 rather than $1.1807, a $0.0008 difference (`audits/audit_claude.md` C1; `sweep.PRIOR_PHASE4` still holds the rounded $2.9035). Caps: phase cap $20, stop $16 (owner, PLAN §12.12; 30% and 37% used); selection cap $5, stop $4, arm B cap $1 (PLAN §11.5); G1 per cell $15 (largest cell P $3.0704). No G1 event. Cell S (Opus 4.1, upper estimate $12.13) not run.
+$5.9747 is exact from the logs. The earlier $5.9739 (`qwen3_733/spend.json`, `RESULTS.md`, STATUS) rounded the 2026-10-20 part: it carried $1.18 rather than $1.1807, a $0.0008 difference (`audits/audit_claude.md` C1; `sweep.PRIOR_PHASE4` still holds the rounded $2.9035). Caps: phase cap $20, stop $16 (owner, PLAN §12.12; 30% and 37% used); selection cap $5, stop $4, arm B cap $1 (PLAN §11.5); spend stop per cell $15 (largest cell P $3.0704). No spend stop. Cell S (Opus 4.1, upper estimate $12.13) not run.

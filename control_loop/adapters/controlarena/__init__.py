@@ -40,6 +40,7 @@ COMMON_EVAL = ["--no-fail-on-error", "--max-retries", "2", "--log-level", "warni
 def run_eval(log_dir: Path, agent_model: str, seed: int, extra_t: list[str],
              payload_file: Path | None, monitor_model: str, epochs: int = 1, max_samples: int = 1,
              limit: int = 1, defense: str = "trusted_monitoring") -> str:
+    from control_loop.paths import rel, rel_text
     from control_loop.results import latest_log
 
     log_dir = Path(log_dir)
@@ -49,13 +50,15 @@ def run_eval(log_dir: Path, agent_model: str, seed: int, extra_t: list[str],
     # after Inspect resolves --model) Inspect's own mockllm stands in.
     cli_model = "mockllm/model" if agent_model.startswith("cl_mock/") else agent_model
     cmd = [sys.executable, "-m", "inspect_ai", "eval", TASK, "--model", cli_model,
-           "--log-dir", str(log_dir), "--seed", str(seed), "--epochs", str(epochs),
+           "--log-dir", rel(log_dir), "--seed", str(seed), "--epochs", str(epochs),
            "--max-samples", str(max_samples), "--limit", str(limit), *COMMON_EVAL,
            "-T", f"untrusted_model={agent_model}", "-T", f"trusted_model={monitor_model}",
            "-T", f"defense={defense}", *extra_t]
     if payload_file is not None:
-        cmd += ["-T", f"payload_file={Path(payload_file).resolve()}", "-T", "mode=attack"]
-    print("$", " ".join(cmd), flush=True)
+        # repo-relative where possible (the episode runs with cwd=REPO; dp_task resolves it), so
+        # Inspect's task-args echo in a .out log carries no absolute path
+        cmd += ["-T", f"payload_file={rel(Path(payload_file).resolve())}", "-T", "mode=attack"]
+    print("$", rel_text(" ".join(cmd)), flush=True)
     subprocess.run(cmd, cwd=REPO, env=dict(os.environ), check=False)
     return latest_log(log_dir)
 

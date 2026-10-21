@@ -35,7 +35,7 @@ model (`--model`), which ControlArena never calls; role models get only the oper
 active config (inspect_ai/model/_model.py, `Model._resolve_config`, lines 1907-1929). So without
 model_seed the policy (role "untrusted") and the monitor (role "trusted") carry no seed, and the
 setting's judges carry ControlArena's own fixed seed 56 (+ retry index) from
-`control_arena/scorers/_llm_judge.py:89-92` (`llm_score`), which no task option can change (R5). The
+`control_arena/scorers/_llm_judge.py:89-92` (`llm_score`), which no task option can change (no ControlArena source file is modified). The
 Anthropic provider drops any seed (audit_codex X8), so model_seed reaches OpenRouter models only.
 """
 from __future__ import annotations
@@ -44,6 +44,8 @@ import copy
 from pathlib import Path
 
 from inspect_ai import Task, task
+
+from control_loop.paths import repo_path  # -T payload_file is repo-relative (run_eval; no absolute paths)
 from inspect_ai.model import GenerateConfig, get_model
 from inspect_ai.scorer import Score, Target, scorer
 from inspect_ai.solver import TaskState
@@ -144,7 +146,7 @@ def build_micro_protocol(defense: str, payload_file: str | Path | None, framing:
         raise ValueError(f"defense must be one of {DEFENSES}, got {defense!r}")
     if payload_file or framing:
         policy = untrusted_policy_builder(attack=proposer_attack_policy_builder(
-            payload_file=str(Path(payload_file).resolve()) if payload_file else None, framing=framing))
+            payload_file=str(repo_path(payload_file).resolve()) if payload_file else None, framing=framing))
     else:
         policy = untrusted_policy_builder()
     if defense == "none":

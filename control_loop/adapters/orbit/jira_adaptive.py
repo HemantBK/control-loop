@@ -750,6 +750,7 @@ _jira._get_defenses = _get_defenses
 
 
 from control_loop.adapters.orbit.orderings import execution_plan  # early / late / claimslast
+from control_loop.paths import repo_path  # -T file paths are repo-relative on the command line
 
 
 @task
@@ -768,7 +769,7 @@ def jira_adaptive(coalition_payload_file: str | None = None, ordering: str | Non
     and the llm_monitor_fixed / llm_monitor_fixed_actions defense presets.
     """
     if coalition_payload_file:
-        os.environ[PAYLOAD_ENV] = str(Path(coalition_payload_file).resolve())
+        os.environ[PAYLOAD_ENV] = str(repo_path(coalition_payload_file).resolve())
     else:
         os.environ.pop(PAYLOAD_ENV, None)
     if greedy_control:
@@ -781,4 +782,6 @@ def jira_adaptive(coalition_payload_file: str | None = None, ordering: str | Non
         os.environ.pop(JUDGE_SEED_ENV, None)
     if ordering is not None:
         kwargs["execution"] = execution_plan(ordering)
+    if kwargs.get("clean_baseline_log"):   # repo-relative on the command line (loop.py); absolute for ORBIT
+        kwargs["clean_baseline_log"] = str(repo_path(kwargs["clean_baseline_log"]).resolve())
     return _jira.jira_ticket_allocation(**kwargs)

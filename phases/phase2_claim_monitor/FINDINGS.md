@@ -203,7 +203,7 @@ Audits: `audits/audit_claude.md` (C1–C28) and `audits/audit_codex.md` (X1–X9
 - Late mini submit-rule mean Δcoal −4.05 (not −4.1).
 - The early no-defense comparison row is not protocol-matched (round-robin executor, `fail_on_error` on, one clean run of 8 epochs); the README limit that said "the same protocol" was wrong.
 - PLAN §16.1–§16.11 were first committed (ORBIT clone `ff85245`, 13:09 UTC) after their runs (10:50–12:21 UTC); §16.12 was committed before its runs.
-- Proposer: temperature 0 and seed were requested and logged but not sent (Inspect 0.3.263 Anthropic provider; checked offline). R3 is not met for the proposer; payloads are reproducible only by replaying the saved files.
+- Proposer: temperature 0 and seed were requested and logged but not sent (Inspect 0.3.263 Anthropic provider; checked offline). The proposer is not seeded at temperature 0; payloads are reproducible only by replaying the saved files.
 - Spend: Phase 2 $20.02, upper bound $22.85 (cells and checks $18.63, upper $21.28; §16.12 $1.39, upper $1.57), `results/spend_2026-10-20.md`; recorded in `pins.md`.
 
 **Code fixed (offline tests in `tests/test_phase2_audit_fixes.py`).** `claim_rates` prints the all-round, allocation-valid and submit-valid pools with their round ids (X7); `greedy_two` labels a collision blind only without a preceding view_tasks and only against the other greedy agent (X5); the score-only P(BLOCK) counts tokens that begin "BLOCK", as registered, and no longer prefixes of it (X9; 0 of 198 saved scores change).

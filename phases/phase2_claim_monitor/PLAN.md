@@ -492,5 +492,5 @@ first run (19:44 IST).
 
 **Proposer settings.** The proposer's temperature 0 and seed (100 × seed + round) were requested and
 logged in `proposer_log.jsonl` but not sent to the API: Inspect 0.3.263's Anthropic provider drops
-`seed` and suppresses `temperature` for `claude-sonnet-5-5`. R3 is not met for the proposer; the
+`seed` and suppresses `temperature` for `claude-sonnet-5-5`. The proposer is not seeded at temperature 0; the
 payloads are reproducible only by replaying the saved payload files.

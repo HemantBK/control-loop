@@ -34,6 +34,7 @@ from pathlib import Path
 
 from control_loop import proposer as _proposer
 from control_loop.adapters.orbit import DEFENSES, ORDERINGS, run_eval  # the ORBIT-specific glue
+from control_loop.paths import json_line, rel, rel_text, write_json
 from control_loop.results import clean_distribution, latest_log, net_blocks, net_blocks_vs_mean, read_run
 
 HERE = Path(__file__).resolve().parent
@@ -92,20 +93,20 @@ def main() -> None:
     c = read_run(clean_log)  # epoch 1, for the scorer's single-draw pairing (record only)
     cd = clean_distribution(clean_log)
     if cd["n_valid"] == 0:
-        sys.exit(f"clean baseline has no valid epoch (log status {c.status}); fix before attacking. Log: {clean_log}")
+        sys.exit(f"clean baseline has no valid epoch (log status {c.status}); fix before attacking. Log: {rel(clean_log)}")
     if c.status != "success":
         print(f"note: baseline log status {c.status}; {cd['n_valid']}/{cd['n']} epochs valid, the rest are excluded per epoch", flush=True)
     print(f"arm baseline {clean_dir.name}: {cd['n_valid']}/{cd['n']} valid epochs, coalition mean {cd['mean']:.2f} "
           f"sd {cd['sd']:.2f}, tickets mean {cd['tickets_mean']:.2f}, blocks/epoch {cd['blocks_mean_by_boundary']}", flush=True)
     for line in cd["excluded"]:
-        print("  excluded", line, flush=True)
-    (out / "baseline.json").write_text(json.dumps(cd, indent=1, default=str), encoding="utf-8")
+        print("  excluded", rel_text(str(line)), flush=True)
+    write_json(out / "baseline.json", cd, indent=1)   # repo-relative paths only
     if args.baseline_only:
         return
 
     coalition = args.greedy_agent if args.greedy_agent else "dev_0,dev_1"
     attack_t = defense_t + ["-T", f"coalition_agents={coalition}",
-                            "-T", f"clean_baseline_log={Path(clean_log).resolve()}"]
+                            "-T", f"clean_baseline_log={rel(Path(clean_log).resolve())}"]   # cwd=REPO (no absolute paths)
     if args.greedy_agent:
         attack_t += ["-T", "greedy_control=true"]
         if not args.round0_payload_file:
@@ -119,7 +120,7 @@ def main() -> None:
                 payload_file = args.round0_payload_file.resolve()
                 payload = payload_file.read_text(encoding="utf-8").strip()
                 prop = {"model": None, "moves": [], "attempts": 0, "fallback": False,
-                        "round0_source": str(payload_file), "greedy_agent": args.greedy_agent}
+                        "round0_source": rel(payload_file), "greedy_agent": args.greedy_agent}
             else:
                 payload_file, payload, prop = None, STATIC_PAYLOAD, {"model": None, "moves": [], "attempts": 0, "fallback": False}
         else:
@@ -145,7 +146,7 @@ def main() -> None:
                "net_blocks_vs_epoch1": net_blocks(res, c), "proposer": prop}
         history.append(row)
         with rounds_file.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(row, default=str) + "\n")
+            f.write(json_line(row) + "\n")   # repo-relative paths only
         g = "nan" if math.isnan(row["gain"]) else f"{row['gain']:+.2f}"
         print(f"round {r}: status={res.status} valid={row['valid']} coalition={res.coalition_reward:.2f} "
               f"gain_vs_clean_mean={g} paired_epoch1={res.gain:+.2f} tickets={res.coalition_tickets}/{res.total_tickets} "

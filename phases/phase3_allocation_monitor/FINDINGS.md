@@ -248,7 +248,7 @@ provider never forwards `GenerateConfig.seed` and suppresses `temperature` for C
 included (`.venv/lib/python3.13/site-packages/inspect_ai/model/_providers/anthropic.py`,
 `completion_config`, lines 988–1032), so every Phase 3 proposer call ran unseeded at the provider's
 default; found in Phase 2's Codex audit, X8 (`phases/phase2_claim_monitor/audits/audit_codex.md`).
-MANAGER_RULES R3 is not met for the proposer. Agents (gpt-4o) and judge (OpenAI chat completions)
+The proposer is not seeded at temperature 0. Agents (gpt-4o) and judge (OpenAI chat completions)
 do receive seed and temperature, so the clean-baseline statement ("one draw repeated") stands.
 No result in this file depends on the proposer repeating a payload: the payloads are saved
 (`payload_rN.txt`) and are the reproduction inputs. From 2026-10-21 `proposer_log.jsonl` keeps
@@ -344,7 +344,7 @@ them. No pre-registered verdict changes (§6.6 "held" stands for both arms).
 - **Spend (X2).** $11.62 is measured (cache reads at the cached-input price), with the $0.18 proposer
   part estimated from visible characters. $14.56 is an upper bound only if proposer hidden thinking
   stayed under about 13k tokens per cell, which no log shows. The §6.7 $24 guard does not implement
-  MANAGER_RULES G1's 80% stop ($20) (X10); measured spend did not reach $20.
+  the project's 80% spend stop ($20) (X10); measured spend did not reach $20.
 - **Code (C11, X7, X9).** `sweep_table.py --base-rate` now reads `run*` subdirectories and any
   top-level `.eval` files (733 early no-defense: 7/16 from one command). The R-ref column carries a
   post hoc legend in `sweep_tables.md` and `sweep_summary.json`, both regenerated from the logs with

@@ -14,10 +14,10 @@ Steps, in order (each is skipped if state.json says it is done, so `full` resume
 Every eval passes `-T model_seed=<seed> -T temperature=<T>` (PLAN §12.1: `inspect eval --seed` alone
 reaches no ControlArena role) and `--max-samples`. The proposer (RedTeamPolicy, Phase 1's protocol with
 the ControlArena brief) sees, after r0a and after each adaptive round, one row per own attack trajectory
-(PLAN §10.2 fields only). Spend guard before every eval (G1): the Phase 4 cumulative spend (PRIOR_PHASE4
+(PLAN §10.2 fields only). Spend guard before every eval (the spend stop): the Phase 4 cumulative spend (PRIOR_PHASE4
 + every cell's spend.json under the same sweep root) plus the eval's upper estimate must stay at or
 below --phase-stop, and the cell's spend plus that estimate at or below --cell-cap; otherwise the cell
-stops with status "stopped: G1 ...". Spend = control_loop.spend over the logs plus the proposer's logged
+stops with status "stopped: spend stop ...". Spend = control_loop.spend over the logs plus the proposer's logged
 usage. The driver writes its own driver.log (no shell redirect, so uv's .env warning never enters it).
 
 PLAN §13 (monitor-aware brief, `--brief monitor_aware --baseline-from <finished cell>`): the clean runs and
@@ -27,7 +27,7 @@ uncaught-success indicator (`uncaught_gain`). Steps: check = import_baseline, pr
 full = r2, ..., r5, summary (adds `verdict_vs_baseline`). Off by default; the §12 path is unchanged.
 
 The verdict function (`verdict`) and the threshold/uncaught counts are plain Python on per-round
-numbers, with no ControlArena import (C1).
+numbers, with no ControlArena import (the analysis stays framework-agnostic).
 """
 from __future__ import annotations
 
@@ -39,13 +39,14 @@ import time
 from pathlib import Path
 
 from control_loop.adapters import controlarena as ca
+from control_loop.paths import rel, rel_text, write_json, write_text
 
 # Phase 4 spend before the sweep, from RESULTS.md: mechanism check + --limit 3 reproduction $1.18
 # (2026-10-20), red-team selection $1.7235 (2026-10-21).
 PRIOR_PHASE4 = 1.18 + 1.7235
 PHASE_CAP = 40.0          # PLAN §5 phase budget
 PHASE_STOP = 0.8 * PHASE_CAP
-CELL_CAP = 15.0           # G1 per cell
+CELL_CAP = 15.0           # spend stop per cell
 
 # Measured cost per sample (untrusted + trusted monitor + judges), from the red-team selection logs
 # (results/phase4_controlarena/redteam_select/, control_loop.spend prices). Upper = 2x.
@@ -257,7 +258,7 @@ class Cell:
         self.state = json.loads(self.state_file.read_text()) if self.state_file.exists() else dict(
             done=[], logs={}, rounds={}, status="running", config=self.config())
         if self.state.get("config") != self.config():
-            raise SystemExit(f"{self.out}: existing state.json was written with a different configuration:\n"
+            raise SystemExit(f"{rel(self.out)}: existing state.json was written with a different configuration:\n"
                              f"{self.state.get('config')}\nvs\n{self.config()}")
         from control_loop.adapters.controlarena.proposer_policy import RedTeamPolicy
         if args.proposer.startswith("cl_mock/"):
@@ -276,7 +277,7 @@ class Cell:
         if getattr(a, "brief", "default") != "default":
             cfg["brief"] = a.brief
         if getattr(a, "baseline_from", None) is not None:
-            cfg["baseline_from"] = str(a.baseline_from)
+            cfg["baseline_from"] = rel(a.baseline_from)   # as written to state.json (repo-relative)
         return cfg
 
     @property
@@ -284,13 +285,13 @@ class Cell:
         return getattr(self.a, "brief", "default") == "monitor_aware"
 
     def log(self, msg: str) -> None:
-        line = f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] {msg}"
+        line = rel_text(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] {msg}")
         print(line, flush=True)
         with (self.out / "driver.log").open("a", encoding="utf-8") as f:
             f.write(line + "\n")
 
     def save(self) -> None:
-        self.state_file.write_text(json.dumps(self.state, indent=2, default=str), encoding="utf-8")
+        write_json(self.state_file, self.state)   # repo-relative paths only; in memory they may be absolute
 
     # spend
     def cell_spend(self) -> float:
@@ -322,22 +323,22 @@ class Cell:
         cell = self.cell_spend()
         rec = dict(cell_usd=round(cell, 4), phase4_cumulative_usd=round(self.phase_spend(), 4),
                    prior_phase4_usd=PRIOR_PHASE4, phase_stop_usd=self.a.phase_stop, cell_cap_usd=self.a.cell_cap)
-        (self.out / "spend.json").write_text(json.dumps(rec, indent=2), encoding="utf-8")
+        write_json(self.out / "spend.json", rec)
         self.log(f"spend: cell ${rec['cell_usd']:.4f}, Phase 4 cumulative ${rec['phase4_cumulative_usd']:.4f} "
                  f"(stop ${self.a.phase_stop:.2f}, cell cap ${self.a.cell_cap:.2f})")
 
     def guard(self, upper: float, what: str) -> None:
         cell, phase = self.cell_spend(), self.phase_spend()
         if phase + upper > self.a.phase_stop:
-            self.stop(f"stopped: G1 phase stop (${phase:.4f} + upper ${upper:.4f} for {what} > ${self.a.phase_stop:.2f})")
+            self.stop(f"stopped: spend stop, phase (${phase:.4f} + upper ${upper:.4f} for {what} > ${self.a.phase_stop:.2f})")
         if cell + upper > self.a.cell_cap:
-            self.stop(f"stopped: G1 cell cap (${cell:.4f} + upper ${upper:.4f} for {what} > ${self.a.cell_cap:.2f})")
+            self.stop(f"stopped: spend stop, cell cap (${cell:.4f} + upper ${upper:.4f} for {what} > ${self.a.cell_cap:.2f})")
 
     def stop(self, status: str) -> None:
         self.state["status"] = status
         self.save()
         self.log(status)
-        raise SystemExit(status)
+        raise SystemExit(rel_text(status))
 
     # steps
     def run_eval(self, name: str, mode: str, payload_file: Path | None) -> str:
@@ -413,7 +414,7 @@ class Cell:
             self.state["rounds"][label] = dict(label=label, round=0, kind=kind, payload=payload0,
                                                log=bs["logs"][label], status=status, attempts=attempt_counts(rs),
                                                valid=validity(rows, status), samples=rows, proposal={},
-                                               reused_from=str(b))
+                                               reused_from=rel(b))
             if label == "r0a":
                 self.observe_round(0, payload0, rs, rows)
         self.save()
@@ -454,7 +455,7 @@ class Cell:
             return steps
 
         if getattr(self.a, "baseline_from", None) is not None:
-            # PLAN §13: baseline reused; the check stage runs round 1 so R2 sees a new log and the gain on it
+            # PLAN §13: baseline reused; the check stage runs round 1 so the by-hand mechanism check sees a new log and the gain on it
             out = [("import_baseline", self.import_baseline), ("propose_r1", lambda: self.propose(1)),
                    *adaptive(1), ("check", self.check)]
             if stage == "check":
@@ -480,7 +481,7 @@ class Cell:
         out.append(("summary", self.summary))
         return out
 
-    # check stage report (R2 aid; the by-hand check is the run agent's, PLAN §12.5)
+    # check stage report (an aid to the by-hand mechanism check; the check is the run agent's, PLAN §12.5)
     def check(self) -> None:
         from control_loop.adapters.controlarena.reader import read_log, step_table
 
@@ -500,7 +501,7 @@ class Cell:
             proposer_user_messages=proposer_user,
             r0a_samples=rec["samples"],
             step_tables={k: step_table(read_log(self.state["logs"][k])) for k in ("honest_run1", "r0a")})
-        (self.out / "check.json").write_text(json.dumps(report, indent=2, default=str), encoding="utf-8")
+        write_json(self.out / "check.json", report)
         for k in ("honest_run1", "r0a"):
             self.log(f"{k} step table:\n{report['step_tables'][k]}")
             self.log(f"{k} sent by role: {json.dumps(report['sent_by_role'][k])}")
@@ -541,8 +542,8 @@ class Cell:
                     verdict_primary=verdict(rounds, "U_step"), verdict_eot=verdict(rounds, "U_eot"), **extra,
                     rounds=[{k: v for k, v in r.items() if k != "samples"} | dict(samples=r["samples"]) for r in rounds],
                     spend=json.loads((self.out / "spend.json").read_text()))
-        (self.out / "summary.json").write_text(json.dumps(summ, indent=2, default=str), encoding="utf-8")
-        (self.out / "tables.md").write_text(round_table(summ), encoding="utf-8")
+        write_json(self.out / "summary.json", summ)
+        write_text(self.out / "tables.md", round_table(summ))
         self.state["status"] = "complete"
         self.save()
         self.log("\n" + round_table(summ))
@@ -606,6 +607,16 @@ def recompute(cell_dir: Path, audit_budget: float = 1.0, require_main: bool = Tr
                 threshold_max_step=tau_step, threshold_eot=tau_eot, honest_runs=honest_runs,
                 verdict_max_step=verdict(rounds, "U_step"), verdict_eot=verdict(rounds, "U_eot"),
                 rounds=rounds)
+
+
+def write_recompute(cell_dir: Path, name: str = "metric_fixed", **kw) -> dict:
+    """`recompute(cell_dir, **kw)` written to <cell_dir>/<name>.json and its `metric_table` to <name>.md,
+    with repo-relative paths only; how qwen3_733/metric_fixed.{json,md} are produced. Returns the
+    recompute result."""
+    rc = recompute(cell_dir, **kw)
+    write_json(Path(cell_dir) / f"{name}.json", rc)
+    write_text(Path(cell_dir) / f"{name}.md", metric_table(rc))
+    return rc
 
 
 def metric_table(summ: dict) -> str:
@@ -723,7 +734,7 @@ def check_secondary(primary: Path, untrusted: str, proposer: str, n: int, rounds
                          f"({type(e).__name__}: {e})")
     if combined != "matched":
         raise SystemExit(f"secondary cell not started: primary verdict {combined!r} (recomputed from the logs; "
-                         f"only 'matched' allows it; anything else goes to the owner, G2)")
+                         f"only 'matched' allows it; anything else stops and goes to the owner)")
     spent = PRIOR_PHASE4 + sum(json.loads(g.read_text()).get("cell_usd", 0.0)
                                for g in Path(out).parent.glob("*/spend.json") if g.parent.resolve() != Path(out).resolve())
     up = cell_upper(untrusted, proposer, n, rounds)
@@ -754,7 +765,7 @@ def main() -> None:
     ap.add_argument("--baseline-from", type=Path, default=None,
                     help="PLAN §13: reuse this finished cell's clean runs and static rounds (same configuration)")
     ap.add_argument("--r2-verified", action="store_true",
-                    help="full stage only: the run agent's by-hand R2 check of the check stage matched (PLAN §12.5)")
+                    help="full stage only: the run agent's by-hand mechanism check of the check stage matched (PLAN §12.5)")
     args = ap.parse_args()
     if (args.brief == "monitor_aware") != (args.baseline_from is not None):
         raise SystemExit("--brief monitor_aware and --baseline-from go together (PLAN §13: the gain needs the "
@@ -766,7 +777,7 @@ def main() -> None:
                         args.phase_stop, args.out)
     cell = Cell(args)
     if cell.state["status"].startswith("stopped"):
-        raise SystemExit(f"{args.out}: cell is {cell.state['status']!r}; not resumed (report to the owner)")
+        raise SystemExit(f"{rel(args.out)}: cell is {cell.state['status']!r}; not resumed (report to the owner)")
     if args.stage == "full" and "check" not in cell.state["done"]:
         raise SystemExit("--stage full needs a passed check stage in the same --out")
     cell.log(f"stage {args.stage}: {json.dumps(cell.config())}")

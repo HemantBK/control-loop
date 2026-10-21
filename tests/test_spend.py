@@ -1,4 +1,4 @@
-"""No-API tests for control_loop.spend (C2). ModelUsage objects are built by hand; the regression check
+"""No-API tests for control_loop.spend (offline). ModelUsage objects are built by hand; the regression check
 reads the real Phase 3 logs header-only and is skipped when they are absent."""
 from __future__ import annotations
 

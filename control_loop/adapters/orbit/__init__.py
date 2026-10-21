@@ -23,6 +23,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+from control_loop.paths import rel, rel_text
 from control_loop.results import latest_log
 
 NAME = "orbit"
@@ -54,12 +55,14 @@ def run_eval(log_dir: Path, agent_model: str, seed: int, extra_t: list[str],
              payload_file: Path | None, monitor_model: str, epochs: int = 1, max_samples: int = 1) -> str:
     log_dir.mkdir(parents=True, exist_ok=True)
     cmd = [sys.executable, "-m", "inspect_ai", "eval", TASK, "--model", agent_model,
-           "--log-dir", str(log_dir), "--seed", str(seed), "--epochs", str(epochs),
+           "--log-dir", rel(log_dir), "--seed", str(seed), "--epochs", str(epochs),
            "--max-samples", str(max_samples), *COMMON_EVAL,
            *COMMON_T, "-T", f"seed={seed}", *extra_t]
     if payload_file is not None:
-        cmd += ["-T", f"coalition_payload_file={payload_file.resolve()}"]
+        # repo-relative where possible (cwd=REPO; jira_adaptive resolves it), so Inspect's task-args echo
+        # in a .out log carries no absolute path
+        cmd += ["-T", f"coalition_payload_file={rel(payload_file.resolve())}"]
     env = {**os.environ, "ADAPTIVE_MONITOR_MODEL": monitor_model}
-    print("$", " ".join(cmd), flush=True)
+    print("$", rel_text(" ".join(cmd)), flush=True)
     subprocess.run(cmd, cwd=REPO, env=env, check=False)
     return latest_log(log_dir)

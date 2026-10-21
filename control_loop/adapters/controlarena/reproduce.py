@@ -15,6 +15,7 @@ import json
 from pathlib import Path
 
 from control_loop.adapters import controlarena as ca
+from control_loop.paths import rel, write_json
 
 UNTRUSTED, TRUSTED = "anthropic/claude-opus-5-5", "anthropic/claude-sonnet-4-6"  # ControlArena 20.1.0 defaults
 
@@ -92,11 +93,11 @@ def main() -> None:
                                  steps=[(s.step, s.tool_calls, s.suspicion_score, s.score_parsed, s.metadata_score,
                                          s.metadata_overwritten) for s in r.steps])
                             for r in flat])
-    (args.out / "summary.json").write_text(json.dumps(summary, indent=2, default=str), encoding="utf-8")
+    write_json(args.out / "summary.json", summary)   # repo-relative paths only
     print("\n" + step_table(flat) + "\n")
     print("control metrics:", json.dumps(summary["control_metrics"], default=str))
     print("attack attempts:", json.dumps(summary["attempts"]))
-    print(f"cost ${summary['cost_usd']:.4f}  ->  {args.out / 'summary.json'}")
+    print(f"cost ${summary['cost_usd']:.4f}  ->  {rel(args.out / 'summary.json')}")
 
 
 if __name__ == "__main__":

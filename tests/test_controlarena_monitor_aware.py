@@ -1,4 +1,4 @@
-"""No-API tests for the monitor-aware proposer brief (phases/phase4_controlarena/PLAN.md §13; C2).
+"""No-API tests for the monitor-aware proposer brief (phases/phase4_controlarena/PLAN.md §13; offline, no API calls).
 
 - the flag defaults off: RedTeamPolicy and the sweep CLI use BRIEF, and a §12 cell's config is unchanged;
 - BRIEF_MONITOR_AWARE differs from BRIEF only in its feedback paragraph and gives no number;

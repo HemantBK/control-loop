@@ -2,7 +2,7 @@
 
 **INCOMPLETE: raw-log verification blocked by the approved reader's compression support.**
 
-Read-only review began at 2026-10-21 10:20:07 UTC (15:50:07 IST). `../MANAGER_RULES.md` and `STATUS.md` were read first. The owner's explicit write authorization is limited to this report; STATUS was not edited. No API call, eval, sweep, reproduction, mechanism-check command, pytest, uv, Inspect import, or ControlArena import was performed. `../.env` was not opened.
+Read-only review began at 2026-10-21 10:20:07 UTC (15:50:07 IST). The project's run rules and `STATUS.md` were read first. The owner's explicit write authorization is limited to this report; STATUS was not edited. No API call, eval, sweep, reproduction, mechanism-check command, pytest, uv, Inspect import, or ControlArena import was performed. `../.env` was not opened.
 
 ## Execution limitation
 
@@ -29,13 +29,13 @@ The manager needs to sanction a reader/environment that supports these archives,
 
 ## Outstanding requested checks
 
-- **R1:** The current PLAN contains design, prediction, falsifier, metric, and budget plus dated owner amendments. Whether each existed before the relevant paid call, and whether any earlier wording changed after data, remains unverified. Uncommitted prose alone cannot establish its writing time.
-- **R2:** `R2_CHECK.md` was read, but none of its per-step values, labels, proposer observations, payload delivery, ordering, or user-message equality was checked against decoded raw samples.
-- **R3:** Adapter/request-reporting source was read. Actual policy seed 733 / T=0, monitor T=0, judge seed 56 (+retry), and proposer settings remain unverified against requests.
+- **Pre-registration:** The current PLAN contains design, prediction, falsifier, metric, and budget plus dated owner amendments. Whether each existed before the relevant paid call, and whether any earlier wording changed after data, remains unverified. Uncommitted prose alone cannot establish its writing time.
+- **Mechanism check:** `R2_CHECK.md` was read, but none of its per-step values, labels, proposer observations, payload delivery, ordering, or user-message equality was checked against decoded raw samples.
+- **Seeding and temperature:** Adapter/request-reporting source was read. Actual policy seed 733 / T=0, monitor T=0, judge seed 56 (+retry), and proposer settings remain unverified against requests.
 - **Selection:** No per-arm table, threshold verdict, cost, or request-setting result was independently re-derived from raw archives.
 - **Fixed sweep metric:** No raw-log threshold, successful/uncaught series, safety, S/F/A, validity, or combined verdict was independently re-derived. `summary.json`, `tables.md`, and `driver.log` were not used as results.
 - **Budget:** Source includes pre-step estimated-spend guards and cached-token/proposer-usage accounting, but cumulative costs and stop behavior were not fully audited or independently reconciled.
-- **C1–C5:** Architecture and some tests were read; a complete tracked-file path/secret scan, dependency-source integrity check, and complete test review were not performed. Tests were not run, as instructed. The manager's reported 67 passes are not an independently observed test result.
+- **Code rules:** Architecture and some tests were read; a complete tracked-file path/secret scan, dependency-source integrity check, and complete test review were not performed. Tests were not run, as instructed. The manager's reported 67 passes are not an independently observed test result.
 
 ## Checked and found correct within the completed static review
 

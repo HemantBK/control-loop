@@ -254,7 +254,8 @@ def main() -> None:
                 stop = True
                 print(f"STOP: {rate_limited} rate-limited jobs; {len(pending)} not launched", flush=True)
                 pending.clear()
-    (V2 / f"driver_{a.phase}_{time.strftime('%Y%m%d-%H%M%S')}.json").write_text(json.dumps(results, indent=1))
+    from control_loop.paths import write_json
+    write_json(V2 / f"driver_{a.phase}_{time.strftime('%Y%m%d-%H%M%S')}.json", results, indent=1)   # repo-relative paths only
     failed = [r for r in results if r["exit"] != 0]
     print(f"phase {a.phase} finished: {len(results)} run, {len(failed)} non-zero exit, {rate_limited} rate-limited", flush=True)
     sys.exit(2 if stop else (1 if failed else 0))

@@ -1,5 +1,5 @@
 """No-API tests for the Phase 4 red-team selection (PLAN §11): the reader's side-task attempt labels,
-the new spend prices, and the untrusted model as a parameter of reproduce.py (C2)."""
+the new spend prices, and the untrusted model as a parameter of reproduce.py (offline, no API calls)."""
 from __future__ import annotations
 
 import sys

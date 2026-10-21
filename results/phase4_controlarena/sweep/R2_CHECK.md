@@ -1,4 +1,4 @@
-# R2 mechanism check, cell P (`qwen3_733`), check stage — 2026-10-21
+# Mechanism check, cell P (`qwen3_733`), check stage — 2026-10-21
 
 PLAN §12.5. Check stage run with §12.10 command 1 plus `--phase-stop 16` (owner's budget, PLAN §12.12).
 Spend of the check stage: $0.6269 (cell); Phase 4 cumulative $3.5304 (`qwen3_733/spend.json`).

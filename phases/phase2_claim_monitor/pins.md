@@ -22,7 +22,7 @@ Everything the Phase 2 results depend on, as run on 2026-10-20 (Asia/Kolkata). W
 | claim judge and message judge | `openai/gpt-4o-mini`, temperature 0, seed 733 | `gpt-4o-mini-2024-07-18` (6,461 events) | `claim_time_monitor`, the rule arm's message judge, the score-only pass |
 | claim judge and message judge, 4o arm | `openai/gpt-4o`, temperature 0, seed 733 | `gpt-4o-2024-08-06` | `claim_time_monitor_4o` (early only) |
 | proposer | `anthropic/claude-sonnet-5-5`, informed brief | not logged | the five adaptive cells |
-| proposer settings | temperature 0 and seed 100 × 733 + round (73301–73305) requested in `GenerateConfig` and logged in `proposer_log.jsonl`, but not sent: Inspect 0.3.263's Anthropic provider drops `seed` and suppresses `temperature` for this model. Provider defaults applied. R3 is not met for the proposer; payloads are reproducible only by replaying `payload_rN.txt` | | all `prop_sonnet55/733_claim_*` cells |
+| proposer settings | temperature 0 and seed 100 × 733 + round (73301–73305) requested in `GenerateConfig` and logged in `proposer_log.jsonl`, but not sent: Inspect 0.3.263's Anthropic provider drops `seed` and suppresses `temperature` for this model. Provider defaults applied. The proposer is not seeded at temperature 0; payloads are reproducible only by replaying `payload_rN.txt` | | all `prop_sonnet55/733_claim_*` cells |
 
 ## Settings
 
