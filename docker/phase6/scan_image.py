@@ -57,6 +57,14 @@ KNOWN_PUBLIC_SHA256 = {
     # CI instance." Hugging Face's published token for its staging CI hub, not an account credential.
     "5de261506c0ff857b7c1af7059f842fb0a36d1ca2e4895da542c5eb726f2c802":
         "Hugging Face staging-CI token published in transformers/testing_utils.py",
+    # 2026-10-22, first full image scan (31 findings, all these two values): OpenSSH's FIDO security-key certificate
+    # algorithm names, followed by "@openssh.com" in sshd, ssh, ssh-keygen, ssh-agent, ssh-add, ssh-keyscan,
+    # ssh-keysign, ssh-pkcs11-helper, ssh-sk-helper, vim's sshdconfig.vim syntax file and Nsight Compute's libssh.so.
+    # Digests verified by hashing the names; lengths 23 and 31 match the report.
+    "b12c7307b55a67d1701d94890611bf9605785942351afe051978e0a23888ab47":
+        "OpenSSH algorithm name sk-ssh-ed25519-cert-v01 (public protocol identifier, not a key)",
+    "3ba30ddc57c5e012f28276fa224e3485067a139cd220da03b730060afb01b2b9":
+        "OpenSSH algorithm name sk-ecdsa-sha2-nistp256-cert-v01 (public protocol identifier, not a key)",
 }
 INSTALLER_FILES = {"RECORD", "INSTALLER", "REQUESTED", "direct_url.json"}
 SKIP_TOP = {"proc", "sys", "dev"}           # runtime mounts; empty in an image rootfs

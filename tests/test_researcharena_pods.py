@@ -1190,3 +1190,17 @@ def test_scan_report_ok_status(tmp_path):
     assert m.main(["--root", str(root), "--path-scan", "/opt/app", "--report", str(rep), "--status", str(st)]) == 0
     assert st.read_text().strip() == "OK" and rep.read_text().startswith("P6 IMAGE SCAN OK:")
 
+
+def test_scan_allows_openssh_algorithm_names_but_not_keys(tmp_path):
+    """2026-10-22: the two OpenSSH security-key algorithm names are allow-listed by digest; a key-shaped value next to
+    them still fails (the sk_key pattern itself is unchanged)."""
+    m = _scanner()
+    root = tmp_path / "img"
+    (root / "usr" / "sbin").mkdir(parents=True)
+    names = "ecdsa-sha2-nistp521-cert-v01@openssh.com," + "sk-" + "ssh-ed25519-cert-v01" + "@openssh.com," \
+            + "sk-" + "ecdsa-sha2-nistp256-cert-v01" + "@openssh.com"
+    (root / "usr" / "sbin" / "sshd").write_bytes(b"\0" + names.encode() + b"\0")
+    assert m.main(["--root", str(root)]) == 0
+    (root / "usr" / "sbin" / "other").write_text('K = "' + "sk-" + "Zp4" * 8 + '"\n')
+    assert m.main(["--root", str(root)]) == 1
+

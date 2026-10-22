@@ -409,3 +409,18 @@ fixed by finding key spans on the whole buffer and widening the window over any 
 patterns are not loosened; only false positives enter the explicit allow-lists (`KNOWN_PUBLIC_SHA256` by digest,
 `--allow-root-path` by file), each with a one-line reason. Phase 6 tests 116 passed. Nothing here enters a table.
 
+## 2026-10-22: first full image scan classified (owner's run b99acca; GitHub Actions, 47 min 30 s; no RunPod spend)
+
+Report: 87,434 regular files (22.94 GB) scanned for .env names and 8 key patterns, 399 text files of the build's own paths
+for `/root/`; 1 known public value allowed (the transformers staging-CI token); 31 findings. Classification:
+- Real secrets: **none.** No .env file, no forbidden credential file.
+- `/root` paths that matter: **none** (0 root_path findings).
+- False positives: **all 31**, two distinct values only, matched by the `sk_key` pattern: `sk-ssh-ed25519-cert-v01` (sha256
+  b12c7307…, length 23) and `sk-ecdsa-sha2-nistp256-cert-v01` (sha256 3ba30ddc…, length 31), OpenSSH's FIDO security-key
+  certificate algorithm names, each followed by `@openssh.com` in sshd, ssh, ssh-keygen, ssh-agent, ssh-add, ssh-keyscan,
+  ssh-keysign, ssh-pkcs11-helper, ssh-sk-helper, vim's sshdconfig.vim and Nsight Compute's libssh.so (all from the base image).
+  Digests verified by hashing the two names; lengths match.
+Action: the two digests were added to `KNOWN_PUBLIC_SHA256` in `docker/phase6/scan_image.py`, each with a one-line reason; no
+key pattern was changed (diff: 8 added lines, 0 pattern lines); a new test proves a key-shaped value beside the names still
+fails. Phase 6 tests 117 passed.
+
