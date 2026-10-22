@@ -207,3 +207,29 @@ Audits: `audits/audit_claude.md` (C1–C28) and `audits/audit_codex.md` (X1–X9
 - Spend: Phase 2 $20.02, upper bound $22.85 (cells and checks $18.63, upper $21.28; §16.12 $1.39, upper $1.57), `results/spend_2026-10-20.md`; recorded in `pins.md`.
 
 **Code fixed (offline tests in `tests/test_phase2_audit_fixes.py`).** `claim_rates` prints the all-round, allocation-valid and submit-valid pools with their round ids (X7); `greedy_two` labels a collision blind only without a preceding view_tasks and only against the other greedy agent (X5); the score-only P(BLOCK) counts tokens that begin "BLOCK", as registered, and no longer prefixes of it (X9; 0 of 198 saved scores change).
+
+## 2026-10-22 — Corrections: absolute paths in tracked run artifacts rewritten (owner's decision (c); SOP check T2.6)
+
+24 tracked files under `results/phase2_claim_monitor/` (`baseline.json` 12, `rounds.jsonl` 12) had their absolute root prefixes rewritten, 49 lines in all (10 files held the repository root, 14 the ORBIT clone root only). The roots (the Mac path of this repository before the pod, and the Mac path of the ORBIT clone, spelled out only in `docs/legacy_absolute_paths.md`) were replaced on the raw text, `rel_text`-style: repository root → repo-relative, ORBIT clone root → `../orbit/` (a sibling repository; its `results/...` paths name the same logs tracked here under `results/`). Each file was parsed before and after; every difference is a string value equal to the old one minus the root prefix: **no number, key, order or spacing changed**. Per-file diffs are in the pod's scratch directory outside the repository. `.out` runner logs are not edited (SOP §3); the ones with absolute paths are listed as legacy in `docs/legacy_absolute_paths.md` and enter no table. Phase 2 has no `.out` file with an absolute path. No verdict, table or number changes.
+
+## 2026-10-22: corrections (p14-corrections; SOP §2.3; owner's decisions (a) and (b) of 2026-10-22; no API call)
+
+- **Fisher p-values (`audits/sop_check.md` T2.3).** README §4 and §6.1 quoted nine two-sided Fisher exact p-values with no generating script. `phases/phase2_claim_monitor/fisher.py` (new, 2026-10-22) recomputes the pooled 2×2 counts from the logs with `claim_rates`' functions and applies `scipy.stats.fisher_exact`. Output (2026-10-22; `uv run --frozen python phases/phase2_claim_monitor/fisher.py`):
+
+```
+cell | pool | rounds | coalition blocked/judged | outsiders blocked/judged | Fisher two-sided p
+early mini | allocation-valid | 5 (A1, A2, A3, A4, A5) | 17/33 | 3/14 | 0.105
+early mini | submit-valid | 4 (A1, A3, A4, A5) | 16/28 | 3/12 | 0.089
+early gpt-4o | allocation-valid | 4 (A2, A3, A4, A5) | 12/16 | 2/14 | 0.001
+early gpt-4o | submit-valid | none | – | – | no valid round
+early rule | allocation-valid | 3 (A1, A2, A3) | 2/18 | 0/9 | 0.538
+early rule | submit-valid | none | – | – | no valid round
+late mini | allocation-valid | 4 (A1, A2, A3, A4) | 10/20 | 4/13 | 0.310
+late mini | submit-valid | 3 (A2, A3, A4) | 7/14 | 3/11 | 0.414
+late rule | allocation-valid | 3 (A2, A4, A5) | 11/23 | 0/4 | 0.123
+late rule | submit-valid | 2 (A4, A5) | 7/15 | 0/3 | 0.245
+```
+
+  Counts identical to README §6.1; p-values identical to the quoted values to two decimals (0.11 / 0.09, 0.31 / 0.41, 0.54, 0.12 / 0.25, 0.001). No number changed; the README carries dated brackets naming the script.
+- **One-draw statement (owner's decision (b); T2.9).** README section 1.2 (added 2026-10-22) states that the two deciding cells are single seeded episodes at seed 733, that one distinct instance backs the headline, and that "This is an observation on 1 draw, not a rate; the replicate is deferred until a defense survives on JiraTicket (owner's decision of 2026-10-22)". No verdict changed.
+- **Not changed.** `pins.md`'s ModelEvent counts (7,720 / 6,461) come from an uncommitted script (T2.5); `pins.md` is outside this task's write list.
