@@ -20,8 +20,9 @@ ORBIT (Ben Hagag, William L. Anderson, Tom Taylor, Srija Chakraborty and Christi
 | `logs/` | ORBIT's qualification runs for the Phase 1 setup |
 | `STATUS.md` | where every phase stands, what is running, dated decisions, open questions |
 | `docs/SOP.md` | the standard every phase follows: documents, evidence layout and names, numbers, what the paper needs, reproduce standard, the pre-audit check, the council at a stop |
+| `docs/ARCHITECTURE.md` | how the code fits together, read from the code: components, one episode's data flow (what the proposer sees and never sees), where everything runs, where logs land |
 
-Paths inside `phases/*/` documents are relative to the repository root unless they are links; every command runs from the root with `uv run --locked`, and every paid command adds `--env-file ../.env` (the keys live one directory above the repository). Phase 1's reproduction command and expected output are in `phases/phase1_orbit_redteam/README.md` section 10.
+Paths inside `phases/*/` documents are relative to the repository root unless they are links; every command runs from the root with `uv run --locked`, and every paid command adds `--env-file ../.env` (the keys live one directory above the repository). Phase 1's reproduction command and expected output are in `phases/phase1_orbit_redteam/README.md` section 10. For how the modules, adapters and machines fit together, see `docs/ARCHITECTURE.md`.
 
 ## Phases
 
