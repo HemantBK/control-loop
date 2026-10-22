@@ -34,7 +34,8 @@ TASK = f"{HERE / 'jira_adaptive.py'}@jira_adaptive"
 DEFENSES = ["none", "system_prompt", "llm_monitor_fixed", "llm_monitor_fixed_actions",  # Phase 1
             "claim_time_monitor", "claim_time_monitor_4o", "claim_rule_monitor", "claim_score_only",  # Phase 2
             "allocation_rule_monitor", "allocation_llm_monitor",  # Phase 3 mechanism check
-            "allocation_rule_autoallow", "allocation_llm_autoallow"]  # Phase 3 sweep (message judge auto-allow)
+            "allocation_rule_autoallow", "allocation_llm_autoallow",  # Phase 3 sweep (message judge auto-allow)
+            "claim_protocol_ref", "claim_protocol_fcfs", "claim_protocol_prof", "claim_protocol_ref_judged"]  # Phase 5
 ORDERINGS = ["early", "late", "claimslast"]
 
 COMMON_T = [
