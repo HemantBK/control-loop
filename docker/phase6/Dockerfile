@@ -107,7 +107,7 @@ RUN P6_PYTHON_EXPECT=3.11 TORCH_CUDA_EXPECT=12.8 NVCC_EXPECT=12.9 RA_DIR=/opt/Re
 FROM ${BASE_IMAGE} AS scan
 COPY scan_image.py /usr/local/share/p6-scan/scan_image.py
 RUN --network=none --mount=type=bind,from=env,source=/,target=/img \
-    python3 /usr/local/share/p6-scan/scan_image.py --root /img --report /p6_scan.txt \
+    python3 /usr/local/share/p6-scan/scan_image.py --root /img --report /p6_scan/report.txt --status /p6_scan/status --no-fail \
       --path-scan /opt/ResearchArena --path-scan /opt/hf --path-scan /etc/p6_image.json --path-scan /usr/local/share/p6 \
       --path-scan /usr/lib/node_modules/opencode-ai/package.json \
       --path-scan-installer-files /usr/local/lib/python3.11/dist-packages \
@@ -117,7 +117,15 @@ RUN --network=none --mount=type=bind,from=env,source=/,target=/img \
       --forbid /opt/hf/token --forbid /opt/hf/stored_tokens --forbid /root/.cache/huggingface/token \
       --forbid /root/.git-credentials --forbid /root/.docker/config.json --forbid /root/.npmrc
 
+# scan_out: only the scan's report and status, exported by the workflow (target scan_out, local output) so the report is
+# printed in the job log before anything else is built or pushed (2026-10-22, owner).
+FROM scratch AS scan_out
+COPY --from=scan /p6_scan/ /
+
 FROM env AS final
-COPY --from=scan /p6_scan.txt /etc/p6_scan.txt
+COPY --from=scan /p6_scan/report.txt /etc/p6_scan.txt
+COPY --from=scan /p6_scan/status /etc/p6_scan_status
+# the pushed image can only be built from a clean scan
+RUN test "$(cat /etc/p6_scan_status)" = OK || { echo "P6 image scan has findings; see the 'Print the scan report' step"; exit 1; }
 LABEL org.opencontainers.image.source="https://github.com/HemantBK/control-loop" \
       org.opencontainers.image.description="Phase 6 (ResearchArena cuda_kernel) pod environment; see docker/phase6/README.md"

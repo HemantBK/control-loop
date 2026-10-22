@@ -393,3 +393,19 @@ Owner-directed hygiene before the commit to the public repository (SOP §3, §7)
   the AWS documentation example ids in `docker/phase6/scan_image.py` and the scanner test's deliberate near-miss.
   Suite `RESEARCHARENA_ROOT=… uv run --frozen pytest -q`: 347 passed, 1 skipped (the mock-protocol test, now
   skipped without `P5_MOCK_LOGS`; 4 passed with it set).
+
+## 2026-10-22: image build stopped at the secret scan; the report made visible (no spend on RunPod)
+
+The owner's first run of the phase6-image workflow failed at the scan step (exit 1 after 14 min 55 s); the scanner printed
+its findings only inside BuildKit's collapsed step log and wrote its report file only when the scan was clean, so the
+findings were not visible. Changes (owner's instruction): `docker/phase6/scan_image.py` always writes the full report and a
+status file (`OK` / `FINDINGS`); `--no-fail` lets the report leave the build; every match is listed (up to 25 per pattern per
+file); each key-pattern finding prints the sha256 of the matched value and up to 80 bytes of context on each side with every
+key-shaped value masked; each `/root/` finding prints its line, masked the same way. The Dockerfile's `scan_out` stage
+exports the report; the `final` stage refuses to build unless the status is OK. The workflow builds to `scan_out`, prints the
+report in a dedicated step and the step summary, uploads it as an artifact, and fails on findings before the final build and
+the push. A new test caught a masking leak during the change (a key cut by the context window's edge printed as a fragment);
+fixed by finding key spans on the whole buffer and widening the window over any span it touches. Policy unchanged: the key
+patterns are not loosened; only false positives enter the explicit allow-lists (`KNOWN_PUBLIC_SHA256` by digest,
+`--allow-root-path` by file), each with a one-line reason. Phase 6 tests 116 passed. Nothing here enters a table.
+

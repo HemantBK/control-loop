@@ -95,9 +95,63 @@ jobs:
         id: buildx
         uses: docker/setup-buildx-action@v4
 
-      # Build every stage (env -> scan -> final) without exporting anything. The scan runs here, after the build of
-      # the environment and before any push; a finding fails this step and the job.
-      - name: Build and scan (no push)
+      # 2026-10-22 (owner): build up to the scan only and export its report, so the full report is printed in this
+      # job's log (and kept as an artifact) before anything else is built; a finding fails the job here, before any push.
+      # cache-to mode=max keeps the env stage's layers, so a rerun after an allow-list change only reruns the scan.
+      - name: Build environment and scan (report only)
+        uses: docker/build-push-action@v7
+        with:
+          context: docker/phase6
+          file: docker/phase6/Dockerfile
+          target: scan_out
+          platforms: linux/amd64
+          outputs: type=local,dest=${{ runner.temp }}/p6scan
+          provenance: false
+          sbom: false
+          build-args: |
+            TRANSFORMERS_VERSION=${{ inputs.transformers_version }}
+            OPENCODE_VERSION=${{ inputs.opencode_version }}
+            RESEARCHARENA_COMMIT=${{ inputs.researcharena_commit }}
+            IMAGE_TAG=${{ steps.v.outputs.tag }}
+            GIT_SHA=${{ github.sha }}
+            BUILD_DATE=${{ steps.v.outputs.build_date }}
+          cache-from: type=gha,scope=phase6-image
+          cache-to: type=gha,scope=phase6-image,mode=max,ignore-error=true
+
+      - name: Print the scan report
+        if: always()
+        run: |
+          set -uo pipefail
+          r="${{ runner.temp }}/p6scan/report.txt"
+          if [ ! -f "$r" ]; then echo "no scan report was produced (the build failed before the scan)"; exit 0; fi
+          echo "status: $(cat "${{ runner.temp }}/p6scan/status" 2>/dev/null || echo missing)"
+          echo "----- full scan report ($(wc -l < "$r") lines) -----"
+          cat "$r"
+          echo "----- end of scan report -----"
+          {
+            echo "### Phase 6 image scan"
+            echo '```'
+            cat "$r"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload the scan report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p6-scan-report
+          path: ${{ runner.temp }}/p6scan/
+          if-no-files-found: warn
+
+      - name: Fail on scan findings
+        run: |
+          set -euo pipefail
+          st=$(cat "${{ runner.temp }}/p6scan/status")
+          echo "scan status: $st"
+          [ "$st" = OK ]
+
+      # Build the final stage without exporting (its RUN refuses to build unless the scan status is OK).
+      - name: Build final image (no push)
         uses: docker/build-push-action@v7
         with:
           context: docker/phase6
@@ -150,7 +204,7 @@ jobs:
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}
           cache-from: type=gha,scope=phase6-image
-          cache-to: type=gha,scope=phase6-image,mode=min,ignore-error=true
+          cache-to: type=gha,scope=phase6-image,mode=max,ignore-error=true
 
       - name: Pushed digest
         env:

@@ -1154,3 +1154,39 @@ def test_image_version_check_flags_each_mismatch(monkeypatch):
     msg = "; ".join(m.problems(bad))
     for want in ("transformers 5.3.0 != 4.53.3", "torch.version.cuda 12.9 != 12.8", "node 20.1.0", "clean=False"):
         assert want in msg, want
+
+
+def test_scan_report_always_written_masked_and_complete(tmp_path):
+    """2026-10-22 (owner): the report is always written, never contains a matched value, carries the sha256 an
+    allow-list entry needs, lists every match, and --no-fail exits 0 with status FINDINGS."""
+    import hashlib
+    m = _scanner()
+    root = tmp_path / "img"
+    (root / "opt" / "app").mkdir(parents=True)
+    fake1 = "sk-" + "Qz7" * 9                      # fake, built at run time so no key-shaped literal sits in this file
+    fake2 = "hf_" + "Ab9" * 12
+    (root / "opt" / "app" / "conf.py").write_text(f'TOKEN = "{fake1}"\nOTHER = "{fake2}"\nSECOND = "{fake1}x"\n')
+    (root / "opt" / "app" / "run.sh").write_text("cd /root/work && ./go\n")
+    rep, st = tmp_path / "out" / "report.txt", tmp_path / "out" / "status"
+    rc = m.main(["--root", str(root), "--path-scan", "/opt/app", "--report", str(rep), "--status", str(st), "--no-fail"])
+    assert rc == 0 and st.read_text().strip() == "FINDINGS"
+    text = rep.read_text()
+    assert fake1 not in text and fake2 not in text and "Qz7Qz7" not in text and "Ab9Ab9" not in text
+    assert hashlib.sha256(fake1.encode()).hexdigest() in text            # the allow-list needs the digest
+    assert text.count("FAIL key_pattern") == 3                            # every match, not only the first per pattern
+    assert "<MASKED sk_key len=" in text and 'TOKEN = "' in text          # context, value masked
+    assert "FAIL root_path /opt/app/run.sh line=1" in text and "cd /root/work" in text
+    assert text.rstrip().splitlines()[-1].startswith("P6 IMAGE SCAN FAILED:")
+    rc2 = m.main(["--root", str(root), "--path-scan", "/opt/app", "--report", str(rep), "--status", str(st)])
+    assert rc2 == 1                                                       # without --no-fail it still fails
+
+
+def test_scan_report_ok_status(tmp_path):
+    m = _scanner()
+    root = tmp_path / "img"
+    (root / "opt" / "app").mkdir(parents=True)
+    (root / "opt" / "app" / "ok.txt").write_text("nothing here\n")
+    rep, st = tmp_path / "report.txt", tmp_path / "status"
+    assert m.main(["--root", str(root), "--path-scan", "/opt/app", "--report", str(rep), "--status", str(st)]) == 0
+    assert st.read_text().strip() == "OK" and rep.read_text().startswith("P6 IMAGE SCAN OK:")
+

@@ -18,6 +18,11 @@ when any of these holds:
    package authors' own text is not this build's and a `/root/` there would not be a leak from this build.
 
 Every finding prints its kind, the image path, the pattern name and the byte offset; a matched value is never printed.
+2026-10-22 (owner): the full report is always written (`--report`) and a status file holds `OK` or `FINDINGS` (`--status`);
+with `--no-fail` the exit code is 0 so the report can leave the build, and the caller fails on the status. Each key-pattern
+finding also prints the sha256 of the matched value (what an allow-list entry needs) and up to 80 bytes of context on each
+side with every key-shaped value in it masked as <MASKED pattern len=N>; each `/root/` finding prints its line, masked the
+same way. All matches are listed (up to MAX_PER_PATTERN per pattern per file), not only the first.
 """
 from __future__ import annotations
 
@@ -69,10 +74,46 @@ def image_path(root: str, p: str) -> str:
     return "/" if rel == "." else "/" + rel
 
 
-def key_hits(fp, allowed: list | None = None) -> list[tuple[str, int]]:
-    """(pattern name, offset) of the first match of each pattern in an open binary file; matches of a known public
-    value are appended to `allowed` as (pattern name, offset, reason) instead."""
-    hits: dict[str, int] = {}
+MAX_PER_PATTERN = 25
+CONTEXT = 80
+
+
+def _spans(b: bytes) -> list[tuple[int, int, str]]:
+    out = []
+    for name, rx in COMPILED:
+        for m in rx.finditer(b):
+            out.append((m.start(), m.end(), name))
+    return sorted(out)
+
+
+def masked_window(b: bytes, a: int, z: int) -> str:
+    """Printable text of b[a:z] with every key-shaped value masked as <MASKED name len=N>. Spans are found on the whole
+    buffer and the window is widened to cover any span it touches, so a value cut by the window edge is never printed
+    as a fragment (2026-10-22: a fragment too short for the patterns would otherwise leak)."""
+    spans = _spans(b)
+    for s0, s1, _ in spans:
+        if s0 < a < s1:
+            a = s0
+        if s0 < z < s1:
+            z = s1
+    out, i = [], a
+    for s0, s1, name in spans:
+        if s1 <= a or s0 >= z or s0 < i:
+            continue
+        out.append(b[i:s0].decode("utf-8", "replace"))
+        out.append(f"<MASKED {name} len={s1 - s0}>")
+        i = s1
+    out.append(b[i:z].decode("utf-8", "replace"))
+    return "".join(out).replace("\r", " ").replace("\n", " \u23ce ").replace("\t", " ")
+
+
+def key_hits(fp, allowed: list | None = None) -> list[tuple[str, int, str, str]]:
+    """(pattern name, offset, sha256 of the matched value, masked context) for every match (up to MAX_PER_PATTERN per
+    pattern) in an open binary file; matches of a known public value are appended to `allowed` as
+    (pattern name, offset, reason) instead."""
+    hits: list[tuple[str, int, str, str]] = []
+    counts: dict[str, int] = {}
+    seen_off: set[tuple[str, int]] = set()
     prev = b""
     base = 0                                  # file offset of prev[0]
     while True:
@@ -82,24 +123,31 @@ def key_hits(fp, allowed: list | None = None) -> list[tuple[str, int]]:
         buf = prev + chunk
         if any(p in buf for p in PREFIXES):
             for name, rx in COMPILED:
-                if name in hits:
-                    continue
                 for m in rx.finditer(buf):
-                    if m.group(0) in KNOWN_EXAMPLES:
+                    off = base + m.start()
+                    if (name, off) in seen_off:
                         continue
-                    reason = KNOWN_PUBLIC_SHA256.get(hashlib.sha256(m.group(0)).hexdigest())
-                    if reason:
-                        if allowed is not None and not any(a[0] == name and a[1] == base + m.start() for a in allowed):
-                            allowed.append((name, base + m.start(), reason))
+                    seen_off.add((name, off))
+                    v = m.group(0)
+                    if v in KNOWN_EXAMPLES:
                         continue
-                    if name == "sk_key" and (m.group(0).startswith(b"sk-ant-") or m.group(0).startswith(b"sk-or-")):
+                    if name == "sk_key" and (v.startswith(b"sk-ant-") or v.startswith(b"sk-or-")):
                         continue              # reported under its own name
-                    hits[name] = base + m.start()
-                    break
+                    digest = hashlib.sha256(v).hexdigest()
+                    reason = KNOWN_PUBLIC_SHA256.get(digest)
+                    if reason:
+                        if allowed is not None:
+                            allowed.append((name, off, reason))
+                        continue
+                    if counts.get(name, 0) >= MAX_PER_PATTERN:
+                        continue
+                    counts[name] = counts.get(name, 0) + 1
+                    ctx = masked_window(buf, max(0, m.start() - CONTEXT), min(len(buf), m.end() + CONTEXT))
+                    hits.append((name, off, digest, ctx))
         keep = buf[-OVERLAP:]
         base += len(buf) - len(keep)
         prev = keep
-    return sorted(hits.items(), key=lambda x: x[1])
+    return sorted(hits, key=lambda x: x[1])
 
 
 def is_text(path: str) -> bool:
@@ -139,8 +187,9 @@ def scan(root: str, path_scan: list[str], installer_dirs: list[str], forbid: lis
             try:
                 allowed: list = []
                 with open(p, "rb") as f:
-                    for name, off in key_hits(f, allowed):
-                        findings.append(f"FAIL key_pattern {image_path(root, p)} pattern={name} offset={off}")
+                    for name, off, digest, ctx in key_hits(f, allowed):
+                        findings.append(f"FAIL key_pattern {image_path(root, p)} pattern={name} offset={off} "
+                                        f"sha256={digest} context=[{ctx}]")
                 for name, off, reason in allowed:
                     notes.append(f"ALLOWED key_pattern {image_path(root, p)} pattern={name} offset={off} ({reason})")
             except OSError as e:
@@ -186,8 +235,13 @@ def scan(root: str, path_scan: list[str], installer_dirs: list[str], forbid: lis
         with open(t, "rb") as f:
             data = f.read()
         i = data.find(ROOT_STR)
-        if i >= 0:
-            findings.append(f"FAIL root_path {ip} offset={i}")
+        while i >= 0:
+            a = data.rfind(b"\n", 0, i) + 1
+            z = data.find(b"\n", i)
+            z = len(data) if z < 0 else z
+            line_no = data.count(b"\n", 0, i) + 1
+            findings.append(f"FAIL root_path {ip} line={line_no} offset={i} text=[{masked_window(data, a, min(z, a + 240))}]")
+            i = data.find(ROOT_STR, z)
     summary = (f"scanned {files} regular files, {nbytes / 1e9:.2f} GB, for .env names and {len(KEY_PATTERNS)} key "
                f"patterns; {root_checked} text files of the build's own paths for '/root/'; "
                f"{len(notes)} known public value(s) allowed; {len(findings)} finding(s)")
@@ -201,16 +255,24 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--path-scan-installer-files", action="append", default=[])
     ap.add_argument("--forbid", action="append", default=[])
     ap.add_argument("--allow-root-path", action="append", default=[])
-    ap.add_argument("--report")
+    ap.add_argument("--report", help="always written: allowed notes, every finding, the summary line")
+    ap.add_argument("--status", help="always written: OK or FINDINGS")
+    ap.add_argument("--no-fail", action="store_true", help="exit 0 even with findings (the caller fails on --status)")
     a = ap.parse_args(argv)
     findings, notes, summary = scan(a.root, a.path_scan, a.path_scan_installer_files, a.forbid, a.allow_root_path)
-    for f in notes + findings:
-        print(f)
-    print(("P6 IMAGE SCAN FAILED: " if findings else "P6 IMAGE SCAN OK: ") + summary)
-    if a.report and not findings:
+    head = ("P6 IMAGE SCAN FAILED: " if findings else "P6 IMAGE SCAN OK: ") + summary
+    lines = notes + findings + [head]
+    for line in lines:
+        print(line)
+    if a.report:
+        os.makedirs(os.path.dirname(os.path.abspath(a.report)), exist_ok=True)
         with open(a.report, "w") as f:
-            f.write("".join(n + "\n" for n in notes) + "P6 IMAGE SCAN OK: " + summary + "\n")
-    return 1 if findings else 0
+            f.write("".join(x + "\n" for x in lines))
+    if a.status:
+        os.makedirs(os.path.dirname(os.path.abspath(a.status)), exist_ok=True)
+        with open(a.status, "w") as f:
+            f.write("FINDINGS\n" if findings else "OK\n")
+    return 0 if (a.no_fail or not findings) else 1
 
 
 if __name__ == "__main__":
