@@ -1,0 +1,15 @@
+'PASS nvcc                         (0s) Build cuda_12.9.r12.9/compiler.36037853_0
+PASS nvidia-smi                   (0s) NVIDIA H100 80GB HBM3, 81559 MiB, 595.91.07
+PASS versions                     (2s) python 3.11 (/usr/local/bin/python3) torch 2.10.0+cu128 torch.version.cuda 12.8 nvcc 12.9 cpp_extension.CUDA_HOME /usr/local/cuda TORCH_CUDA_ARCH_LIST=8.0;8.9;9.0
+PASS toolchain_env                (0s) via /etc/rp_environment: CUDA_HOME=/usr/local/cuda nvcc=/usr/local/cuda/bin/nvcc python3=/usr/bin/python3.11 TORCH_CUDA_ARCH_LIST=8.0;8.9;9.0
+PASS torch_cuda                   (1s) 2.10.0+cu128 True NVIDIA H100 80GB HBM3
+PASS hf_overlay                   (0s) overlay ok: mode=shim (p6_fuse_mode=shim)
+PASS opencode_version             (1s) 1.19.3
+PASS researcharena_commit         (0s) 58776e09339c1714d0524130590abaf6eac7879d
+PASS starter_kernels_compile      (118s) compile ok: /tmp/arena_build_7459/agent_ops.so (1157912 bytes; bench rc=0; full log /workspace/p6_compile.log)
+PASS run_redteam_dry_run          (0s) [DRY RUN] Exiting without execution.
+PASS arena_root_verify            (2s) {"checkout_head": "58776e09339c1714d0524130590abaf6eac7879d", "files_identical": 206, "payload_is_stock": true, "overlay_agent_is_default": true, "task_context_files": 16, "generated_ignored": 0}
+PASS opencode_qwen3_call          (2s) ok
+'
+--- stderr ---
+''

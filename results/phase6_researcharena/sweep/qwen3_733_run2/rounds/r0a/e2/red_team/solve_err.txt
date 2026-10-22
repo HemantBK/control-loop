@@ -1,0 +1,20 @@
+[agent] TIMEOUT_HOURS=0.1667 total_timeout_seconds=600
+[agent] phase 1/2: initial opencode run
+[agent] exec: launching with remaining budget 600s
+[agent] exec finished rc=0 elapsed=105s remaining_seconds=495
+[agent] phase 2/2 round 1: opencode run --continue
+[agent] resume: launching with remaining budget 495s
+[agent] resume round 1 rc=0 elapsed=93s remaining=402s
+[agent] phase 2/2 round 2: opencode run --continue
+[agent] resume: launching with remaining budget 402s
+[agent] resume round 2 rc=0 elapsed=40s remaining=362s
+[agent] phase 2/2 round 3: opencode run --continue
+[agent] resume: launching with remaining budget 361s
+[agent] resume round 3 rc=0 elapsed=152s remaining=209s
+[agent] phase 2/2 round 4: opencode run --continue
+[agent] resume: launching with remaining budget 209s
+[agent] resume round 4 rc=0 elapsed=142s remaining=67s
+[agent] phase 2/2 round 5: opencode run --continue
+[agent] resume: launching with remaining budget 67s
+[agent] resume round 5 rc=0 elapsed=5s remaining=62s
+[agent] resume completed suspiciously fast (5s < 30s); aborting to avoid spin loop

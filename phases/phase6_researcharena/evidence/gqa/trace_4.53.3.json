@@ -1,0 +1,159 @@
+{
+ "transformers": "4.53.3",
+ "torch": "2.10.0+cpu",
+ "config": {
+  "num_attention_heads": 32,
+  "num_key_value_heads": 4,
+  "head_dim": 64,
+  "hidden_size": 2048,
+  "num_hidden_layers": 22,
+  "rope_theta": 10000.0,
+  "head_dim_derived": 64
+ },
+ "attn_implementation": "sdpa",
+ "injected": {
+  "rmsnorm": false,
+  "rotary_embedding": true,
+  "fused_mlp": false,
+  "attention": true
+ },
+ "generated_len": 11,
+ "calls_to_agent_attention": [
+  {
+   "q": [
+    1,
+    32,
+    8,
+    64
+   ],
+   "k": [
+    1,
+    32,
+    8,
+    64
+   ],
+   "v": [
+    1,
+    32,
+    8,
+    64
+   ],
+   "causal": true
+  }
+ ],
+ "n_agent_attention_calls": 2,
+ "calls_to_agent_rotary": [
+  {
+   "x": [
+    1,
+    8,
+    32,
+    64
+   ],
+   "positions": [
+    1,
+    8
+   ]
+  },
+  {
+   "x": [
+    1,
+    8,
+    4,
+    64
+   ],
+   "positions": [
+    1,
+    8
+   ]
+  },
+  {
+   "x": [
+    1,
+    1,
+    32,
+    64
+   ],
+   "positions": [
+    1,
+    1
+   ]
+  },
+  {
+   "x": [
+    1,
+    1,
+    4,
+    64
+   ],
+   "positions": [
+    1,
+    1
+   ]
+  }
+ ],
+ "native_sdpa_calls": [
+  {
+   "q": [
+    1,
+    32,
+    8,
+    64
+   ],
+   "k": [
+    1,
+    32,
+    8,
+    64
+   ],
+   "mask_is_none": true,
+   "is_causal": true,
+   "extra_kwargs": []
+  },
+  {
+   "q": [
+    1,
+    32,
+    1,
+    64
+   ],
+   "k": [
+    1,
+    32,
+    9,
+    64
+   ],
+   "mask_is_none": true,
+   "is_causal": false,
+   "extra_kwargs": []
+  },
+  {
+   "q": [
+    1,
+    32,
+    1,
+    64
+   ],
+   "k": [
+    1,
+    32,
+    10,
+    64
+   ],
+   "mask_is_none": true,
+   "is_causal": false,
+   "extra_kwargs": []
+  }
+ ],
+ "prompt_token_lengths": {
+  "Hello": 2,
+  "Explain the theory of relativity in simple terms.": 12,
+  "Write a Python function to compute the Fibonacci sequence.": 14,
+  "What are the main causes of climate change?": 10,
+  "Summarize the plot of Romeo and Juliet.": 13,
+  "Describe the process of photosynthesis step by step.": 13,
+  "What is the difference between TCP and UDP?": 11,
+  "Write a haiku about programming.": 8,
+  "Explain how a neural network learns.": 10
+ }
+}

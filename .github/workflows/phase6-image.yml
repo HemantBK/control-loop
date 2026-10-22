@@ -1,0 +1,191 @@
+# Phase 6 prebuilt image (phases/phase6_researcharena/PLAN.md Amendments 2026-10-22 (4), (5); docker/phase6/README.md).
+# Manual only. Builds docker/phase6/Dockerfile for linux/amd64, scans the image filesystem inside the build (the
+# Dockerfile's `scan` stage fails the build on a .env file, an API-key pattern or a `/root/` path in the build's own
+# files), and only then logs in to GHCR and pushes ghcr.io/hemantbk/control-loop-phase6. No secret other than the
+# job's own GITHUB_TOKEN is used, and it is used only by the login step after the scan.
+name: phase6-image
+
+on:
+  workflow_dispatch:
+    inputs:
+      transformers_version:
+        description: "transformers version (the head-layout verdict: 4.53.3, PLAN Amendment 2026-10-22 (5))"
+        required: true
+        type: string
+      opencode_version:
+        description: "opencode-ai npm version"
+        required: false
+        default: "1.19.3"
+        type: string
+      researcharena_commit:
+        description: "ResearchArena commit (full 40-character sha)"
+        required: false
+        default: "58776e09339c1714d0524130590abaf6eac7879d"
+        type: string
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: phase6-image
+  cancel-in-progress: false
+
+env:
+  IMAGE: ghcr.io/hemantbk/control-loop-phase6
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    steps:
+      - name: Validate inputs
+        id: v
+        env:
+          TF: ${{ inputs.transformers_version }}
+          OC: ${{ inputs.opencode_version }}
+          RA: ${{ inputs.researcharena_commit }}
+        run: |
+          set -euo pipefail
+          [[ "$TF" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "transformers_version '$TF' is not X.Y.Z"; exit 1; }
+          [[ "$OC" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "opencode_version '$OC' is not X.Y.Z"; exit 1; }
+          [[ "$RA" =~ ^[0-9a-f]{40}$ ]] || { echo "researcharena_commit '$RA' is not a 40-character sha"; exit 1; }
+          tag="tf${TF}-oc${OC}-ra${RA:0:7}"
+          {
+            echo "tag=${tag}"
+            echo "build_date=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          } >> "$GITHUB_OUTPUT"
+          echo "image tags: ${IMAGE}:${tag} ${IMAGE}:sha-${GITHUB_SHA}"
+
+      - name: Free disk space (the image is about 15 GB compressed, 30+ GB unpacked)
+        run: |
+          set -euo pipefail
+          df -h / /mnt || true
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/.ghcup /opt/hostedtoolcache/CodeQL \
+                      /usr/local/share/boost /usr/share/swift /usr/local/share/powershell /opt/microsoft /opt/google \
+                      /usr/local/julia* || true
+          docker system prune -af >/dev/null || true
+          # move Docker (and with it buildx's builder state) to /mnt when that disk has more room than /
+          if [ -d /mnt ]; then
+            root_free=$(df --output=avail -BG / | tail -1 | tr -dc 0-9)
+            mnt_free=$(df --output=avail -BG /mnt | tail -1 | tr -dc 0-9)
+            if [ "${mnt_free:-0}" -gt "${root_free:-0}" ]; then
+              sudo systemctl stop docker docker.socket
+              sudo mkdir -p /mnt/docker
+              sudo python3 - <<'PY'
+          import json, os
+          p = "/etc/docker/daemon.json"
+          d = json.load(open(p)) if os.path.exists(p) else {}
+          d["data-root"] = "/mnt/docker"
+          json.dump(d, open(p, "w"))
+          PY
+              sudo systemctl start docker
+              echo "docker data-root moved to /mnt/docker"
+            fi
+          fi
+          df -h / /mnt || true
+          docker info --format 'docker root dir: {{.DockerRootDir}}'
+
+      - name: Check out
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v4
+
+      # Build every stage (env -> scan -> final) without exporting anything. The scan runs here, after the build of
+      # the environment and before any push; a finding fails this step and the job.
+      - name: Build and scan (no push)
+        uses: docker/build-push-action@v7
+        with:
+          context: docker/phase6
+          file: docker/phase6/Dockerfile
+          target: final
+          platforms: linux/amd64
+          outputs: type=cacheonly
+          provenance: false
+          sbom: false
+          build-args: |
+            TRANSFORMERS_VERSION=${{ inputs.transformers_version }}
+            OPENCODE_VERSION=${{ inputs.opencode_version }}
+            RESEARCHARENA_COMMIT=${{ inputs.researcharena_commit }}
+            IMAGE_TAG=${{ steps.v.outputs.tag }}
+            GIT_SHA=${{ github.sha }}
+            BUILD_DATE=${{ steps.v.outputs.build_date }}
+          cache-from: type=gha,scope=phase6-image
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Same inputs and build args as the scanned build: every layer, the scan included, comes from the builder's
+      # cache, so the pushed image is the one scanned (its /etc/p6_scan.txt is the scan's report).
+      - name: Push
+        id: push
+        uses: docker/build-push-action@v7
+        with:
+          context: docker/phase6
+          file: docker/phase6/Dockerfile
+          target: final
+          platforms: linux/amd64
+          push: true
+          provenance: false
+          sbom: false
+          build-args: |
+            TRANSFORMERS_VERSION=${{ inputs.transformers_version }}
+            OPENCODE_VERSION=${{ inputs.opencode_version }}
+            RESEARCHARENA_COMMIT=${{ inputs.researcharena_commit }}
+            IMAGE_TAG=${{ steps.v.outputs.tag }}
+            GIT_SHA=${{ github.sha }}
+            BUILD_DATE=${{ steps.v.outputs.build_date }}
+          tags: |
+            ${{ env.IMAGE }}:${{ steps.v.outputs.tag }}
+            ${{ env.IMAGE }}:sha-${{ github.sha }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          cache-from: type=gha,scope=phase6-image
+          cache-to: type=gha,scope=phase6-image,mode=min,ignore-error=true
+
+      - name: Pushed digest
+        env:
+          DIGEST: ${{ steps.push.outputs.digest }}
+          TAG: ${{ steps.v.outputs.tag }}
+        run: |
+          set -euo pipefail
+          echo "pushed ${IMAGE}:${TAG} and ${IMAGE}:sha-${GITHUB_SHA}"
+          echo "digest ${DIGEST}"
+          echo "pin for the RunPod template: ${IMAGE}:${TAG} (by digest: ${IMAGE}@${DIGEST})"
+          {
+            echo "### Phase 6 image"
+            echo "- tag: \`${IMAGE}:${TAG}\`"
+            echo "- also: \`${IMAGE}:sha-${GITHUB_SHA}\`"
+            echo "- digest: \`${DIGEST}\`"
+            echo "- by digest: \`${IMAGE}@${DIGEST}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # Informational: GHCR creates a new package private even from a public repository, and GITHUB_TOKEN cannot change
+      # a package's visibility (no REST endpoint). Anonymous pull access tells which it is now.
+      - name: Package visibility (anonymous pull check)
+        continue-on-error: true
+        env:
+          TAG: ${{ steps.v.outputs.tag }}
+        run: |
+          set -uo pipefail
+          repo=hemantbk/control-loop-phase6
+          tok=$(curl -s "https://ghcr.io/token?scope=repository:${repo}:pull" | jq -r '.token // empty')
+          code=$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer ${tok}" \
+                 -H "Accept: application/vnd.oci.image.manifest.v1+json, application/vnd.docker.distribution.manifest.v2+json" \
+                 "https://ghcr.io/v2/${repo}/manifests/${TAG}")
+          if [ "$code" = 200 ]; then
+            msg="anonymous pull of ${TAG} works: the package is public"
+          else
+            msg="anonymous pull refused (HTTP ${code}): the package is PRIVATE. Owner, once: github.com/users/HemantBK/packages/container/package/control-loop-phase6 -> Package settings -> Danger Zone -> Change visibility -> Public"
+          fi
+          echo "$msg"
+          echo "- visibility: $msg" >> "$GITHUB_STEP_SUMMARY"

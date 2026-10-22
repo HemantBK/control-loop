@@ -1,0 +1,27 @@
+'PASS nvcc                         (0s) Build cuda_12.8.r12.8/compiler.35583870_0
+PASS nvidia-smi                   (0s) NVIDIA H100 80GB HBM3, 81559 MiB
+PASS torch_cuda                   (1s) 2.9.1+cu128 True NVIDIA H100 80GB HBM3
+PASS hf_overlay                   (0s) overlay ok: mode=shim (p6_fuse_mode=shim)
+PASS opencode_version             (1s) 1.19.3
+PASS researcharena_commit         (0s) 58776e09339c1714d0524130590abaf6eac7879d
+PASS starter_kernels_compile      (14s) ninja: build stopped: subcommand failed.
+PASS run_redteam_dry_run          (0s) [DRY RUN] Exiting without execution.
+FAIL arena_root_verify            (1s)
+<frozen runpy>:128: RuntimeWarning: '"'"'control_loop.adapters.researcharena.arena_root'"'"' found in sys.modules after import of package '"'"'control_loop.adapters.researcharena'"'"', but prior to execution of '"'"'control_loop.adapters.researcharena.arena_root'"'"'; this may result in unpredictable behaviour
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/workspace/src/control-loop/control_loop/adapters/researcharena/arena_root.py", line 264, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/workspace/src/control-loop/control_loop/adapters/researcharena/arena_root.py", line 258, in main
+    m = verify(a.dest, a.checkout, a.manifest_out)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/src/control-loop/control_loop/adapters/researcharena/arena_root.py", line 178, in verify
+    raise ArenaRootError("checkout is not clean (git status --porcelain):\n" + state["porcelain"])
+ArenaRootError: checkout is not clean (git status --porcelain):
+?? settings/cuda_kernel/task_context/workspace/
+PASS opencode_qwen3_call          (16s) ok
+'
+--- stderr ---
+''

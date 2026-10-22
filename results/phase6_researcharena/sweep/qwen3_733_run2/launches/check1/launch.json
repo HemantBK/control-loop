@@ -1,0 +1,32 @@
+{
+  "dry_run": false,
+  "episodes": {
+    "qwen3_733-clean_run1-e1": {
+      "attempts": 1,
+      "dest": "results/phase6_researcharena/sweep/qwen3_733_run2/clean/run1/e1",
+      "pod_id": "7bkjqa1zhho1mv",
+      "status": "collected"
+    },
+    "qwen3_733-r0a-e1": {
+      "attempts": 1,
+      "dest": "results/phase6_researcharena/sweep/qwen3_733_run2/rounds/r0a/e1",
+      "pod_id": "7bkjqa1zhho1mv",
+      "status": "collected"
+    }
+  },
+  "error": null,
+  "pods": [
+    {
+      "data_center": "EU-NL-1",
+      "deleted": true,
+      "episode_id": "qwen3_733-r0a-e1",
+      "gpu_type": "NVIDIA H100 80GB HBM3",
+      "id": "7bkjqa1zhho1mv",
+      "name": "p6-qwen3_733-check1-e2",
+      "rate": 3.99
+    }
+  ],
+  "run_id": "qwen3_733-check1",
+  "serial_fallback": "serial fallback: 2 episodes on 1 pods (PLAN \u00a77.7(2))",
+  "written": "2026-10-22T08:25:42Z"
+}

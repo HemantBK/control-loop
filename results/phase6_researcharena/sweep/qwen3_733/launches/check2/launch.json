@@ -1,0 +1,59 @@
+{
+  "dry_run": false,
+  "episodes": {
+    "qwen3_733-r0a-e2": {
+      "attempts": 2,
+      "dest": "results/phase6_researcharena/sweep/qwen3_733/rounds/r0a/e2",
+      "error": "start failed rc=124: timeout after 120s",
+      "status": "lost"
+    },
+    "qwen3_733-r0a-e3": {
+      "attempts": 2,
+      "dest": "results/phase6_researcharena/sweep/qwen3_733/rounds/r0a/e3",
+      "error": "start failed rc=124: timeout after 120s",
+      "status": "lost"
+    }
+  },
+  "error": null,
+  "pods": [
+    {
+      "data_center": "EU-FR-1",
+      "deleted": true,
+      "episode_id": "qwen3_733-r0a-e2",
+      "gpu_type": "NVIDIA H100 80GB HBM3",
+      "id": "dum8a2y5hc8zwc",
+      "name": "p6-qwen3_733-check2-e2",
+      "rate": 3.99
+    },
+    {
+      "data_center": "EU-FR-1",
+      "deleted": true,
+      "episode_id": "qwen3_733-r0a-e2",
+      "gpu_type": "NVIDIA H100 80GB HBM3",
+      "id": "ndolca0y2amva0",
+      "name": "p6-qwen3_733-check2-e1-retry",
+      "rate": 3.99
+    },
+    {
+      "data_center": "EU-FR-1",
+      "deleted": true,
+      "episode_id": "qwen3_733-r0a-e3",
+      "gpu_type": "NVIDIA H100 80GB HBM3",
+      "id": "81ehms5n6514jw",
+      "name": "p6-qwen3_733-check2-e2-again",
+      "rate": 3.99
+    },
+    {
+      "data_center": "EU-FR-1",
+      "deleted": true,
+      "episode_id": "qwen3_733-r0a-e3",
+      "gpu_type": "NVIDIA H100 80GB HBM3",
+      "id": "nj9snpqakof84a",
+      "name": "p6-qwen3_733-check2-e2-retry",
+      "rate": 3.99
+    }
+  ],
+  "run_id": "qwen3_733-check2",
+  "serial_fallback": "serial fallback: 2 episodes on 1 pods (PLAN \u00a77.7(2))",
+  "written": "2026-10-22T07:54:05Z"
+}

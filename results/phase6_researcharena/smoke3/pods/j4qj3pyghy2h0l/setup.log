@@ -1,0 +1,67 @@
+[pod_setup 23:35:33] step 1_system: start
+Cuda compilation tools, release 12.8, V12.8.93
+Build cuda_12.8.r12.8/compiler.35583870_0
+NVIDIA H100 80GB HBM3, 81559 MiB
+[pod_setup 23:35:43] fuse-overlayfs (shim) self-test ok
+[pod_setup 23:35:43] fuse: shim (no /dev/fuse)
+[pod_setup 23:35:43] step 1_system: done in 10 s
+[pod_setup 23:35:43] step 2_node_opencode: start
+v22.23.4
+1.19.3
+[pod_setup 23:36:01] step 2_node_opencode: done in 18 s
+[pod_setup 23:36:01] step 3_python: start
+torch 2.9.1+cu128 cuda True transformers 5.3.0
+[pod_setup 23:36:05] step 3_python: done in 4 s
+[pod_setup 23:36:05] step 4_checkouts: start
+[pod_setup 23:36:09] ResearchArena at 58776e09339c1714d0524130590abaf6eac7879d
+[pod_setup 23:36:09] control-loop: local tree pushed by pods.py (47 files)
+[pod_setup 23:36:09] step 4_checkouts: done in 4 s
+[pod_setup 23:36:09] step 5_arena_root: start
+/workspace/arena_root
+{"checkout_head": "58776e09339c1714d0524130590abaf6eac7879d", "files_identical": 206, "payload_is_stock": true, "overlay_agent_is_default": true}
+[pod_setup 23:36:11] step 5_arena_root: done in 2 s
+[pod_setup 23:36:11] step 6_tinyllama: start
+TinyLlama at /workspace/hf/hub/models--TinyLlama--TinyLlama-1.1B-Chat-v1.0/snapshots/fe8a4ea1ffedaf415f4da2f062534de366a451e6 HF_HOME /workspace/hf
+[pod_setup 23:36:18] step 6_tinyllama: done in 7 s
+[pod_setup 23:36:18] step 7_smoke: start
+ Cluster ID:       setup
+ Experiment:       phase6_setup_dryrun
+ Seed:             733
+============================================================
+[DRY RUN] Exiting without execution.
+[5/6] c++ -MMD -MF bindings.o.d -DTORCH_EXTENSION_NAME=agent_ops -DTORCH_API_INCLUDE_EXTENSION_H -isystem /usr/local/lib/python3.12/dist-packages/torch/include -isystem /usr/local/lib/python3.12/dist-packages/torch/include/torch/csrc/api/include -isystem /usr/local/include -isystem /usr/include/python3.12 -fPIC -std=c++17 -O3 -c /workspace/src/ResearchArena/settings/cuda_kernel/task_context/bindings.cpp -o bindings.o 
+ninja: build stopped: subcommand failed.
+
+[pod_setup 23:36:33] step 7_smoke: done in 15 s
+[pod_setup 23:36:33] setup complete in 60 s
+
+--- stderr ---
+W: https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/InRelease: Key is stored in legacy trusted.gpg keyring (/etc/apt/trusted.gpg), see the DEPRECATION section in apt-key(8) for details.
+debconf: delaying package configuration, since apt-utils is not installed
+fuse-overlayfs(shim): no /dev/fuse; COPIED /tmp/tmp.xXXpAMthOR/lower -> /tmp/tmp.xXXpAMthOR/merged (0 MiB in 0 s); writes stay in the copy, teardown is rm -rf; marker /tmp/tmp.xXXpAMthOR/.shim_overlay
+
+WARNING: apt does not have a stable CLI interface. Use with caution in scripts.
+
+W: https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/InRelease: Key is stored in legacy trusted.gpg keyring (/etc/apt/trusted.gpg), see the DEPRECATION section in apt-key(8) for details.
+
+WARNING: apt does not have a stable CLI interface. Use with caution in scripts.
+
+debconf: delaying package configuration, since apt-utils is not installed
+
+WARNING: apt does not have a stable CLI interface. Use with caution in scripts.
+
+W: https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/InRelease: Key is stored in legacy trusted.gpg keyring (/etc/apt/trusted.gpg), see the DEPRECATION section in apt-key(8) for details.
+debconf: delaying package configuration, since apt-utils is not installed
+npm notice
+npm notice New major version of npm available! 10.9.9 -> 12.2.1
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.1
+npm notice To update run: npm install -g npm@12.2.1
+npm notice
+<frozen runpy>:128: RuntimeWarning: 'control_loop.adapters.researcharena.arena_root' found in sys.modules after import of package 'control_loop.adapters.researcharena', but prior to execution of 'control_loop.adapters.researcharena.arena_root'; this may result in unpredictable behaviour
+<frozen runpy>:128: RuntimeWarning: 'control_loop.adapters.researcharena.arena_root' found in sys.modules after import of package 'control_loop.adapters.researcharena', but prior to execution of 'control_loop.adapters.researcharena.arena_root'; this may result in unpredictable behaviour
+
+Fetching 10 files:   0%|          | 0/10 [00:00<?, ?it/s]Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+
+Fetching 10 files:  10%|█         | 1/10 [00:00<00:01,  4.94it/s]
+Fetching 10 files:  80%|████████  | 8/10 [00:00<00:00, 25.63it/s]
+Fetching 10 files: 100%|██████████| 10/10 [00:06<00:00,  1.65it/s]
