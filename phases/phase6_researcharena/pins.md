@@ -84,6 +84,7 @@ equals `spend.py`'s Sonnet 4.6 prices.
 |---|---|---|
 | ResearchArena | `aisa-group/ResearchArena` at `58776e09339c1714d0524130590abaf6eac7879d`, unmodified; upstream `11ea904` (branch `cuda-correction`) not adopted | PLAN §1.1, Amendment (5) and the owner's line under it |
 | control-loop | commit `e69fc02` and later; smoke5 pushed the tree at that commit (`--control-loop-commit local`; the Phase 6 code was unchanged against it); runs before smoke5 used the then uncommitted tree | `git log`; this file, Code |
+| job launcher | `scripts/jobs/p6run.sh`, `scripts/jobs/p6state.sh` (tracked 2026-10-22, audit response A8): the scripts the manager used from the session scratch directory from after diag1 (smoke5), with the job directory now `$JOBS_DIR` (default `$HOME/jobs`) and the repository root found from the script's own path | `audits/RESPONSE.md` A8 |
 | prebuilt image | `ghcr.io/hemantbk/control-loop-phase6:tf4.53.3-oc1.19.3-ra58776e0` (also `:sha-e69fc029bff7e6413032d4929ef3e95e72963aad`), digest `sha256:73c00e14792730a2e9898b6fab2a4302543880dbec77133d09e05a40e72ba330`, 16.25 GB compressed, public; workflow run 39812742697 at `e69fc02`, 2026-10-22 16:17–16:58 UTC; scan OK (87,434 files, 0 findings, 32 known public values allowed) | PLAN, dated line under Amendment (5) |
 | RunPod template | `pzov5japaa` ("p6-researcharena-tf4.53.3": the image by tag, container disk 60 GB, volume 30 GB at /workspace, 22/tcp, no registry credential); used through `P6_TEMPLATE_ID` | same; `results/phase6_researcharena/smoke5/run.jsonl` |
 | earlier images | `runpod/pytorch:1.0.3-cu1281-torch291-ubuntu2404` (smoke, smoke2, smoke3); `runpod/base:1.4.1-cuda1290-ubuntu2204` + `pod_setup.sh` (smoke4, check runs 1 and 2, diag1); by tag, no digest recorded | the runs' `run.jsonl` `pod_create` lines |
@@ -105,14 +106,32 @@ are the `pods.jsonl` create and delete lines.
 | smoke4 | 2026-10-22 06:28:52–06:37:27 | `evfwaz8dpfybcl` (EU-FR-1) | 514 | 0.5699 | 0.0500 (upper) | `…/smoke4/` |
 | check run 1 | 2026-10-22 07:02:24–07:54:06 | `vv2ifkc0kg2msp` 532 s $0.5901; `neouf87knws00n` 346 s $0.3836; `t074x6df8gd2eg` 387 s $0.4292; `qonjcz2oosa2rs` 351 s $0.3897; `dum8a2y5hc8zwc` 353 s $0.3917; `ndolca0y2amva0` 321 s $0.3560; `81ehms5n6514jw` 461 s $0.5115; `nj9snpqakof84a` 340 s $0.3772 (all EU-FR-1) | 3,091 | 3.4290 | not measurable | `…/sweep/qwen3_733/` |
 | check run 2 | 2026-10-22 08:04:29–08:50:45 | `7bkjqa1zhho1mv` (EU-NL-1) 1,270 s $1.4083; `nlfm6a9lbsdy2x` (EU-FR-1) 1,500 s $1.6634 | 2,770 | 3.0717 | agent 0.3874 | `…/sweep/qwen3_733_run2/` |
-| run2 monitor re-run | 2026-10-22 09:57:52–10:16:52 | none | — | — | monitor 0.5349 | same, run_id `qwen3_733-monitor-rerun` |
+| run2 monitor re-run | 2026-10-22 09:57:52–10:01:52 (scoring; the run's spend line was appended at 10:16:52) | none | — | — | monitor 0.5349 | same, run_id `qwen3_733-monitor-rerun` |
 | diag1 | 2026-10-22 11:40:48–11:50:54 | `hkclkzkhedowb3` (EU-FR-1) | 604 | 0.6705 | 0.0000 | `…/diag1/` |
 | smoke5 | 2026-10-22 17:03:05–17:13:19 | `epc9ftzjt0ijjp` (EU-FR-1) | 613 | 0.6800 | 0.0000 | `…/smoke5/` |
-| **Phase 6 total** | | **16 pods** | **7,893 (2.1925 H100-h)** | **8.7572** | **1.0223** | **$9.7795** |
+| **Phase 6 execution total** | | **16 pods** | **7,893 whole s (2.1925 H100-h)** | **8.7572** | **1.0223** | **$9.7795** |
 
 API detail: agent (Qwen3 via OpenRouter, reader at `control_loop/spend.py` list price, unverified) 0.3874; monitor
 (Sonnet 4.6, opencode's per-message cost = `spend.py`) 0.5349; smoke3 and smoke4 opencode calls 0.0500 each (upper bound).
-$0.1000 of the total is an upper bound. Not in the total: council Qwen3 call $0.0022 (`audits/council_2026-10-22_check.md`;
-Codex unpriced, 21,077 tokens), i.e. $9.7817 with the council; the image builds on GitHub Actions. Against the caps: phase
-cap $150 / stop $120 (PLAN Amendment (3) item 4). `python -m control_loop.status results/phase6_researcharena` prints
+Against the caps: phase cap $150 / stop $120 (PLAN Amendment (3) item 4).
+
+### Spend by basis (2026-10-22, audit response A2/A3; `phases/phase6_researcharena/spend_total.py`)
+
+| basis | item | $ |
+|---|---|---|
+| measured | GPU, sum of the 16 `pods.jsonl` delete lines' `usd` (driver wall-clock × $3.99/h; not RunPod's invoice) | 8.7572 |
+| measured | monitor re-run (opencode per-message cost) | 0.5349 |
+| | measured total | 9.2921 |
+| list-price recomputation | agent (Qwen3 tokens × `spend.py` 0.22 / 0.88 per M, unverified; opencode's own OpenRouter cost $0.1444) | 0.3874 |
+| allowance | smoke3, smoke4 paid call at the $0.05 cap | 0.1000 |
+| | execution total | 9.7795 |
+| recorded, list price | council on the check stage, Qwen3 call (OpenRouter usage.cost $0.0009967); Codex unpriced (21,077 tokens) | 0.0022 |
+| recorded, billed | council on smoke5 (OpenRouter usage.cost $0.2451775; $0.2286 at listed prices) | 0.2452 |
+| recorded, billed | audit, GPT-6 Astra, two calls (OpenRouter usage.cost $1.309137; $1.6561 at listed prices) | 1.3091 |
+| | **phase total with councils and audit** | **11.3360** |
+| not measured, not added | check run 1's API; opencode's title requests; the Codex council call; image builds on GitHub Actions | — |
+
+GPU: 7,893 whole seconds × $3.99/h = $8.7481; the `usd` sum is $8.7572 because `pods.py` rounds `usd` from the unrounded
+seconds and truncates `seconds_billed` (8.23 s of fractions over 16 pods). The earlier "$9.7817 with the council" left out
+the smoke5 council. `python -m control_loop.status results/phase6_researcharena` prints
 $8.8572 because it omits the run2 directory's own $0.9223 (`README.md` §9 item 2).

@@ -435,3 +435,62 @@ check, compile or stock-kernel benchmark ran, so the transformers 4.53.3 pin is 
 collected (the session never opened). Under the owner's firm time box (PLAN, dated line 2026-10-22) this failure is reported
 with its cause and not fixed or relaunched. Nothing here enters a table.
 
+
+## 2026-10-22: corrections after the audit (docs/SOP.md §2.3, §2.6; task phase6-audit-response; no pod, no model call, $0)
+
+This entry answers the audit `audits/audit_astra.md` (GPT-6 Astra via OpenRouter, $1.3091 billed). The full answer is in
+`audits/RESPONSE.md`, which counts 11 fixed, 1 disclosed and 0 not accepted. Corrections to earlier entries, each given as
+the wrong value, then the right value, then the source:
+
+1. **smoke4** entry: "11 of 11 PASS" is wrong; the log has **12 of 12 PASS**. The list left out `nvcc` (`PASS nvcc`, Build
+   cuda_12.9). Source: `results/phase6_researcharena/smoke4/smoke.log` lines 1–12.
+2. **smoke3** entry: it listed seven genuine passes and the false compile PASS. The log has **9 PASS lines**: 8 genuine
+   (`nvcc` passed too, CUDA 12.8) and the false `starter_kernels_compile`, plus 1 FAIL (`arena_root_verify`). The checkout
+   that check refused was the GPU pod's own clone, deleted with the pod. Source: `results/phase6_researcharena/smoke3/smoke.log`.
+3. **smoke5** entry: "RunPod reported it reachable after about 10 minutes (the first pull of the 16.25 GB image …)" is
+   wrong. What the log shows: the create-and-wait command returned an SSH endpoint after 612 s. That is consistent with the
+   first image pull, but the pull time was not measured, and the endpoint's return did not show that the pod was reachable:
+   the first ssh failed. Source: `results/phase6_researcharena/smoke5/run.jsonl` (`pod_create done … in 612s`).
+4. **smoke5** entry, launcher path. The entry as committed (`bcff9f2`) reads `<session scratch>/jobs/p6run.sh`. README §9
+   item 15 said a CPU-pod path remained, which described an earlier draft. The entry was most likely rewritten in place
+   before that commit. That is disclosed here, because this notebook is append-only.
+   The smoke5 council file had its five script and packet path lines changed from the CPU-pod scratch path to
+   `<session scratch>/…` the same day (manager's decision). The opinions and the manager's view were not changed.
+5. **Validity of clean/run1/e1** ("check stage replicate 733 run2" entry; "unpaid fixes" item 1 table): "V1 True, V2 True"
+   is wrong under PLAN §4's literal rule. The right value is **V1 False, V2 False**: the clean episode's side score is None,
+   and V1 requires `side_task_score ∈ {0, 1}`. So the check stage has no V1-valid clean episode. The True values are the
+   reader's: `reader.SampleResult.valid_v1` exempts side task `none`, while `sweep.validity` does not. This is disclosed and
+   the code is unchanged. Source: PLAN §4; `CHECK.md`; `control_loop/adapters/researcharena/{reader.py, sweep.py}`.
+6. **CPU-only head-layout analysis**: "The cause is the environment, not the agents" is too strong. The right wording: the
+   crash is **consistent with** the unexpanded GQA K/V heads under transformers 5.3.0, on CPU evidence (about 80 %
+   confidence). No GPU run localized the fault, and the RoPE kernel's missing guard remains an alternative. One of the four
+   run2 episodes (r0a e2) failed on its own compile edit. Source: this notebook's entry itself (its 20 %); diag1 and smoke5
+   ran no benchmark.
+7. **Spend.**
+   - First entry: "$0.0642 as `pods.jsonl` records it (the driver's seconds × rate with its own rounding of the billed
+     interval)". The right explanation: `pods.py` computes `usd` on the unrounded interval (about 57.9 s for that pod) and
+     truncates `seconds_billed` to 57.
+   - Over 16 pods, 7,893 whole s × $3.99/h = $8.7481, against the $8.7572 sum of `usd`. The difference is 8.23 s of
+     fractions.
+   - The phase spend is now stated by basis:
+     - measured $9.2921 (GPU $8.7572, monitor re-run $0.5349);
+     - list-price recomputation $0.3874 (agent);
+     - allowances $0.1000;
+     - execution total $9.7795;
+     - with both councils ($0.0022, $0.2452) and the audit ($1.3091): **$11.3360**.
+   - The README's former "$9.7817 with the council" left out the smoke5 council.
+   - Not measured and not added: check run 1's API, opencode's title requests, the Codex council call.
+   - Source: `phases/phase6_researcharena/spend_total.py` (new) on every `pods.jsonl` and `run.jsonl` under
+     `results/phase6_researcharena/`.
+8. **pins.md, monitor re-run end time**: "09:57:52–10:16:52" is wrong for the scoring. Scoring ran **09:57:52–10:01:52**;
+   10:16:52 is the run's spend line. Source: `results/phase6_researcharena/sweep/qwen3_733_run2/run.jsonl` lines 18–26.
+9. **Order**: diag1 (11:40–11:50) came before the CPU-only analysis (PLAN Amendment (4)). The README now has them in that
+   order.
+
+Added, with no run:
+- `phases/phase6_researcharena/spend_total.py` and `tests/test_researcharena_spend_total.py` (3 passed);
+- tracked copies of the job launcher and state check, `scripts/jobs/{p6run.sh, p6state.sh}` (`$JOBS_DIR`, default
+  `$HOME/jobs`).
+
+README §1, §2, §4, §7–§12 and `pins.md` are updated as `audits/RESPONSE.md` lists. Phase 6 test files: 120 passed
+(`RESEARCHARENA_ROOT=<checkout> uv run --frozen pytest -q`, six files). Spend $0. Nothing here enters a table.

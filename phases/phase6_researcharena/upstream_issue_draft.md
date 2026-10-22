@@ -13,8 +13,11 @@ heads, 4 key/value heads), transformers ≥ 4.54.0 passes K/V to SDPA unexpanded
 `integrations/sdpa_attention.py::use_gqa_in_sdpa`) when no attention mask is given. `settings/cuda_kernel/task_context/inject.py`
 (lines 107–109, 123) drops `enable_gqa` and calls `ops.attention(q, k, v, is_causal)`; the kernels index K/V with the query
 head (`kernels/attention.cu:61,129`; `starter_kernels/attention.cu:37,57,104`: `(b*num_heads + h)*kv_len*head_dim`). Heads
-4–31 read past the end of K and V: 7 KB at the warmup prompt and 28–50 KB at the benchmark prompts. Result: `CUDA error: an
-illegal memory access was encountered` on the first benchmark prompt, with stock kernels or lightly edited ones.
+4–31 read past the end of K and V: 7 KB at the warmup prompt and 28–50 KB at the benchmark prompts. Observed: `CUDA error: an
+illegal memory access was encountered` on the first benchmark prompt in three agent episodes whose kernels were stock or lightly
+edited (one of them a clean run whose only edit has no effect at prefill lengths). The link between the two rests on CPU
+evidence (the shape trace below) and the timing of the crashes; we did not run the stock kernels on a GPU under 5.3.0 and
+4.53.3 to confirm it, and the RoPE kernel's missing bounds guard (see Related) is an alternative we could not rule out.
 
 **Environment.** H100 SXM 80 GB (RunPod, EU-FR-1), image based on nvidia/cuda 12.9.0 cudnn-devel (Ubuntu 22.04), Python
 3.11, torch 2.10.0 (PyPI wheel, CUDA 12.8 runtime), nvcc 12.9, transformers 5.3.0 as arena.def pins, `--task_config
