@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 from inspect_ai.model import ModelUsage
 
-from control_loop.spend import UnknownModelError, log_cost, price_for, usage_cost, usage_map_cost
+from control_loop.spend import Price, UnknownModelError, log_cost, price_for, usage_cost, usage_map_cost
 
 REPO = Path(__file__).resolve().parents[1]
 P3 = REPO / "results" / "phase3_allocation_monitor"
@@ -49,8 +49,9 @@ def test_fixture_total_matches_hand_computation():
     }
     # by hand, $ per 1M: gpt-4o 95,685*2.50 + 63,872*1.25 + 18,410*10.00 = 239,212.5 + 79,840 + 184,100 = 503,152.5
     # gpt-4o-mini 40,000*0.15 + 1,500*0.60 = 6,000 + 900 = 6,900
-    # sonnet-5-5 6,600*2.00 + 2,000*0.20 + 1,000*2.50 + 950*10.00 = 13,200 + 400 + 2,500 + 9,500 = 25,600
-    hand = (503_152.5 + 6_900 + 25_600) / 1e6  # 0.5356525
+    # sonnet-5-5 6,600*2.00 + 2,000*0.10 + 1,000*2.50 + 950*10.00 = 13,200 + 200 + 2,500 + 9,500 = 25,400
+    # (cache_read 0.20 -> 0.10 on 2026-10-22, owner's price correction; was 25,600 / 0.5356525)
+    hand = (503_152.5 + 6_900 + 25_400) / 1e6  # 0.5354525
     assert usage_map_cost(usage) == pytest.approx(hand, abs=1e-9)
 
 
@@ -63,3 +64,17 @@ def test_phase3_logs_match_reconciliation():
     total = sum(log_cost(read_eval_log(str(p), header_only=True)) for p in files)
     assert len(files) == 68
     assert total == pytest.approx(RECONCILED_P3_AGENTS_JUDGE, abs=0.01), total
+
+
+def test_verified_covers_every_price():
+    """docs/prices_verified_2026-10-21.md: every PRICES key has a VERIFIED entry for each of the four fields."""
+    from dataclasses import fields
+
+    from control_loop.spend import PRICES, VERIFIED
+
+    names = {f.name for f in fields(Price)}
+    assert set(VERIFIED) == set(PRICES)
+    for model, by_field in VERIFIED.items():
+        assert set(by_field) == names, model
+        for field, status in by_field.items():
+            assert status == "unverified" or status.startswith("2026-10-21 https://"), (model, field, status)

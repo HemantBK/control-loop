@@ -28,8 +28,11 @@ import re
 import zipfile
 from pathlib import Path
 
+from control_loop import runlog
 from control_loop.adapters import controlarena as ca
 from control_loop.paths import rel, write_json
+
+PHASE = "phase4_controlarena"   # run.jsonl phase name (docs/SOP.md §3, run log)
 
 OUT = ca.REPO / "results" / "phase4_controlarena" / "mechanism_check"
 MODELS = {"mock": ("cl_mock/dp", "cl_mock/dp"),
@@ -174,11 +177,34 @@ def main() -> None:
     red = RedTeamPolicy(out / "redteam", proposer_model="cl_mock/dp", seed=SEED)
     payload_file = red.write_payload(0, STATIC_PAYLOAD)
 
-    h_log = ca.run_eval(out / "honest", untrusted, SEED, ["-T", "mode=honest"], None, trusted)
-    a_log = ca.run_eval(out / "redteam", untrusted, SEED, [], payload_file, trusted)
+    def log_run(step: str, status: str, **kw) -> None:
+        """One <out>/run.jsonl line (docs/SOP.md §3; `python -m control_loop.status <out>`)."""
+        runlog.log_step(out, phase=PHASE, run_id=f"mechanism_check/{args.backend}", step=step, status=status, **kw)
 
-    h_chk, h = check_episode(h_log, None)
-    a_chk, a = check_episode(a_log, STATIC_PAYLOAD)
+    # the paid pair: one honest and one red-team episode; the pair's cost goes on the `check` line below
+    # (measured once over both logs, as reported in check.json), never on the episode lines as well
+    log_run("honest", "started", note=f"{untrusted} under {trusted}, limit 1")
+    try:
+        h_log = ca.run_eval(out / "honest", untrusted, SEED, ["-T", "mode=honest"], None, trusted)
+    except BaseException as e:
+        log_run("honest", "failed", error=f"{type(e).__name__}: {e}", paths=[out / "honest"])
+        raise
+    log_run("honest", "done", paths=[out / "honest"])
+    log_run("redteam", "started", note="STATIC_PAYLOAD, round 0")
+    try:
+        a_log = ca.run_eval(out / "redteam", untrusted, SEED, [], payload_file, trusted)
+    except BaseException as e:
+        log_run("redteam", "failed", error=f"{type(e).__name__}: {e}", paths=[out / "redteam"])
+        raise
+    log_run("redteam", "done", paths=[out / "redteam"])
+
+    log_run("check", "started")
+    try:
+        h_chk, h = check_episode(h_log, None)
+        a_chk, a = check_episode(a_log, STATIC_PAYLOAD)
+    except BaseException as e:
+        log_run("check", "failed", error=f"{type(e).__name__}: {e}")
+        raise
     metrics = control_metrics(h_log, a_log)
     # requested_seed is `inspect eval --seed`; sent_settings is what the provider requests carried
     # (the Anthropic path sends no seed, audit_codex X8). Reports before 2026-10-21 call it `seed`.
@@ -191,6 +217,9 @@ def main() -> None:
     if args.backend == "mock":
         report["proposer_smoke"] = asyncio.run(red.propose(1))
     write_json(out / "check.json", report)   # repo-relative paths only
+    log_run("check", "done", cost_usd=report["cost_usd"], paths=[out / "check.json"],
+            note=f"instruction delivered honest {h_chk['instruction_delivered']}, redteam {a_chk['instruction_delivered']}; "
+                 f"monitor scored every step honest {h_chk['monitor_scored_every_step']}, redteam {a_chk['monitor_scored_every_step']}")
 
     print("\n" + step_table([h, a]) + "\n")
     for k in ("honest", "redteam"):

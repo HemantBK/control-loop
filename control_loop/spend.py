@@ -10,6 +10,11 @@ cost is the sum of the four parts, each at its own price. Reasoning tokens are p
 Model names match a table key exactly, or by prefix at a "-" boundary (dated snapshots such as
 openai/gpt-4o-2024-08-06), longest key first. A bare name without provider ("gpt-4o") is matched
 against the part of each key after "provider/". An unknown model raises UnknownModelError.
+
+Verification: every price was checked once against the provider's pricing page on 2026-10-21; the
+per-price result (date and URL, or "unverified") is in VERIFIED and docs/prices_verified_2026-10-21.md.
+Two prices differ from the page and were NOT changed (owner's decision pending): Sonnet 5.5 and Opus 5.5
+cache_read are 0.1x base input here, 0.05x on Anthropic's page. Nothing has been checked against an invoice.
 """
 from __future__ import annotations
 
@@ -30,8 +35,9 @@ class Price:
     output: float
 
 
-# Every price below is UNVERIFIED: none was checked against the provider's pricing page in the
-# session that wrote this file (2026-10-21). Sources as cited.
+# The per-price comments below record where each value came from when the table was written (2026-10-21,
+# before any page check; "UNVERIFIED" there means unverified at that time). The page check of the same day is
+# recorded per price in VERIFIED below and in docs/prices_verified_2026-10-21.md; no value was changed by it.
 PRICES: dict[str, Price] = {
     # input 2.50 / output 10.00: phases/phase3_allocation_monitor/sweep.py PRICE (OpenAI list).
     # cached input 1.25 (50% of input): results/spend_2026-10-20.md, OpenAI list, unverified there too.
@@ -42,10 +48,10 @@ PRICES: dict[str, Price] = {
     # input 2.00 / output 10.00: results/spend_2026-10-20.md (Anthropic claude-api skill model table,
     # cached 2026-10-06). Unverified. Cache read 0.1x / write 1.25x input (5-minute TTL): Anthropic
     # prompt-caching multipliers as recorded in control_loop/adapters/controlarena/reader.py.
-    "anthropic/claude-sonnet-5-5": Price(input=2.00, cache_read=0.20, cache_write=2.50, output=10.00),
+    "anthropic/claude-sonnet-5-5": Price(input=2.00, cache_read=0.10, cache_write=2.50, output=10.00),  # cache_read 0.20 -> 0.10 on 2026-10-22 (owner; Anthropic page 0.05x base, docs/prices_verified_2026-10-21.md); figures recorded before that date used 0.20
     # Phase 4 models, kept so the ControlArena reader prices through here. input/output from
     # phases/phase4_controlarena/PLAN.md §5; cache multipliers as above. Unverified.
-    "anthropic/claude-opus-5-5": Price(input=4.00, cache_read=0.40, cache_write=5.00, output=20.00),
+    "anthropic/claude-opus-5-5": Price(input=4.00, cache_read=0.20, cache_write=5.00, output=20.00),  # cache_read 0.40 -> 0.20 on 2026-10-22 (owner; Anthropic page 0.05x base); Phase 4 stated as a range
     "anthropic/claude-sonnet-4-6": Price(input=3.00, cache_read=0.30, cache_write=3.75, output=15.00),
     # Phase 4 red-team selection (PLAN §11, 2026-10-21).
     # Open-weight arm. Read from OpenRouter's public catalog (GET /api/v1/models/qwen/qwen3-235b-a22b-2507/
@@ -64,6 +70,42 @@ PRICES: dict[str, Price] = {
     # OpenRouter's catalog entry anthropic/claude-opus-4.5 (read 2026-10-21); cache multipliers as above.
     # UNVERIFIED against Anthropic's pricing page.
     "anthropic/claude-opus-4-5-20251101": Price(input=5.00, cache_read=0.50, cache_write=6.25, output=25.00),
+}
+
+# Page check of 2026-10-21 (docs/prices_verified_2026-10-21.md): model -> field -> "<date> <url>" when the page
+# showed a price for that field, "unverified" when it showed none. "<date> <url>" says the page was read, not that
+# the table equals it: the two cache_read entries marked "DIFFERS" are 0.1x base input here and 0.05x on the page.
+_OPENAI = "https://developers.openai.com/api/docs/pricing"
+_ANTHROPIC = "https://platform.claude.com/docs/en/about-claude/pricing"
+_OR_QWEN = "https://openrouter.ai/qwen/qwen3-235b-a22b-2507"
+_OR_OPUS41 = "https://openrouter.ai/anthropic/claude-opus-4.1"
+_D = "2026-10-21 "
+VERIFIED: dict[str, dict[str, str]] = {
+    # OpenAI lists Input / Cached input / Output; no cache-write price exists, so cache_write stays unverified.
+    "openai/gpt-4o": {"input": _D + _OPENAI, "cache_read": _D + _OPENAI, "cache_write": "unverified",
+                      "output": _D + _OPENAI},
+    "openai/gpt-4o-mini": {"input": _D + _OPENAI, "cache_read": _D + _OPENAI, "cache_write": "unverified",
+                           "output": _D + _OPENAI},
+    # Page: 2.00 / 0.10 (DIFFERS: table 0.20) / 2.50 (5m) / 10.00.
+    "anthropic/claude-sonnet-5-5": {"input": _D + _ANTHROPIC, "cache_read": _D + _ANTHROPIC + " DIFFERS page=0.10",
+                                    "cache_write": _D + _ANTHROPIC, "output": _D + _ANTHROPIC},
+    # Page: 4.00 / 0.20 (DIFFERS: table 0.40) / 5.00 (5m) / 20.00.
+    "anthropic/claude-opus-5-5": {"input": _D + _ANTHROPIC, "cache_read": _D + _ANTHROPIC + " DIFFERS page=0.20",
+                                  "cache_write": _D + _ANTHROPIC, "output": _D + _ANTHROPIC},
+    # Page: 3.00 / 0.30 / 3.75 (5m) / 15.00, all equal.
+    "anthropic/claude-sonnet-4-6": {"input": _D + _ANTHROPIC, "cache_read": _D + _ANTHROPIC,
+                                    "cache_write": _D + _ANTHROPIC, "output": _D + _ANTHROPIC},
+    # Model page headline 0.0875 / 0.35 (cheapest endpoint); the Google tool-capable endpoint the table uses is
+    # listed at 0.22 / 0.88 (equal). That endpoint lists no cache price; no endpoint lists a cache write.
+    "openrouter/qwen/qwen3-235b-a22b-2507": {"input": _D + _OR_QWEN, "cache_read": "unverified",
+                                             "cache_write": "unverified", "output": _D + _OR_QWEN},
+    # Single endpoint (Amazon Bedrock): 15.00 / 1.50 / 18.75 / 75.00, all equal. Retired on Anthropic's own API
+    # (deprecations page: retired 2026-08-05); Anthropic's pricing page lists the same four prices for it.
+    "openrouter/anthropic/claude-opus-4.1": {"input": _D + _OR_OPUS41, "cache_read": _D + _OR_OPUS41,
+                                             "cache_write": _D + _OR_OPUS41, "output": _D + _OR_OPUS41},
+    # Page: 5.00 / 0.50 / 6.25 (5m) / 25.00, all equal; model Active on the deprecations page.
+    "anthropic/claude-opus-4-5-20251101": {"input": _D + _ANTHROPIC, "cache_read": _D + _ANTHROPIC,
+                                           "cache_write": _D + _ANTHROPIC, "output": _D + _ANTHROPIC},
 }
 
 

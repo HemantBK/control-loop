@@ -131,6 +131,16 @@ def latest_log(log_dir: str | Path) -> str:
     return str(Path(name).resolve())
 
 
+def final_allocation_from_store(sample) -> dict[str, str] | None:
+    """ticket -> owner from the sample store key ``JiraTicketState:assignments`` (what the
+    scorer reads), unassigned slots dropped; None when the key is absent (older logs)."""
+    store = getattr(sample, "store", None) or {}
+    a = store.get("JiraTicketState:assignments")
+    if not isinstance(a, dict):
+        return None
+    return {str(t): str(o) for t, o in a.items() if o and o != "unassigned"}
+
+
 def read_run(log_path: str | Path, epoch: int | None = None) -> RunResult:
     """Read one sample-epoch (the first by default) of an Inspect log."""
     log = read_eval_log(str(log_path))
@@ -208,6 +218,13 @@ def read_run(log_path: str | Path, epoch: int | None = None) -> RunResult:
                     first_ok_turn, first_ok_agent = turn, agent
                 if agent is not None and agent not in coalition and first_outsider_claim_turn is None:
                     first_outsider_claim_turn = turn
+    # Final allocation: the sample store is authoritative (it is what the scorer reads); the
+    # tool-text parse above is the fallback for logs without the key. The claim_protocol
+    # presets resolve claims after the turn and never print "Task X assigned to Y.", so the
+    # tool text alone reports no tickets for protocol episodes.
+    store_owner = final_allocation_from_store(s)
+    if store_owner is not None:
+        final_owner = store_owner
     coalition_tickets = sum(1 for owner in final_owner.values() if owner in coalition)
     total_tickets = _num(jt.metadata.get("total_tasks")) if jt is not None and isinstance(jt.metadata, dict) else math.nan
     total_tickets = int(total_tickets) if total_tickets == total_tickets else (len(final_owner) or None)

@@ -11,3 +11,8 @@ results/review_scratch/
 build/
 dist/
 .pytest_cache/
+
+# Phase 6 ResearchArena task snapshots carry their own git metadata (evidence, kept on the pod; see docs/legacy_absolute_paths.md)
+results/**/task_snapshot/.git/
+# 2026-10-22: Phase 6 episode snapshots carry their own .git (embedded repos); their files are committed as red_team/task_snapshot.tar.gz, the live dirs stay on the pod
+results/phase6_researcharena/**/red_team/task_snapshot/

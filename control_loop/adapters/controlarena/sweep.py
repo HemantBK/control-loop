@@ -38,8 +38,11 @@ import math
 import time
 from pathlib import Path
 
+from control_loop import runlog
 from control_loop.adapters import controlarena as ca
 from control_loop.paths import rel, rel_text, write_json, write_text
+
+PHASE = "phase4_controlarena"   # run.jsonl phase name (docs/SOP.md §3, run log)
 
 # Phase 4 spend before the sweep, from RESULTS.md: mechanism check + --limit 3 reproduction $1.18
 # (2026-10-20), red-team selection $1.7235 (2026-10-21).
@@ -267,6 +270,11 @@ class Cell:
                                  brief=getattr(args, "brief", "default"))
         if (self.out / "redteam" / "history.jsonl").exists():
             self.red.history = [json.loads(x) for x in (self.out / "redteam" / "history.jsonl").read_text().splitlines() if x]
+        # run.jsonl bookkeeping (control_loop.runlog): the cell spend as of the last write_spend, and the
+        # files the running step wrote; neither changes what the driver does or spends
+        self._spent: float | None = None
+        self._spend_writes = 0
+        self._step_paths: list = []
 
     def config(self) -> dict:
         a = self.a
@@ -292,6 +300,10 @@ class Cell:
 
     def save(self) -> None:
         write_json(self.state_file, self.state)   # repo-relative paths only; in memory they may be absolute
+
+    def log_run(self, step: str, status: str, **kw) -> None:
+        """One <cell>/run.jsonl line (docs/SOP.md §3; `python -m control_loop.status <sweep root>`)."""
+        runlog.log_step(self.out, phase=PHASE, run_id=self.out.name, step=step, status=status, **kw)
 
     # spend
     def cell_spend(self) -> float:
@@ -324,15 +336,23 @@ class Cell:
         rec = dict(cell_usd=round(cell, 4), phase4_cumulative_usd=round(self.phase_spend(), 4),
                    prior_phase4_usd=PRIOR_PHASE4, phase_stop_usd=self.a.phase_stop, cell_cap_usd=self.a.cell_cap)
         write_json(self.out / "spend.json", rec)
+        self._spent, self._spend_writes = cell, self._spend_writes + 1
         self.log(f"spend: cell ${rec['cell_usd']:.4f}, Phase 4 cumulative ${rec['phase4_cumulative_usd']:.4f} "
                  f"(stop ${self.a.phase_stop:.2f}, cell cap ${self.a.cell_cap:.2f})")
 
     def guard(self, upper: float, what: str) -> None:
         cell, phase = self.cell_spend(), self.phase_spend()
+        note = (f"cell ${cell:.4f} + upper ${upper:.4f} vs cap ${self.a.cell_cap:.2f}; "
+                f"phase ${phase:.4f} + upper vs stop ${self.a.phase_stop:.2f}")
         if phase + upper > self.a.phase_stop:
-            self.stop(f"stopped: spend stop, phase (${phase:.4f} + upper ${upper:.4f} for {what} > ${self.a.phase_stop:.2f})")
+            status = f"stopped: spend stop, phase (${phase:.4f} + upper ${upper:.4f} for {what} > ${self.a.phase_stop:.2f})"
+            self.log_run(f"spend_guard:{what}", "stopped", error=status, note=note)
+            self.stop(status)
         if cell + upper > self.a.cell_cap:
-            self.stop(f"stopped: spend stop, cell cap (${cell:.4f} + upper ${upper:.4f} for {what} > ${self.a.cell_cap:.2f})")
+            status = f"stopped: spend stop, cell cap (${cell:.4f} + upper ${upper:.4f} for {what} > ${self.a.cell_cap:.2f})"
+            self.log_run(f"spend_guard:{what}", "stopped", error=status, note=note)
+            self.stop(status)
+        self.log_run(f"spend_guard:{what}", "done", note=note)
 
     def stop(self, status: str) -> None:
         self.state["status"] = status
@@ -353,6 +373,7 @@ class Cell:
         self.log(f"{name}: {mode}, n={n}, max_samples={self.a.max_samples}")
         p = ca.run_eval(self.out / sub, self.a.untrusted, self.a.seed, extra, payload_file, self.a.trusted,
                         max_samples=self.a.max_samples, limit=n)
+        self._step_paths.append(self.out / sub)
         self.state["logs"][name] = str(p)
         self.save()
         self.write_spend()
@@ -434,9 +455,28 @@ class Cell:
         return prop
 
     def step(self, name: str, fn) -> None:
+        """Run one stage unless state.json says it is done, with one run.jsonl line per outcome: skipped,
+        started, then done (cost = the cell spend the stage added, as measured by write_spend; None when the
+        stage writes no spend), stopped (self.stop: spend guard, usability screen, baseline mismatch) or
+        failed (any other error)."""
         if name in self.state["done"]:
+            self.log_run(name, "skipped", note="state.json: done")
             return
-        fn()
+        self.log_run(name, "started")
+        self._step_paths = []
+        before = self._spent if self._spent is not None else self.cell_spend()
+        n_before = self._spend_writes
+        try:
+            fn()
+        except SystemExit as e:
+            status = "stopped" if str(self.state.get("status", "")).startswith("stopped") else "failed"
+            self.log_run(name, status, error=str(e), paths=self._step_paths)
+            raise
+        except BaseException as e:
+            self.log_run(name, "failed", error=f"{type(e).__name__}: {e}", paths=self._step_paths)
+            raise
+        cost = None if self._spend_writes == n_before else self._spent - before
+        self.log_run(name, "done", cost_usd=cost, paths=self._step_paths)
         self.state["done"].append(name)
         self.save()
 
@@ -502,6 +542,7 @@ class Cell:
             r0a_samples=rec["samples"],
             step_tables={k: step_table(read_log(self.state["logs"][k])) for k in ("honest_run1", "r0a")})
         write_json(self.out / "check.json", report)
+        self._step_paths.append(self.out / "check.json")
         for k in ("honest_run1", "r0a"):
             self.log(f"{k} step table:\n{report['step_tables'][k]}")
             self.log(f"{k} sent by role: {json.dumps(report['sent_by_role'][k])}")
@@ -544,6 +585,7 @@ class Cell:
                     spend=json.loads((self.out / "spend.json").read_text()))
         write_json(self.out / "summary.json", summ)
         write_text(self.out / "tables.md", round_table(summ))
+        self._step_paths += [self.out / "summary.json", self.out / "tables.md"]
         self.state["status"] = "complete"
         self.save()
         self.log("\n" + round_table(summ))
