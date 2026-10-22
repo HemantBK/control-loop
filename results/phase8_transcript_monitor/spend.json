@@ -1,0 +1,186 @@
+{
+  "rows": [
+    {
+      "dir": "check/v1/gpt-4o-mini/pass1",
+      "n_logs": 1,
+      "models": [
+        "openai/gpt-4o-mini"
+      ],
+      "input": 7183,
+      "cache_read": 1024,
+      "output": 976,
+      "cost": 0.0017,
+      "budget_row": "check",
+      "planned": 0.01,
+      "upper": 0.02,
+      "notes": []
+    },
+    {
+      "dir": "check/v2/gpt-4o-mini/pass1",
+      "n_logs": 1,
+      "models": [
+        "openai/gpt-4o-mini"
+      ],
+      "input": 271,
+      "cache_read": 7936,
+      "output": 987,
+      "cost": 0.0012,
+      "budget_row": "check",
+      "planned": 0.01,
+      "upper": 0.02,
+      "notes": []
+    },
+    {
+      "dir": "greedy/gpt-4o-mini/pass1",
+      "n_logs": 1,
+      "models": [
+        "openai/gpt-4o-mini"
+      ],
+      "input": 179348,
+      "cache_read": 41728,
+      "output": 25680,
+      "cost": 0.0454,
+      "budget_row": "greedy/gpt-4o-mini/pass1",
+      "planned": 0.07,
+      "upper": 0.1,
+      "notes": []
+    },
+    {
+      "dir": "stratum_n/gpt-4o-mini/pass1",
+      "n_logs": 1,
+      "models": [
+        "openai/gpt-4o-mini"
+      ],
+      "input": 483111,
+      "cache_read": 98432,
+      "output": 58883,
+      "cost": 0.1152,
+      "budget_row": "stratum_n/gpt-4o-mini/pass1",
+      "planned": 0.14,
+      "upper": 0.2,
+      "notes": []
+    },
+    {
+      "dir": "v1/gpt-4o-mini/pass1",
+      "n_logs": 1,
+      "models": [
+        "openai/gpt-4o-mini"
+      ],
+      "input": 4326983,
+      "cache_read": 988672,
+      "output": 557321,
+      "cost": 1.0576,
+      "budget_row": "v1/gpt-4o-mini/pass1",
+      "planned": 1.33,
+      "upper": 2.0,
+      "notes": []
+    },
+    {
+      "dir": "v1/gpt-4o-mini/pass2",
+      "n_logs": 1,
+      "models": [
+        "openai/gpt-4o-mini"
+      ],
+      "input": 4299847,
+      "cache_read": 1015808,
+      "output": 559664,
+      "cost": 1.057,
+      "budget_row": "v1/gpt-4o-mini/pass2",
+      "planned": 1.33,
+      "upper": 2.0,
+      "notes": []
+    },
+    {
+      "dir": "v1/gpt-4o-mini/pass3",
+      "n_logs": 1,
+      "models": [
+        "openai/gpt-4o-mini"
+      ],
+      "input": 4318663,
+      "cache_read": 996992,
+      "output": 559659,
+      "cost": 1.0584,
+      "budget_row": "v1/gpt-4o-mini/pass3",
+      "planned": 1.33,
+      "upper": 2.0,
+      "notes": []
+    },
+    {
+      "dir": "v2/gpt-4o-mini/pass1",
+      "n_logs": 1,
+      "models": [
+        "openai/gpt-4o-mini"
+      ],
+      "input": 497531,
+      "cache_read": 97536,
+      "output": 60446,
+      "cost": 0.1182,
+      "budget_row": "v2/gpt-4o-mini",
+      "planned": 0.48,
+      "upper": 0.75,
+      "notes": []
+    },
+    {
+      "dir": "v2/gpt-4o-mini/pass2",
+      "n_logs": 1,
+      "models": [
+        "openai/gpt-4o-mini"
+      ],
+      "input": 55163,
+      "cache_read": 539904,
+      "output": 60583,
+      "cost": 0.0851,
+      "budget_row": "v2/gpt-4o-mini",
+      "planned": 0.48,
+      "upper": 0.75,
+      "notes": []
+    },
+    {
+      "dir": "v2/gpt-4o-mini/pass3",
+      "n_logs": 1,
+      "models": [
+        "openai/gpt-4o-mini"
+      ],
+      "input": 54395,
+      "cache_read": 540672,
+      "output": 59882,
+      "cost": 0.0846,
+      "budget_row": "v2/gpt-4o-mini",
+      "planned": 0.48,
+      "upper": 0.75,
+      "notes": []
+    }
+  ],
+  "cells": {
+    "check/v1/gpt-4o-mini": 0.0017,
+    "check/v2/gpt-4o-mini": 0.0012,
+    "greedy/gpt-4o-mini/pass1": 0.0454,
+    "stratum_n/gpt-4o-mini/pass1": 0.1152,
+    "v1/gpt-4o-mini/pass1": 1.0576,
+    "v1/gpt-4o-mini/pass2": 1.057,
+    "v1/gpt-4o-mini/pass3": 1.0584,
+    "v2/gpt-4o-mini/pass1": 0.1182,
+    "v2/gpt-4o-mini/pass2": 0.0851,
+    "v2/gpt-4o-mini/pass3": 0.0846
+  },
+  "total": 3.6244,
+  "stop": 48.0,
+  "cell_cap": 40.0,
+  "stop_reached": false,
+  "cells_over_cap": [],
+  "budget_totals": {
+    "primary arm": [
+      4.62,
+      6.97
+    ],
+    "secondary arm (gpt-4o)": [
+      28.2,
+      42.35
+    ],
+    "phase, both arms": [
+      32.82,
+      49.32
+    ]
+  },
+  "gpt4o_projection": null
+}
