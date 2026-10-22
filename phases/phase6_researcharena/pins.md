@@ -75,3 +75,44 @@ equals `spend.py`'s Sonnet 4.6 prices.
 | verified | request bodies captured by a local TLS-terminating proxy on the CPU pod (no request reached OpenRouter, dummy key): the Qwen3 body carried exactly the routing object; the title request (`google/gemini-nano-banana-2.1`, opencode's small model for OpenRouter) carried none | `/tmp/p6_orproxy.py` on the CPU pod (scratch, not in the repo) |
 | composed root | `$P6_ARENA_ROOT` rebuilt and verified 2026-10-22 (206/206 identical, `overlay_agent_is_default` true, manifest `overlay_openrouter_routing` = the object above); the GPU pods rebuild theirs in `pod_setup.sh` step 5 from the pushed tree | `composed_root_manifest.json` |
 | not verified | that OpenRouter honours the object on a real call (no paid call made); which provider serves each request (opencode 1.19.3 does not store OpenRouter's `provider` response field in `solve_out.json`) | — |
+
+## Close-out, 2026-10-22 (phase closed by the owner's time box; `README.md` §1, §4, §11)
+
+### Code and environment as last pinned
+
+| item | value | source |
+|---|---|---|
+| ResearchArena | `aisa-group/ResearchArena` at `58776e09339c1714d0524130590abaf6eac7879d`, unmodified; upstream `11ea904` (branch `cuda-correction`) not adopted | PLAN §1.1, Amendment (5) and the owner's line under it |
+| control-loop | commit `e69fc02` and later; smoke5 pushed the tree at that commit (`--control-loop-commit local`; the Phase 6 code was unchanged against it); runs before smoke5 used the then uncommitted tree | `git log`; this file, Code |
+| prebuilt image | `ghcr.io/hemantbk/control-loop-phase6:tf4.53.3-oc1.19.3-ra58776e0` (also `:sha-e69fc029bff7e6413032d4929ef3e95e72963aad`), digest `sha256:73c00e14792730a2e9898b6fab2a4302543880dbec77133d09e05a40e72ba330`, 16.25 GB compressed, public; workflow run 39812742697 at `e69fc02`, 2026-10-22 16:17–16:58 UTC; scan OK (87,434 files, 0 findings, 32 known public values allowed) | PLAN, dated line under Amendment (5) |
+| RunPod template | `pzov5japaa` ("p6-researcharena-tf4.53.3": the image by tag, container disk 60 GB, volume 30 GB at /workspace, 22/tcp, no registry credential); used through `P6_TEMPLATE_ID` | same; `results/phase6_researcharena/smoke5/run.jsonl` |
+| earlier images | `runpod/pytorch:1.0.3-cu1281-torch291-ubuntu2404` (smoke, smoke2, smoke3); `runpod/base:1.4.1-cuda1290-ubuntu2204` + `pod_setup.sh` (smoke4, check runs 1 and 2, diag1); by tag, no digest recorded | the runs' `run.jsonl` `pod_create` lines |
+| transformers | 5.3.0 in every run that reached a GPU (smoke3 onward through check run 2); **4.53.3** pinned by Amendment (5) and baked into the image; never run on a GPU (smoke5 reached no setup step) | `results/phase6_researcharena/smoke4/smoke.log`; PLAN Amendment (5) |
+| torch / CUDA | torch 2.10.0 from PyPI (`torch.version.cuda` 12.8), nvcc 12.9, python 3.11 (smoke4 onward) | `smoke4/smoke.log` |
+| opencode-ai | 1.19.3 (GPU pods from smoke2; pinned from smoke4; CPU pod from 2026-10-22 09:56) | setup logs; this file, Code |
+| TinyLlama | `TinyLlama/TinyLlama-1.1B-Chat-v1.0`, revision `fe8a4ea1ffedaf415f4da2f062534de366a451e6` in the image | `docker/phase6/README.md` |
+
+### Every run: dates (UTC), pods and spend (list price, from `pods.jsonl` and `run.jsonl`)
+
+All pods: `NVIDIA H100 80GB HBM3`, Secure Cloud, $3.99/h. Times are the run's first and last `run.jsonl` line; pod times
+are the `pods.jsonl` create and delete lines.
+
+| run | UTC | pod id (data center) | s billed | GPU $ | API $ | directory |
+|---|---|---|---|---|---|---|
+| smoke | 2026-10-21 16:12:10–16:13:08 | `e7v13puzxqsmwe` (EU-FR-1) | 57 | 0.0642 | 0.0000 | `results/phase6_researcharena/smoke/` |
+| smoke2 | 2026-10-21 18:56:30–18:58:31 | `bkd5wint05nd3g` (EU-FR-1) | 120 | 0.1340 | 0.0000 | `…/smoke2/` |
+| smoke3 | 2026-10-21 23:35:03–23:37:08 | `j4qj3pyghy2h0l` (EU-FR-1) | 124 | 0.1379 | 0.0500 (upper) | `…/smoke3/` |
+| smoke4 | 2026-10-22 06:28:52–06:37:27 | `evfwaz8dpfybcl` (EU-FR-1) | 514 | 0.5699 | 0.0500 (upper) | `…/smoke4/` |
+| check run 1 | 2026-10-22 07:02:24–07:54:06 | `vv2ifkc0kg2msp` 532 s $0.5901; `neouf87knws00n` 346 s $0.3836; `t074x6df8gd2eg` 387 s $0.4292; `qonjcz2oosa2rs` 351 s $0.3897; `dum8a2y5hc8zwc` 353 s $0.3917; `ndolca0y2amva0` 321 s $0.3560; `81ehms5n6514jw` 461 s $0.5115; `nj9snpqakof84a` 340 s $0.3772 (all EU-FR-1) | 3,091 | 3.4290 | not measurable | `…/sweep/qwen3_733/` |
+| check run 2 | 2026-10-22 08:04:29–08:50:45 | `7bkjqa1zhho1mv` (EU-NL-1) 1,270 s $1.4083; `nlfm6a9lbsdy2x` (EU-FR-1) 1,500 s $1.6634 | 2,770 | 3.0717 | agent 0.3874 | `…/sweep/qwen3_733_run2/` |
+| run2 monitor re-run | 2026-10-22 09:57:52–10:16:52 | none | — | — | monitor 0.5349 | same, run_id `qwen3_733-monitor-rerun` |
+| diag1 | 2026-10-22 11:40:48–11:50:54 | `hkclkzkhedowb3` (EU-FR-1) | 604 | 0.6705 | 0.0000 | `…/diag1/` |
+| smoke5 | 2026-10-22 17:03:05–17:13:19 | `epc9ftzjt0ijjp` (EU-FR-1) | 613 | 0.6800 | 0.0000 | `…/smoke5/` |
+| **Phase 6 total** | | **16 pods** | **7,893 (2.1925 H100-h)** | **8.7572** | **1.0223** | **$9.7795** |
+
+API detail: agent (Qwen3 via OpenRouter, reader at `control_loop/spend.py` list price, unverified) 0.3874; monitor
+(Sonnet 4.6, opencode's per-message cost = `spend.py`) 0.5349; smoke3 and smoke4 opencode calls 0.0500 each (upper bound).
+$0.1000 of the total is an upper bound. Not in the total: council Qwen3 call $0.0022 (`audits/council_2026-10-22_check.md`;
+Codex unpriced, 21,077 tokens), i.e. $9.7817 with the council; the image builds on GitHub Actions. Against the caps: phase
+cap $150 / stop $120 (PLAN Amendment (3) item 4). `python -m control_loop.status results/phase6_researcharena` prints
+$8.8572 because it omits the run2 directory's own $0.9223 (`README.md` §9 item 2).

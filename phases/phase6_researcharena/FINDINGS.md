@@ -424,3 +424,14 @@ Action: the two digests were added to `KNOWN_PUBLIC_SHA256` in `docker/phase6/sc
 key pattern was changed (diff: 8 added lines, 0 pattern lines); a new test proves a key-shaped value beside the names still
 fails. Phase 6 tests 117 passed.
 
+## 2026-10-22: smoke test on the prebuilt image (the time box's one smoke): FAILED before any check
+
+Run under `<session scratch>/jobs/p6run.sh smoke5` (pid-tracked; driver output copied to `results/phase6_researcharena/smoke5/driver.log`, paths made relative, 2026-10-22), template `pzov5japaa`, image digest
+`sha256:73c00e14…a330`. Pod `epc9ftzjt0ijjp` (EU-FR-1, H100 SXM, $3.99/h) was created at launch (≈17:03Z); RunPod reported it
+reachable after about 10 minutes (the first pull of the 16.25 GB image, within the 20-minute wait). The driver's first ssh
+command, the tar push of the local control_loop tree (`pods.py` `push_repo`), failed with `Connection to 31.24.80.42 closed by
+remote host` (ssh rc 255); the driver raised and deleted the pod at 17:13:19Z; 613 s billed, $0.68. No setup step, version
+check, compile or stock-kernel benchmark ran, so the transformers 4.53.3 pin is untested on a GPU. The pod's own logs were not
+collected (the session never opened). Under the owner's firm time box (PLAN, dated line 2026-10-22) this failure is reported
+with its cause and not fixed or relaunched. Nothing here enters a table.
+

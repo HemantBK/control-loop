@@ -886,3 +886,16 @@ environment. Log the published-container crash as an upstream issue with evidenc
 commit 11ea904 is not adopted; the draft issue is phases/phase6_researcharena/upstream_issue_draft.md (not filed; the owner
 files it after the call).
 
+2026-10-22  Amendment (4) item 1, recorded when they exist: image `ghcr.io/hemantbk/control-loop-phase6:tf4.53.3-oc1.19.3-ra58776e0`
+(also `:sha-e69fc029bff7e6413032d4929ef3e95e72963aad`), digest
+`sha256:73c00e14792730a2e9898b6fab2a4302543880dbec77133d09e05a40e72ba330` (both tags resolve to it, read anonymously from
+ghcr.io on the CPU pod: the package is public), 43 layers, 16.25 GB compressed; built by `.github/workflows/phase6-image.yml`
+run 39812742697 at commit e69fc02 (2026-10-22 16:17–16:58 UTC), image scan OK (87,434 files, 0 findings, 32 known public values
+allowed). RunPod template `pzov5japaa` ("p6-researcharena-tf4.53.3": that image by tag, container disk 60 GB, volume 30 GB at
+/workspace, port 22/tcp, no registry credential). Pods use it through `P6_TEMPLATE_ID=pzov5japaa`.
+
+2026-10-22  Owner, firming the time box of Amendment (4) item 3: "if the smoke or the check fails for any reason, new cause or
+not, report it with the cause, but don't fix and relaunch. Bring me the close-out write-up for Phase 6 as 'not reproducible
+on RunPod' alongside the cause, and start Phase 7's pre-registered build checks in parallel. I'll decide on any further
+attempt." The smoke of 2026-10-22 17:03 UTC (template pzov5japaa) is the one smoke.
+

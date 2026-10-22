@@ -1,0 +1,19 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "control_loop/adapters/researcharena/pods.py", line 1188, in <module>
+    sys.exit(main())
+             ~~~~^^
+  File "control_loop/adapters/researcharena/pods.py", line 1184, in main
+    return smoke(a.out, cfg, allow_paid=a.allow_paid, dry_run=a.dry_run)
+  File "control_loop/adapters/researcharena/pods.py", line 854, in smoke
+    L.setup(pod)
+    ~~~~~~~^^^^^
+  File "control_loop/adapters/researcharena/pods.py", line 516, in setup
+    self.push_repo(pod)
+    ~~~~~~~~~~~~~~^^^^^
+  File "control_loop/adapters/researcharena/pods.py", line 563, in push_repo
+    raise RuntimeError(f"pushing the control_loop tree to pod {pod.id} failed rc={cp.returncode}: "
+                       f"{cp.stderr.decode(errors='replace')[-300:]}")
+RuntimeError: pushing the control_loop tree to pod epc9ftzjt0ijjp failed rc=255: Connection to 31.24.80.42 closed by remote host.
+
