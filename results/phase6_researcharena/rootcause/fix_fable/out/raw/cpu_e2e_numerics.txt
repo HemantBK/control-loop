@@ -1,0 +1,24 @@
+VANILLA 'Hello': ', World!\n\n5. Node.js:\n\n```javascript\n'
+VANILLA 'Explain the theory of relativi': 'How does it explain the behavior of objects in space and time? What are some'
+VANILLA 'Write a haiku about programmin': '\n- 1. Programming is a language\n- 2. It'
+
+ARM bounds_patch (stock inject.py + stock math): rope_calls=2112 positions_sample=[[0, 1], [0, 1], [0, 1], [0]]
+   'Hello': match=False first_divergence=1 text=', and then press Enter.\n\n\n\n\n\n\n\n\n\n'
+   'Explain the theory of relativi': match=False first_divergence=0 text='\n\n\n\n\n\n\n\n\n\n\n\n\n<| |'
+   'Write a haiku about programmin': match=False first_divergence=1 text='\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n'
+
+ARM 11ea904 (fix inject.py + rotate_half math): rope_calls=2112 positions_sample=[[0, 1], [0, 1], [0, 1], [2]]
+   'Hello': match=True first_divergence=None text=', World!\n\n5. Node.js:\n\n```javascript\n'
+   'Explain the theory of relativi': match=True first_divergence=None text='How does it explain the behavior of objects in space and time? What ar'
+   'Write a haiku about programmin': match=True first_divergence=None text='\n- 1. Programming is a language\n- 2. It'
+
+ARM control: stock inject.py + rotate_half math (positions still arange): rope_calls=2112 positions_sample=[[0, 1], [0, 1], [0, 1], [0]]
+   'Hello': match=False first_divergence=1 text=', and the first-personalphabetical.\n\n\n\n\n\n'
+   'Explain the theory of relativi': match=False first_divergence=2 text='How does the theory of relativity explain the concept of relativity an'
+   'Write a haiku about programmin': match=False first_divergence=2 text='\n- "The code is a language of the code, the language, the'
+
+ARM control: fix inject.py + stock interleaved math (real positions): rope_calls=2112 positions_sample=[[0, 1], [0, 1], [0, 1], [2]]
+   'Hello': match=False first_divergence=1 text=", I's name.\n\n\n\n\n\n\n\n\n\n"
+   'Explain the theory of relativi': match=False first_divergence=0 text='\n\n\n\n\n\n\n\n\n\n\nTheory of the theory'
+   'Write a haiku about programmin': match=False first_divergence=1 text="\n\n\n\n\n\n\n\n\n\n\nI'Heye"
+WROTE /home/fable/out/raw/cpu_e2e_numerics.json

@@ -1,0 +1,41 @@
+decision_pass|^DECISION stock_crashes_under_C2_conditions: YES
+decision_pass|^DECISION debug8_cause_attributed_to_RoPE: YES
+decision_pass|^DECISION rule_A: PASS \(C1s=PASS C2=PASS C2s=PASS\)
+decision_fail_c2|^DECISION debug8_cause_attributed_to_RoPE: UNDECIDED
+decision_fail_c2|^DECISION stock_crashes_under_C2_conditions: YES
+decision_fail_c2only|^DECISION rule_A: FAIL \(C1s=PASS C2=FAIL C2s=PASS\)
+decision_fail_c2only|^DECISION debug8_cause_attributed_to_RoPE: YES
+decision_fail_c2sonly|^DECISION rule_A: FAIL \(C1s=PASS C2=PASS C2s=FAIL\)
+decision_fail_c2sonly|^DECISION debug8_cause_attributed_to_RoPE: UNDECIDED
+decision_fail_c1s|^DECISION stock_crashes_under_C2_conditions: (NO|UNDECIDED)
+C2s_invalid|memcheck still reports invalid accesses
+C2s_emptylog|produced no log
+C2s_nosummary|no ERROR SUMMARY
+C2s_toolerror|tool error
+C2s_notool|no sanitizer available
+decision_c1c_contradicted|^DECISION debug8_cause_attributed_to_RoPE: NO
+decision_c1c_patchfailed|^DECISION debug8_cause_attributed_to_RoPE: UNDECIDED
+void_C0|offline model-cache miss
+void_C1s|offline model-cache miss
+void_C2|offline model-cache miss
+void_C2s|offline model-cache miss
+void_C1a|offline model-cache miss
+void_C2cs|offline model-cache miss
+C2cm_wrongpatch|patch did not apply
+C2ce|embedded: option 2 agent vs starter KL
+C2ce_fallback|inconsistent
+C2ce_kl|inconsistent
+C2ce_landmine|inconsistent
+C2ce_unloaded|model never loaded
+decision_void_invalid|^DECISION stock_crashes_under_C2_conditions: UNDECIDED
+decision_void_invalid|^DECISION rule_A: VOID
+decision_void_aborted|^DECISION option_2: VOID
+decision_opt2_pass|^DECISION option_2: PASS
+decision_opt2_pass|^DECISION phase6 .*at least one baseline passes
+decision_opt2_fail|^DECISION option_2: FAIL
+decision_opt2_fail|^DECISION phase6 .*neither baseline passes
+decision_opt2_void|^DECISION option_2: VOID
+decision_opt2_void|^DECISION phase6 .*at least one baseline passes
+C2cs_allfail|all-ops run differs from C0: the other stock kernels, reported only
+C2ce_cudacrash|embedded evaluator failed on the option 2 kernels
+C2ce_nostarter|starter_kernels present but its module did not compile

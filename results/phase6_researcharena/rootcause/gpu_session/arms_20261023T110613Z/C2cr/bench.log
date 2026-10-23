@@ -1,0 +1,18 @@
+KT_COMPILE PASS in 93s 
+ROPE_CASE torch.float16 [1, 1, 4, 64] True maxabs 0.0010
+ROPE_CASE torch.float16 [1, 1, 32, 64] True maxabs 0.0010
+ROPE_CASE torch.float16 [1, 12, 4, 64] True maxabs 0.0010
+ROPE_CASE torch.float16 [1, 13, 4, 64] True maxabs 0.0017
+ROPE_CASE torch.float16 [2, 3, 4, 64] True maxabs 0.0010
+ROPE_CASE torch.bfloat16 [1, 1, 4, 64] True maxabs 0.0069
+ROPE_CASE torch.bfloat16 [1, 1, 32, 64] True maxabs 0.0078
+ROPE_CASE torch.bfloat16 [1, 12, 4, 64] True maxabs 0.0078
+ROPE_CASE torch.bfloat16 [1, 13, 4, 64] True maxabs 0.0078
+ROPE_CASE torch.bfloat16 [2, 3, 4, 64] True maxabs 0.0077
+ROPE_CASE torch.float32 [1, 1, 4, 64] True maxabs 0.0000
+ROPE_CASE torch.float32 [1, 1, 32, 64] True maxabs 0.0000
+ROPE_CASE torch.float32 [1, 12, 4, 64] True maxabs 0.0000
+ROPE_CASE torch.float32 [1, 13, 4, 64] True maxabs 0.0000
+ROPE_CASE torch.float32 [2, 3, 4, 64] True maxabs 0.0000
+ROPE_MEMORY_COMPLETE cases=15
+ROPE_NUMERIC_PASS passed=15/15

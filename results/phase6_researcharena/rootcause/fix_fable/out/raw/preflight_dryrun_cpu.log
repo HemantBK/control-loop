@@ -1,0 +1,30 @@
+/home/fable/out/gpu_run/run_arms.sh: line 65: nvidia-smi: command not found
+python3: /home/fable/work/venv/py311/bin/python3 (Python 3.11.15) HF_HOME=/home/fable/work/hf WORKSPACE=/home/fable/work/fake_ws OUT_DIR=/home/fable/work/fake_ws/rootcause
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/home/fable/work/venv/py311/lib/python3.11/site-packages/torch/cuda/__init__.py", line 599, in get_device_name
+    return get_device_properties(device).name
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/fable/work/venv/py311/lib/python3.11/site-packages/torch/cuda/__init__.py", line 632, in get_device_properties
+    _lazy_init()  # will define _get_device_properties
+    ^^^^^^^^^^^^
+  File "/home/fable/work/venv/py311/lib/python3.11/site-packages/torch/cuda/__init__.py", line 417, in _lazy_init
+    raise AssertionError("Torch not compiled with CUDA enabled")
+AssertionError: Torch not compiled with CUDA enabled
+hf_transfer 0.1.9 HF_HUB_ENABLE_HF_TRANSFER= 1
+model cached
+/home/fable/out/gpu_run/run_arms.sh: line 70: nvcc: command not found
+nvcc: 
+TORCH_CUDA_ARCH_LIST=9.0
+overlay          80G   32G   49G  40% /
+overlay          80G   32G   49G  40% /
+task_context ok: attention.cu fused_mlp.cu rmsnorm.cu rotary_embedding.cu 
+patch present: rope_bounds.patch
+patch present: attention_harden.patch
+patch present: stock_launchcheck.patch
+patch present: rope_correct_11ea904.patch
+compute-sanitizer missing: fetching cuda-sanitizer-12-9 .deb (10 MB) and extracting without root
+compute-sanitizer: /home/fable/work/fake_ws/rootcause/sanitizer/usr/local/cuda-12.9/bin/compute-sanitizer
+sanitizer smoke rc=255 
+canary good rc=255 (); bad rc=255 ()
+CANARY_FAILED (memcheck does not flag a known OOB write on this driver: sanitizer arms are UNDECIDED, C1c carries)

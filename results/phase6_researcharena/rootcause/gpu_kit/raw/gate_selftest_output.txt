@@ -1,0 +1,107 @@
+ok   C0 (C0) -> PASS
+ok   C1a (C1a) -> PASS
+ok   C1x (C1a) -> FAIL
+ok   C1c (C1c) -> PASS
+ok   C2 (C2) -> PASS
+ok   C2fail (C2) -> FAIL
+ok   C2_wrongpatch (C2) -> FAIL
+ok   C2s (C2s) -> PASS
+ok   C2s_fallback (C2s) -> FAIL
+ok   C1s_crash (C1s) -> PASS
+ok   C1s_nocrash (C1s) -> FAIL
+ok   C1s_timeout (C1s) -> FAIL
+ok   C1r (C1r) -> PASS
+ok   C1r_rope_second (C1r) -> PASS
+ok   C1r_fail (C1r) -> FAIL
+ok   C2r (C2r) -> PASS
+ok   C2r_invalid (C2r) -> FAIL
+ok   C2cr (C2cr) -> PASS
+ok   C2cr_fail (C2cr) -> FAIL
+ok   C2a (C2a) -> PASS
+ok   C2a_incomplete (C2a) -> UNDECIDED
+ok   C3a (C3a) -> PASS
+ok   C3a_fail (C3a) -> FAIL
+ok   C2c (C2c) -> PASS
+ok   C2c_crash (C2c) -> FAIL
+ok   C2cs (C2cs) -> PASS
+ok   C2cs_allfail (C2cs) -> PASS
+ok   C2cs_allfail matches /all-ops run differs from C0: the other stock kernels, reported only/
+ok   C2cs_ropefail (C2cs) -> FAIL
+ok   C2cs_fallback (C2cs) -> FAIL
+ok   missing_dir (C1s) -> NOT_RUN
+ok   decision_pass (decision) -> PASS
+ok   decision_pass matches /^DECISION stock_crashes_under_C2_conditions: YES/
+ok   decision_pass matches /^DECISION debug8_cause_attributed_to_RoPE: YES/
+ok   decision_pass matches /^DECISION rule_A: PASS \(C1s=PASS C2=PASS C2s=PASS\)/
+ok   decision_fail_c1s (decision) -> FAIL
+ok   decision_fail_c1s matches /^DECISION stock_crashes_under_C2_conditions: (NO|UNDECIDED)/
+ok   decision_fail_skipped (decision) -> VOID
+ok   decision_fail_c2 (decision) -> FAIL
+ok   decision_fail_c2 matches /^DECISION debug8_cause_attributed_to_RoPE: UNDECIDED/
+ok   decision_fail_c2 matches /^DECISION stock_crashes_under_C2_conditions: YES/
+ok   C2s_invalid (C2s) -> FAIL
+ok   C2s_invalid matches /memcheck still reports invalid accesses/
+ok   C2s_emptylog (C2s) -> FAIL
+ok   C2s_emptylog matches /produced no log/
+ok   C2s_nosummary (C2s) -> FAIL
+ok   C2s_nosummary matches /no ERROR SUMMARY/
+ok   C2s_notool (C2s) -> PASS
+ok   C2s_notool matches /no sanitizer available/
+ok   C2s_toolerror (C2s) -> FAIL
+ok   C2s_toolerror matches /tool error/
+ok   decision_fail_c2only (decision) -> FAIL
+ok   decision_fail_c2only matches /^DECISION rule_A: FAIL \(C1s=PASS C2=FAIL C2s=PASS\)/
+ok   decision_fail_c2only matches /^DECISION debug8_cause_attributed_to_RoPE: YES/
+ok   decision_fail_c2sonly (decision) -> FAIL
+ok   decision_fail_c2sonly matches /^DECISION rule_A: FAIL \(C1s=PASS C2=PASS C2s=FAIL\)/
+ok   decision_fail_c2sonly matches /^DECISION debug8_cause_attributed_to_RoPE: UNDECIDED/
+ok   decision_c1c_contradicted (decision) -> PASS
+ok   decision_c1c_contradicted matches /^DECISION debug8_cause_attributed_to_RoPE: NO/
+ok   decision_c1c_patchfailed (decision) -> PASS
+ok   decision_c1c_patchfailed matches /^DECISION debug8_cause_attributed_to_RoPE: UNDECIDED/
+ok   void_C0 (C0) -> INVALID
+ok   void_C0 matches /offline model-cache miss/
+ok   void_C1s (C1s) -> INVALID
+ok   void_C1s matches /offline model-cache miss/
+ok   void_C2 (C2) -> INVALID
+ok   void_C2 matches /offline model-cache miss/
+ok   void_C2s (C2s) -> INVALID
+ok   void_C2s matches /offline model-cache miss/
+ok   void_C1a (C1a) -> INVALID
+ok   void_C1a matches /offline model-cache miss/
+ok   void_C2cs (C2cs) -> INVALID
+ok   void_C2cs matches /offline model-cache miss/
+ok   C2cm (C2cm) -> PASS
+ok   C2cm_invalid (C2cm) -> FAIL
+ok   C2cm_emptylog (C2cm) -> FAIL
+ok   C2cm_wrongpatch (C2cm) -> FAIL
+ok   C2cm_wrongpatch matches /patch did not apply/
+ok   C2ce (C2ce) -> PASS
+ok   C2ce matches /embedded: option 2 agent vs starter KL/
+ok   C2ce_fallback (C2ce) -> FAIL
+ok   C2ce_fallback matches /inconsistent/
+ok   C2ce_kl (C2ce) -> FAIL
+ok   C2ce_kl matches /inconsistent/
+ok   C2ce_landmine (C2ce) -> FAIL
+ok   C2ce_landmine matches /inconsistent/
+ok   C2ce_unloaded (C2ce) -> INVALID
+ok   C2ce_unloaded matches /model never loaded/
+ok   decision_void_invalid (decision) -> VOID
+ok   decision_void_invalid matches /^DECISION stock_crashes_under_C2_conditions: UNDECIDED/
+ok   decision_void_invalid matches /^DECISION rule_A: VOID/
+ok   decision_void_aborted (decision) -> VOID
+ok   decision_void_aborted matches /^DECISION option_2: VOID/
+ok   decision_opt2_pass (decision) -> FAIL
+ok   decision_opt2_pass matches /^DECISION option_2: PASS/
+ok   decision_opt2_pass matches /^DECISION phase6 .*at least one baseline passes/
+ok   decision_opt2_fail (decision) -> FAIL
+ok   decision_opt2_fail matches /^DECISION option_2: FAIL/
+ok   decision_opt2_fail matches /^DECISION phase6 .*neither baseline passes/
+ok   decision_opt2_void (decision) -> PASS
+ok   decision_opt2_void matches /^DECISION option_2: VOID/
+ok   decision_opt2_void matches /^DECISION phase6 .*at least one baseline passes/
+ok   C2ce_cudacrash (C2ce) -> FAIL
+ok   C2ce_cudacrash matches /embedded evaluator failed on the option 2 kernels/
+ok   C2ce_nostarter (C2ce) -> FAIL
+ok   C2ce_nostarter matches /starter_kernels present but its module did not compile/
+gate_selftest: 65 fixtures, 41 line checks, ALL_PASS

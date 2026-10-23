@@ -1,0 +1,14 @@
+cached at /root/scratch/rootcause/cachetest.vApe/hub/models--TinyLlama--TinyLlama-1.1B-Chat-v1.0/snapshots/fe8a4ea1ffedaf415f4da2f062534de366a451e6
+hub
+xet
+models--TinyLlama--TinyLlama-1.1B-Chat-v1.0
+### (1) without the mirror
+    raise LocalEntryNotFoundError(
+huggingface_hub.errors.LocalEntryNotFoundError: Cannot find the requested files in the disk cache and outgoing traffic has been disabled. To enable hf.co look-ups and downloads online, set 'local_files_only' to False.
+### (2) with run_arms.sh's mirror_hf_cache
+lrwxrwxrwx  1 root root   86 Oct 23 15:31 models--TinyLlama--TinyLlama-1.1B-Chat-v1.0 -> /root/scratch/rootcause/cachetest.vApe/hub/models--TinyLlama--TinyLlama-1.1B-Chat-v1.0
+[bench] Loading tokenizer: TinyLlama/TinyLlama-1.1B-Chat-v1.0 ...
+[bench] Tokenizer loaded (vocab=32000)
+[bench] Loading model: TinyLlama/TinyLlama-1.1B-Chat-v1.0 (dtype=float16) ...
+[bench] Model loaded (1100M params)
+MODEL_LOAD_OK LlamaForCausalLM 32000

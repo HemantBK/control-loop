@@ -1,0 +1,17 @@
+'FAIL stock_kernels_bench          (380s)
+DIAG model_config: model_id=TinyLlama/TinyLlama-1.1B-Chat-v1.0 num_attention_heads=32 num_key_value_heads=4 head_dim=64 hidden_size=2048 num_hidden_layers=22 dtype=float16 max_new_tokens=128 seed=733
+DIAG versions: Name: transformers Version: 4.53.3 Name: torch Version: 2.10.0
+DIAG transformers: 4.53.3
+DIAG stock_kernels: CRASH torch.AcceleratorError: CUDA error: an illegal memory access was encountered (bench rc=1)
+DIAG sdpa_shapes: ops.attention called 22 times; query heads [32], key/value heads [32] (K/V expanded to the query head count); attn_implementation sdpa
+DIAG stock_kernels_blocking: CRASH torch.AcceleratorError: CUDA error: an illegal memory access was encountered (bench rc=1)
+DIAG blocking_frame: File "/usr/local/lib/python3.11/dist-packages/transformers/models/llama/modeling_llama.py", line 441, in forward
+DIAG blocking_frame: File "/usr/local/lib/python3.11/dist-packages/transformers/models/llama/modeling_llama.py", line 290, in forward
+DIAG blocking_frame: File "/workspace/p6_diag/blocking/inject.py", line 134, in fn
+DIAG blocking_frame: File "/usr/local/lib/python3.11/dist-packages/transformers/models/llama/modeling_llama.py", line 241, in forward
+DIAG faulting_kernel: not named in the traceback (see p6_diag_bench_blocking.log)
+stock kernels did not complete: DIAG stock_kernels: CRASH torch.AcceleratorError: CUDA error: an illegal memory access was encountered (bench rc=1); faulting kernel: not named in the traceback (see p6_diag_bench_blocking.log); full log /workspace/p6_diag_bench.log
+smoke test: 1 failure(s)
+
+--- stderr ---
+'

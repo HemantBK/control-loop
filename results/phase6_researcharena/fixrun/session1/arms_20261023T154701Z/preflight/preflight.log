@@ -1,0 +1,32 @@
+NVIDIA H100 80GB HBM3, 595.91.07, 81559 MiB
+python3: /usr/local/bin/python3 (Python 3.11.17) HF_HOME=/workspace/hf WORKSPACE=/workspace OUT_DIR=/workspace/rootcause
+torch 2.10.0+cu128 cuda 12.8 transformers 4.53.3 gpu NVIDIA H100 80GB HBM3 cap (9, 0)
+hf_transfer 0.1.9 HF_HUB_ENABLE_HF_TRANSFER= 1
+model cached
+nvcc: Build cuda_12.9.r12.9/compiler.36037853_0
+TORCH_CUDA_ARCH_LIST=9.0
+overlay                                                                    40G   15G   26G  37% /
+eu-fr-1-vast.runpod.net:/runpodfs/podvolumes/wsvx61p6rrh8/byzohwv0vkn9jy   28G  2.1G   26G   8% /workspace
+hf cache mirror: /workspace/hf/models--TinyLlama--TinyLlama-1.1B-Chat-v1.0
+[bench] Tokenizer loaded (vocab=32000)
+[bench] Loading model: TinyLlama/TinyLlama-1.1B-Chat-v1.0 (dtype=float16) ...
+[bench] Model loaded (1100M params)
+MODEL_LOAD_OK LlamaForCausalLM 32000
+task_context ok: attention.cu fused_mlp.cu rmsnorm.cu rotary_embedding.cu 
+patch present: rope_guard_only.patch
+patch present: starter_rope_guard_only.patch
+patch present: rope_bounds.patch
+patch present: attention_harden.patch
+patch present: stock_launchcheck.patch
+patch present: opt2_task_context.patch
+patch present: c_embedded_check.py
+patch present: embedded_evaluate.py
+patch present: opt2_embedded3_evaluate.py
+patch present: c_minimal_kernels.py
+patch present: c0_vanilla.py
+patch present: c_kernel_tests.py
+compute-sanitizer: /usr/local/cuda/bin/compute-sanitizer (2025.2.1.0 (build 35969825) (public-release))
+sanitizer smoke rc=0 ========= ERROR SUMMARY: 0 errors
+canary good rc=0 (========= ERROR SUMMARY: 0 errors); bad rc=86 (========= Invalid __global__ write of size 4 bytes)
+PARSER_OK (gate.py parse_sanitizer on the real canary_bad.log)
+CANARY_OK

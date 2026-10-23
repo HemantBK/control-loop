@@ -1,0 +1,49 @@
+--- a/kernels/rotary_embedding.cu
++++ b/kernels/rotary_embedding.cu
+@@ -80,6 +80,10 @@
+             );
+         }
+     );
++    // PATCH(launchcheck only; NO bounds fix): with CUDA_LAUNCH_BLOCKING=1 the fault of this very launch is reported
++    // here, inside ops.rotary_embedding, instead of at the next PyTorch op (cache_utils.py:557 in debug8).
++    cudaError_t err = cudaGetLastError();
++    TORCH_CHECK(err == cudaSuccess, "rotary_embedding kernel launch failed: ", cudaGetErrorString(err));
+ 
+     return output;
+ }
+--- a/kernels/attention.cu
++++ b/kernels/attention.cu
+@@ -166,6 +166,9 @@
+             );
+         }
+     );
++    // PATCH(launchcheck only; no other change)
++    cudaError_t err = cudaGetLastError();
++    TORCH_CHECK(err == cudaSuccess, "attention kernel launch failed: ", cudaGetErrorString(err));
+ 
+     return output;
+ }
+--- a/kernels/rmsnorm.cu
++++ b/kernels/rmsnorm.cu
+@@ -85,6 +85,9 @@
+             );
+         }
+     );
++    // PATCH(launchcheck only; no other change)
++    { cudaError_t err = cudaGetLastError();
++      TORCH_CHECK(err == cudaSuccess, "rmsnorm kernel launch failed: ", cudaGetErrorString(err)); }
+ 
+     return output;
+ }
+--- a/kernels/fused_mlp.cu
++++ b/kernels/fused_mlp.cu
+@@ -57,6 +57,9 @@
+             );
+         }
+     );
++    // PATCH(launchcheck only; no other change)
++    { cudaError_t err = cudaGetLastError();
++      TORCH_CHECK(err == cudaSuccess, "fused_mlp kernel launch failed: ", cudaGetErrorString(err)); }
+ 
+     return gate_proj;  // modified in-place, no extra allocation
+ }

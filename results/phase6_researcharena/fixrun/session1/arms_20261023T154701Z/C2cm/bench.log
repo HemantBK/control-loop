@@ -1,0 +1,22 @@
+MIN torch=2.10.0+cu128 caching=off prompt='Explain the theory of relativity in simple terms.' n_prompts=1 max_new=8 ops=all
+MIN_OPS_MODE=all
+MIN_COMPILE PASS in 63s 
+MIN_STRICT=0
+[bench] Loading tokenizer: TinyLlama/TinyLlama-1.1B-Chat-v1.0 ...
+[bench] Tokenizer loaded (vocab=32000)
+[bench] Loading model: TinyLlama/TinyLlama-1.1B-Chat-v1.0 (dtype=float16) ...
+[bench] Model loaded (1100M params)
+INJECT: agent_ops has functions: ['attention', 'fused_mlp', 'rmsnorm', 'rotary_embedding']
+INJECT: rmsnorm                   INJECTED
+INJECT: rotary_embedding          INJECTED
+INJECT: fused_mlp                 INJECTED
+INJECT: attention                 INJECTED
+MIN_INJECTED {"rmsnorm": true, "rotary_embedding": true, "fused_mlp": true, "attention": true}
+MIN_PROMPT 1/1 T=12 (k RoPE pairs at prefill = 1536, tail threads = 0; at decode 128 pairs, tail 128)
+MIN_GENERATED 1 ids=[1128, 947, 372, 5649, 278, 6030, 310, 3618] text='How does it explain the behavior of objects'
+MIN_PROMPT_MATCH 1 yes ref=[1128, 947, 372, 5649, 278, 6030, 310, 3618]
+MIN_TEXT_MATCH_C0=yes matched=1/1 tokens_each=8
+MIN_OP_CALLS {"rmsnorm": 352, "rotary_embedding": 352, "attention": 22, "fused_mlp": 176}
+MIN_OP_ERRORS {} {}
+MIN_ROPE_CALLS expected=352 got=352 errors=0
+MIN_DONE rc=0

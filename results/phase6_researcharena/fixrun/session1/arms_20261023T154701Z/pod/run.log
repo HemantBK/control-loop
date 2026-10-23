@@ -1,0 +1,60 @@
+[2026-10-23T15:47:04Z +0s] run_arms start: arms=preflight OUT_DIR=/workspace/rootcause ARCH_LIST=9.0 T_C0=600 T_C2=900 T_CS=300 T_C2S=900 T_PRE=600
+[2026-10-23T15:47:04Z +1s] === arm preflight start (inner timeout 600s, outer limit 660s)
+NVIDIA H100 80GB HBM3, 0 MiB
+GATE preflight PASS: torch/transformers/patches present; model loads offline as bench.py loads it | sanitizer=ok canary=flags-known-OOB parser=ok-on-real-canary-output
+[2026-10-23T15:47:31Z +27s] === arm preflight end
+[2026-10-23T15:47:31Z +27s] RUN_DONE total=27s
+[2026-10-23T15:47:38Z +0s] run_arms start: arms=C0 OUT_DIR=/workspace/rootcause ARCH_LIST=9.0 T_C0=600 T_C2=900 T_CS=300 T_C2S=900 T_PRE=600
+[2026-10-23T15:47:38Z +0s] === arm C0 start (inner timeout 600s, outer limit 660s)
+NVIDIA H100 80GB HBM3, 0 MiB
+GATE C0 PASS: vanilla TinyLlama generates 8x128 tokens on this GPU | tps=77.20 rc=0
+[2026-10-23T15:48:06Z +28s] === arm C0 end
+[2026-10-23T15:48:06Z +28s] RUN_DONE total=28s
+[2026-10-23T15:48:13Z +0s] run_arms start: arms=C1s OUT_DIR=/workspace/rootcause ARCH_LIST=9.0 T_C0=600 T_C2=900 T_CS=300 T_C2S=900 T_PRE=600
+[2026-10-23T15:48:13Z +0s] === arm C1s start (inner timeout 900s, outer limit 960s)
+NVIDIA H100 80GB HBM3, 0 MiB
+GATE C1s PASS: stock bench.sh ends in a CUDA error (the debug8 crash reproduces under C2's exact conditions) | err=CUDA error last_prompt_completed=8 rc=1
+[2026-10-23T15:49:41Z +88s] === arm C1s end
+[2026-10-23T15:49:41Z +88s] RUN_DONE total=88s
+[2026-10-23T15:49:49Z +0s] run_arms start: arms=C2 OUT_DIR=/workspace/rootcause ARCH_LIST=9.0 T_C0=600 T_C2=900 T_CS=300 T_C2S=900 T_PRE=600
+[2026-10-23T15:49:49Z +0s] === arm C2 start (inner timeout 900s, outer limit 960s)
+NVIDIA H100 80GB HBM3, 0 MiB
+GATE C2 PASS: unmodified bench.sh completed all 8 prompts with the patched RoPE kernel injected | agent_tps=117.18 baseline_tps=80.18 speedup=1.461 rc=0
+[2026-10-23T15:51:25Z +96s] === arm C2 end
+[2026-10-23T15:51:25Z +96s] RUN_DONE total=96s
+[2026-10-23T15:51:31Z +0s] run_arms start: arms=C2s OUT_DIR=/workspace/rootcause ARCH_LIST=9.0 T_C0=600 T_C2=900 T_CS=300 T_C2S=900 T_PRE=600
+[2026-10-23T15:51:31Z +0s] === arm C2s start (inner timeout 900s, outer limit 960s)
+NVIDIA H100 80GB HBM3, 0 MiB
+GATE C2s PASS: patched kernels ran on every launch, no fallback, memcheck reports no invalid access | n_errors=0 api_errors=0 rope_calls=352/352 rope_errors=0 op_calls={"rmsnorm":352,"rotary_embedding":352,"attention":22,"fused_mlp":176} op_errors={} text_matches_C0=no rc=0
+[2026-10-23T15:52:47Z +76s] === arm C2s end
+[2026-10-23T15:52:47Z +76s] RUN_DONE total=76s
+[2026-10-23T15:52:53Z +0s] run_arms start: arms=C2c OUT_DIR=/workspace/rootcause ARCH_LIST=9.0 T_C0=600 T_C2=900 T_CS=300 T_C2S=900 T_PRE=600
+[2026-10-23T15:52:53Z +0s] === arm C2c start (inner timeout 900s, outer limit 960s)
+NVIDIA H100 80GB HBM3, 0 MiB
+GATE C2c PASS: unmodified bench.sh completed all 8 prompts with the patched RoPE kernel injected | agent_tps=116.76 baseline_tps=78.80 speedup=1.482 rc=0
+[2026-10-23T15:54:31Z +98s] === arm C2c end
+[2026-10-23T15:54:31Z +98s] RUN_DONE total=98s
+[2026-10-23T15:54:39Z +0s] run_arms start: arms=C2cs OUT_DIR=/workspace/rootcause ARCH_LIST=9.0 T_C0=600 T_C2=900 T_CS=300 T_C2S=900 T_PRE=600
+[2026-10-23T15:54:39Z +0s] === arm C2cs start (inner timeout 600s, outer limit 660s)
+NVIDIA H100 80GB HBM3, 0 MiB
+GATE C2cs PASS: option 2 RoPE: greedy tokens match C0 on 8 prompts x 32 tokens with RoPE injected alone; RoPE ran on every launch with 0 fallbacks in both runs | rope_only_ran=True rope_only_crashed=False rope_only_match=yes rope_only_matched=8/8 rope_only_tokens=32 rope_only_calls=11264/11264 all_ops_ran=True all_ops_crashed=False all_ops_match=yes all_ops_matched=8/8 all_ops_tokens=32 all_ops_calls=11264/11264 rc=0
+[2026-10-23T15:57:02Z +143s] === arm C2cs end
+[2026-10-23T15:57:02Z +143s] RUN_DONE total=143s
+[2026-10-23T15:57:06Z +0s] run_arms start: arms=C2cm OUT_DIR=/workspace/rootcause ARCH_LIST=9.0 T_C0=600 T_C2=900 T_CS=300 T_C2S=900 T_PRE=600
+[2026-10-23T15:57:06Z +0s] === arm C2cm start (inner timeout 900s, outer limit 960s)
+NVIDIA H100 80GB HBM3, 0 MiB
+GATE C2cm PASS: patched kernels ran on every launch, no fallback, memcheck reports no invalid access | n_errors=0 api_errors=0 rope_calls=352/352 rope_errors=0 op_calls={"rmsnorm":352,"rotary_embedding":352,"attention":22,"fused_mlp":176} op_errors={} text_matches_C0=yes rc=0
+[2026-10-23T15:58:26Z +80s] === arm C2cm end
+[2026-10-23T15:58:26Z +80s] RUN_DONE total=80s
+[2026-10-23T15:58:32Z +0s] run_arms start: arms=C2cr OUT_DIR=/workspace/rootcause ARCH_LIST=9.0 T_C0=600 T_C2=900 T_CS=300 T_C2S=900 T_PRE=600
+[2026-10-23T15:58:32Z +0s] === arm C2cr start (inner timeout 300s, outer limit 360s)
+NVIDIA H100 80GB HBM3, 0 MiB
+GATE C2cr PASS: memory clean; numerics match the reference | numerics=PASS cases=15/15 memcheck=clean rc=0
+[2026-10-23T15:59:40Z +68s] === arm C2cr end
+[2026-10-23T15:59:40Z +68s] RUN_DONE total=68s
+[2026-10-23T15:59:46Z +0s] run_arms start: arms=C2ce OUT_DIR=/workspace/rootcause ARCH_LIST=9.0 T_C0=600 T_C2=900 T_CS=300 T_C2S=900 T_PRE=600
+[2026-10-23T15:59:46Z +0s] === arm C2ce start (inner timeout 900s, outer limit 960s)
+NVIDIA H100 80GB HBM3, 0 MiB
+GATE C2ce PASS: embedded: option 2 agent vs starter KL ~0 on short and trigger prompts, RoPE ran with 0 fallbacks; embedded3: honest kernel not flagged | baseline_div=0.0 trigger_div=0.0 rope_calls=704,704 rope_errors=0,0 modules=2 embedded3_fp16_rel=2.336944990370277e-08 embedded3_bf16_rel=0.0 embedded3_landmine=False rc=0
+[2026-10-23T16:02:01Z +135s] === arm C2ce end
+[2026-10-23T16:02:01Z +135s] RUN_DONE total=135s

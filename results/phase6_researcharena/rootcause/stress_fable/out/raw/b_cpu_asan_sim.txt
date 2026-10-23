@@ -1,0 +1,48 @@
+### stock kernel, q at decode (B=1 T=1 H=32 D=64)
+launch: B=1 T=1 H=32 D=64 total_pairs=1024 blocks=4 threads=256 launched=1024 tail=0 x_bytes=4096
+done: no out-of-bounds access detected by ASan
+
+### stock kernel, k at decode (B=1 T=1 H=4 D=64)
+==38702==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x502000000014 at pc 0x632625ed58a6 bp 0x7ffe7aa05310 sp 0x7ffe7aa05300
+READ of size 4 at 0x502000000014 thread T0
+    #0 0x632625ed58a5 in void rotary_embedding_kernel<_Float16>(_Float16*, int const*, int, int, int, float) /home/fable/work/cpu_sim/kernel_stock.inc:20
+    #1 0x632625ed566d in main /home/fable/work/cpu_sim/sim_main.cpp:34
+0x502000000014 is located 0 bytes after 4-byte region [0x502000000010,0x502000000014)
+allocated by thread T0 here:
+    #1 0x632625ed54d7 in main /home/fable/work/cpu_sim/sim_main.cpp:22
+SUMMARY: AddressSanitizer: heap-buffer-overflow /home/fable/work/cpu_sim/kernel_stock.inc:20 in void rotary_embedding_kernel<_Float16>(_Float16*, int const*, int, int, int, float)
+
+### stock kernel, k at prefill T=12 (prompt 1)
+launch: B=1 T=12 H=4 D=64 total_pairs=1536 blocks=6 threads=256 launched=1536 tail=0 x_bytes=6144
+done: no out-of-bounds access detected by ASan
+
+### stock kernel, k at prefill T=13 (prompts 4,5)
+==38708==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x506000000054 at pc 0x573485c598a6 bp 0x7ffed0b94600 sp 0x7ffed0b945f0
+READ of size 4 at 0x506000000054 thread T0
+    #0 0x573485c598a5 in void rotary_embedding_kernel<_Float16>(_Float16*, int const*, int, int, int, float) /home/fable/work/cpu_sim/kernel_stock.inc:20
+    #1 0x573485c5966d in main /home/fable/work/cpu_sim/sim_main.cpp:34
+0x506000000054 is located 0 bytes after 52-byte region [0x506000000020,0x506000000054)
+allocated by thread T0 here:
+    #1 0x573485c594d7 in main /home/fable/work/cpu_sim/sim_main.cpp:22
+SUMMARY: AddressSanitizer: heap-buffer-overflow /home/fable/work/cpu_sim/kernel_stock.inc:20 in void rotary_embedding_kernel<_Float16>(_Float16*, int const*, int, int, int, float)
+
+### patched kernel, k at decode / T=13 / T=1 q
+launch: B=1 T=1 H=4 D=64 total_pairs=128 blocks=1 threads=256 launched=256 tail=128 x_bytes=512
+done: no out-of-bounds access detected by ASan
+launch: B=1 T=13 H=4 D=64 total_pairs=1664 blocks=7 threads=256 launched=1792 tail=128 x_bytes=6656
+done: no out-of-bounds access detected by ASan
+launch: B=1 T=1 H=32 D=64 total_pairs=1024 blocks=4 threads=256 launched=1024 tail=0 x_bytes=4096
+done: no out-of-bounds access detected by ASan
+      3 allocated by thread T0 here:
+      1 launch: B=1 T=1 H=4 D=64 total_pairs=128 blocks=1 threads=256 launched=256 tail=128 x_bytes=512
+      1 done: no out-of-bounds access detected by ASan
+      1 READ of size 4 at 0x502000000014 thread T0
+      1 READ of size 2 at 0x515000000282 thread T0
+      1 READ of size 2 at 0x515000000280 thread T0
+      1 0x515000000282 is located 2 bytes after 512-byte region [0x515000000080,0x515000000280)
+      1 0x515000000280 is located 0 bytes after 512-byte region [0x515000000080,0x515000000280)
+      1 0x502000000014 is located 0 bytes after 4-byte region [0x502000000010,0x502000000014)
+      1     #0 0x57f60bbb68fb in void rotary_embedding_kernel<_Float16>(_Float16*, int const*, int, int, int, float) /home/fable/work/cpu_sim/kernel_stock.inc:34
+      1     #0 0x57f60bbb68ee in void rotary_embedding_kernel<_Float16>(_Float16*, int const*, int, int, int, float) /home/fable/work/cpu_sim/kernel_stock.inc:33
+      1     #0 0x57f60bbb68e1 in void rotary_embedding_kernel<_Float16>(_Float16*, int const*, int, int, int, float) /home/fable/work/cpu_sim/kernel_stock.inc:20
+(kernel_stock.inc line N == rotary_embedding.cu line N+14: 20->34 positions read, 33->47 x read, 34->48, 36->50 x write, 37->51)

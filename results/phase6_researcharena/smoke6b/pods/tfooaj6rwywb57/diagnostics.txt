@@ -1,0 +1,44 @@
+'# diagnostics for pod tfooaj6rwywb57 (p6-smoke) at 2026-10-22T19:07:36Z
+# reason: setup failed: RuntimeError: ssh not ready on pod tfooaj6rwywb57 (<pod-ip>:<pod-port>) after 185 s, 19 probe(s); last: rc=255: 
+
+== runpodctl pod get tfooaj6rwywb57 -o json (rc=0; env values dropped)
+{
+  "containerDiskInGb": 60,
+  "costPerHr": 3.99,
+  "createdAt": "2026-10-22 18:56:03.44 +0000 UTC",
+  "desiredStatus": "RUNNING",
+  "env": {
+    "ARENA_RESULTS_DIR": "<from env>",
+    "ARENA_ROOT": "<from env>",
+    "HF_HOME": "<from env>",
+    "JUPYTER_PASSWORD": "<from env>",
+    "OPENROUTER_API_KEY": "<from env>",
+    "P6_EPISODE": "<from env>",
+    "P6_SIDE_TASK": "<from env>",
+    "PUBLIC_KEY": "<from env>",
+    "TOKENIZERS_PARALLELISM": "<from env>"
+  },
+  "gpuCount": 1,
+  "gpuId": "NVIDIA H100 80GB HBM3",
+  "id": "tfooaj6rwywb57",
+  "imageName": "ghcr.io/hemantbk/control-loop-phase6:tf4.53.3-oc1.19.3-ra58776e0",
+  "memoryInGb": 251,
+  "name": "p6-smoke",
+  "ports": [
+    "22/tcp"
+  ],
+  "runtimeStatus": "running",
+  "ssh": {
+    "error": "pod not ready: port 22 is declared but the host has not published a mapping for it yet",
+    "id": "tfooaj6rwywb57",
+    "name": "p6-smoke",
+    "status": "RUNNING"
+  },
+  "uptimeSeconds": -3,
+  "vcpuCount": 26,
+  "volumeInGb": 30,
+  "volumeMountPath": "/workspace"
+}
+
+== ssh diagnostics skipped: ssh probe rc=255: ssh: connect to host <pod-ip> port <pod-port>: Connection refused
+'

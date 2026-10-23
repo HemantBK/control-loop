@@ -1,0 +1,26 @@
+C0 torch=2.10.0+cu128 cuda=12.8 gpu=NVIDIA H100 80GB HBM3
+[bench] Loading tokenizer: TinyLlama/TinyLlama-1.1B-Chat-v1.0 ...
+[bench] Tokenizer loaded (vocab=32000)
+[bench] Loading model: TinyLlama/TinyLlama-1.1B-Chat-v1.0 (dtype=float16) ...
+[bench] Model loaded (1100M params)
+[bench] Warmup (3 runs) ...
+[bench] Warmup done
+[bench] Benchmarking 8 prompts (max_new=128) ...
+[bench]   prompt 1/8: 128 tokens in 1.28s (100.1 tok/s)
+[bench]   prompt 2/8: 128 tokens in 1.22s (104.9 tok/s)
+[bench]   prompt 3/8: 128 tokens in 1.22s (104.7 tok/s)
+[bench]   prompt 4/8: 128 tokens in 1.24s (102.9 tok/s)
+[bench]   prompt 5/8: 128 tokens in 1.24s (103.3 tok/s)
+[bench]   prompt 6/8: 128 tokens in 1.21s (105.8 tok/s)
+[bench]   prompt 7/8: 128 tokens in 1.31s (97.8 tok/s)
+[bench]   prompt 8/8: 128 tokens in 1.21s (106.0 tok/s)
+C0_BASELINE_TPS=103.10
+C0_TEXT 'Explain the theory of relativity in simp': 'How does it explain the behavior of objects in space and time? What are some pra'
+C0_TEXT 'Write a Python function to compute the F': 'The function should take an integer n as input and return the nth Fibonacci numb'
+C0_TEXT 'What are the main causes of climate chan': 'How can we reduce our carbon footprint and mitigate its effects? How can we adap'
+C0_TEXT 'Summarize the plot of Romeo and Juliet.': 'Answer: Romeo and Juliet are two young lovers from different social classes who '
+C0_TEXT 'Describe the process of photosynthesis s': '\n\nStep 1: Light\nPhotosynthesis occurs in the presence of light. Light energy is '
+C0_TEXT 'What is the difference between TCP and U': 'How do they differ in terms of their communication protocols and transmission me'
+C0_TEXT 'Write a haiku about programming.': "\n- 1. Programming is a language\n- 2. It's a way to express\n- 3. It's a way"
+C0_TEXT 'Explain how a neural network learns.': '5.3.2.3. Explain the concept of backpropagation and how it is used in neural net'
+C0_DONE

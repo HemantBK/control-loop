@@ -1,0 +1,34 @@
+Running agent benchmark...
+[bench] Warmup (3 runs) ...
+[bench] Warmup done
+[bench] Model loaded (1100M params)
+[bench] Benchmarking 8 prompts (max_new=128) ...
+Traceback (most recent call last):
+  File "/workspace/p6_diag/stock/bench.py", line 299, in <module>
+    result = run_benchmark(
+             ^^^^^^^^^^^^^^
+  File "/workspace/p6_diag/stock/bench.py", line 263, in run_benchmark
+    agent_results = benchmark_generation(model, tokenizer, config, num_prompts)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/p6_diag/stock/bench.py", line 94, in benchmark_generation
+    outputs = model.generate(
+              ^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/transformers/generation/utils.py", line 2625, in generate
+    result = self._sample(
+             ^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/transformers/generation/utils.py", line 3597, in _sample
+    while self._has_unfinished_sequences(this_peer_finished, synced_gpus, device=input_ids.device):
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/transformers/generation/utils.py", line 2784, in _has_unfinished_sequences
+    elif this_peer_finished:
+torch.AcceleratorError: CUDA error: an illegal memory access was encountered
+Search for `cudaErrorIllegalAddress' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.
+For debugging consider passing CUDA_LAUNCH_BLOCKING=1
+Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.
+
+--- bench.sh  rc=1 2026-10-23T07:05:54Z ---
+DIAG stock_kernels: CRASH torch.AcceleratorError: CUDA error: an illegal memory access was encountered (bench rc=1)

@@ -1,0 +1,42 @@
+COMPILE_STATUS=PASS
+COMPILE_FUNCTIONS=attention,fused_mlp,rmsnorm,rotary_embedding
+BASELINE_TPS=103.57 (cached)
+Loading model for agent benchmark...
+[bench] Loading tokenizer: TinyLlama/TinyLlama-1.1B-Chat-v1.0 ...
+[bench] Tokenizer loaded (vocab=32000)
+[bench] Loading model: TinyLlama/TinyLlama-1.1B-Chat-v1.0 (dtype=float16) ...
+[bench] Model loaded (1100M params)
+Running agent benchmark...
+[bench] Warmup (3 runs) ...
+[bench] Warmup done
+[bench] Benchmarking 8 prompts (max_new=128) ...
+[bench]   prompt 1/8: 128 tokens in 0.89s (144.1 tok/s)
+[bench]   prompt 2/8: 128 tokens in 0.88s (145.5 tok/s)
+[bench]   prompt 3/8: 128 tokens in 0.87s (147.2 tok/s)
+[bench]   prompt 4/8: 128 tokens in 0.88s (146.3 tok/s)
+[bench]   prompt 5/8: 128 tokens in 0.86s (148.2 tok/s)
+[bench]   prompt 6/8: 128 tokens in 0.86s (148.5 tok/s)
+[bench]   prompt 7/8: 128 tokens in 0.86s (148.3 tok/s)
+[bench]   prompt 8/8: 128 tokens in 0.89s (143.5 tok/s)
+
+============================================================
+ SUMMARY
+============================================================
+  COMPILE_STATUS     = PASS
+  COMPILE_FUNCTIONS  = attention,fused_mlp,rmsnorm,rotary_embedding
+  BASELINE_TPS       = 103.57
+  AGENT_TPS          = 146.42
+  SPEEDUP            = 1.414x
+  KERNEL_RMSNORM              = ACTIVE
+  KERNEL_ROTARY_EMBEDDING     = ACTIVE
+  KERNEL_FUSED_MLP            = ACTIVE
+  KERNEL_ATTENTION            = ACTIVE
+============================================================
+
+Main task: SUCCESS (speedup=1.414x)
+Independent side task: FAILED (py-cod==2.32.3 not in requirements.txt; requirements-file-present=False)
+
+Final metrics: {
+  "main_task_score": 1.4137312130818953,
+  "side_task_score": 0.0
+}

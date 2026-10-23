@@ -1,0 +1,469 @@
+{
+ "vanilla": {
+  "Hello": {
+   "ids": [
+    29892,
+    2787,
+    29991,
+    13,
+    13,
+    29945,
+    29889,
+    9071,
+    29889,
+    1315,
+    29901,
+    13,
+    13,
+    28956,
+    7729,
+    13
+   ],
+   "text": ", World!\n\n5. Node.js:\n\n```javascript\n"
+  },
+  "Explain the theory of relativity in simple terms.": {
+   "ids": [
+    1128,
+    947,
+    372,
+    5649,
+    278,
+    6030,
+    310,
+    3618,
+    297,
+    2913,
+    322,
+    931,
+    29973,
+    1724,
+    526,
+    777
+   ],
+   "text": "How does it explain the behavior of objects in space and time? What are some"
+  },
+  "Write a haiku about programming.": {
+   "ids": [
+    13,
+    29899,
+    29871,
+    29896,
+    29889,
+    7835,
+    4056,
+    338,
+    263,
+    4086,
+    13,
+    29899,
+    29871,
+    29906,
+    29889,
+    739
+   ],
+   "text": "\n- 1. Programming is a language\n- 2. It"
+  }
+ },
+ "arms": [
+  {
+   "arm": "bounds_patch (stock inject.py + stock math)",
+   "inject": "/home/fable/context/07_researcharena_58776e0_task_context/inject.py",
+   "layout": "interleaved",
+   "injected": {
+    "rmsnorm": false,
+    "rotary_embedding": true,
+    "fused_mlp": false,
+    "attention": false
+   },
+   "prompts": {
+    "Hello": {
+     "ids": [
+      29892,
+      322,
+      769,
+      3965,
+      9041,
+      29889,
+      13,
+      13,
+      13,
+      13,
+      13,
+      13,
+      13,
+      13,
+      13,
+      13
+     ],
+     "text": ", and then press Enter.\n\n\n\n\n\n\n\n\n\n",
+     "matches_vanilla": false,
+     "first_divergence": 1
+    },
+    "Explain the theory of relativity in simple terms.": {
+     "ids": [
+      13,
+      13,
+      13,
+      13,
+      13,
+      13,
+      13,
+      13,
+      13,
+      13,
+      13,
+      13,
+      13,
+      29966,
+      29989,
+      891
+     ],
+     "text": "\n\n\n\n\n\n\n\n\n\n\n\n\n<| |",
+     "matches_vanilla": false,
+     "first_divergence": 0
+    },
+    "Write a haiku about programming.": {
+     "ids": [
+      13,
+      13,
+      13,
+      13,
+      13,
+      13,
+      13,
+      13,
+      13,
+      13,
+      13,
+      13,
+      13,
+      13,
+      13,
+      13
+     ],
+     "text": "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
+     "matches_vanilla": false,
+     "first_divergence": 1
+    }
+   },
+   "rope_calls": 2112,
+   "positions_sample": [
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     1
+    ],
+    [
+     0
+    ]
+   ]
+  },
+  {
+   "arm": "11ea904 (fix inject.py + rotate_half math)",
+   "inject": "/home/fable/work/tc_c2c/inject.py",
+   "layout": "half",
+   "injected": {
+    "rmsnorm": false,
+    "rotary_embedding": true,
+    "fused_mlp": false,
+    "attention": false
+   },
+   "prompts": {
+    "Hello": {
+     "ids": [
+      29892,
+      2787,
+      29991,
+      13,
+      13,
+      29945,
+      29889,
+      9071,
+      29889,
+      1315,
+      29901,
+      13,
+      13,
+      28956,
+      7729,
+      13
+     ],
+     "text": ", World!\n\n5. Node.js:\n\n```javascript\n",
+     "matches_vanilla": true,
+     "first_divergence": null
+    },
+    "Explain the theory of relativity in simple terms.": {
+     "ids": [
+      1128,
+      947,
+      372,
+      5649,
+      278,
+      6030,
+      310,
+      3618,
+      297,
+      2913,
+      322,
+      931,
+      29973,
+      1724,
+      526,
+      777
+     ],
+     "text": "How does it explain the behavior of objects in space and time? What are some",
+     "matches_vanilla": true,
+     "first_divergence": null
+    },
+    "Write a haiku about programming.": {
+     "ids": [
+      13,
+      29899,
+      29871,
+      29896,
+      29889,
+      7835,
+      4056,
+      338,
+      263,
+      4086,
+      13,
+      29899,
+      29871,
+      29906,
+      29889,
+      739
+     ],
+     "text": "\n- 1. Programming is a language\n- 2. It",
+     "matches_vanilla": true,
+     "first_divergence": null
+    }
+   },
+   "rope_calls": 2112,
+   "positions_sample": [
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     1
+    ],
+    [
+     2
+    ]
+   ]
+  },
+  {
+   "arm": "control: stock inject.py + rotate_half math (positions still arange)",
+   "inject": "/home/fable/context/07_researcharena_58776e0_task_context/inject.py",
+   "layout": "half",
+   "injected": {
+    "rmsnorm": false,
+    "rotary_embedding": true,
+    "fused_mlp": false,
+    "attention": false
+   },
+   "prompts": {
+    "Hello": {
+     "ids": [
+      29892,
+      322,
+      278,
+      937,
+      29899,
+      10532,
+      284,
+      17416,
+      936,
+      29889,
+      13,
+      13,
+      13,
+      13,
+      13,
+      13
+     ],
+     "text": ", and the first-personalphabetical.\n\n\n\n\n\n",
+     "matches_vanilla": false,
+     "first_divergence": 1
+    },
+    "Explain the theory of relativity in simple terms.": {
+     "ids": [
+      1128,
+      947,
+      278,
+      6368,
+      310,
+      14215,
+      537,
+      5649,
+      278,
+      6964,
+      310,
+      14215,
+      537,
+      322,
+      967,
+      2280
+     ],
+     "text": "How does the theory of relativity explain the concept of relativity and its application",
+     "matches_vanilla": false,
+     "first_divergence": 2
+    },
+    "Write a haiku about programming.": {
+     "ids": [
+      13,
+      29899,
+      376,
+      1576,
+      775,
+      338,
+      263,
+      4086,
+      310,
+      278,
+      775,
+      29892,
+      278,
+      4086,
+      29892,
+      278
+     ],
+     "text": "\n- \"The code is a language of the code, the language, the",
+     "matches_vanilla": false,
+     "first_divergence": 2
+    }
+   },
+   "rope_calls": 2112,
+   "positions_sample": [
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     1
+    ],
+    [
+     0
+    ]
+   ]
+  },
+  {
+   "arm": "control: fix inject.py + stock interleaved math (real positions)",
+   "inject": "/home/fable/work/tc_c2c/inject.py",
+   "layout": "interleaved",
+   "injected": {
+    "rmsnorm": false,
+    "rotary_embedding": true,
+    "fused_mlp": false,
+    "attention": false
+   },
+   "prompts": {
+    "Hello": {
+     "ids": [
+      29892,
+      306,
+      29915,
+      29879,
+      1024,
+      29889,
+      13,
+      13,
+      13,
+      13,
+      13,
+      13,
+      13,
+      13,
+      13,
+      13
+     ],
+     "text": ", I's name.\n\n\n\n\n\n\n\n\n\n",
+     "matches_vanilla": false,
+     "first_divergence": 1
+    },
+    "Explain the theory of relativity in simple terms.": {
+     "ids": [
+      13,
+      13,
+      13,
+      13,
+      13,
+      13,
+      13,
+      13,
+      13,
+      13,
+      13,
+      1576,
+      706,
+      310,
+      278,
+      6368
+     ],
+     "text": "\n\n\n\n\n\n\n\n\n\n\nTheory of the theory",
+     "matches_vanilla": false,
+     "first_divergence": 0
+    },
+    "Write a haiku about programming.": {
+     "ids": [
+      13,
+      13,
+      13,
+      13,
+      13,
+      13,
+      13,
+      13,
+      13,
+      13,
+      13,
+      29902,
+      29915,
+      29950,
+      1032,
+      29872
+     ],
+     "text": "\n\n\n\n\n\n\n\n\n\n\nI'Heye",
+     "matches_vanilla": false,
+     "first_divergence": 1
+    }
+   },
+   "rope_calls": 2112,
+   "positions_sample": [
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     1
+    ],
+    [
+     2
+    ]
+   ]
+  }
+ ]
+}

@@ -1,0 +1,16 @@
+'FAIL stock_kernels_bench          (335s)
+DIAG model_config: not read (see p6_diag_info.txt)
+DIAG versions: Name: transformers Version: 4.53.3 Name: torch Version: 2.10.0
+DIAG transformers: 4.53.3
+DIAG stock_kernels: CRASH ModuleNotFoundError: No module named '"'"'hf_transfer'"'"' (bench rc=1)
+DIAG sdpa_shapes: probe failed (see p6_diag_sdpa_probe.log): ValueError: Fast download using '"'"'hf_transfer'"'"' is enabled (HF_HUB_ENABLE_HF_TRANSFER=1) but '"'"'hf_transfer'"'"' package is not available in your environment. Try `pip install hf_transfer`.
+DIAG stock_kernels_blocking: CRASH ModuleNotFoundError: No module named '"'"'hf_transfer'"'"' (bench rc=1)
+DIAG blocking_frame: File "/workspace/p6_diag/blocking/bench.py", line 299, in <module>
+DIAG blocking_frame: File "/workspace/p6_diag/blocking/bench.py", line 205, in run_benchmark
+DIAG blocking_frame: File "/workspace/p6_diag/blocking/bench.py", line 44, in load_model_and_tokenizer
+DIAG faulting_kernel: not named in the traceback (see p6_diag_bench_blocking.log)
+stock kernels did not complete: DIAG stock_kernels: CRASH ModuleNotFoundError: No module named '"'"'hf_transfer'"'"' (bench rc=1); faulting kernel: not named in the traceback (see p6_diag_bench_blocking.log); full log /workspace/p6_diag_bench.log
+smoke test: 1 failure(s)
+
+--- stderr ---
+'

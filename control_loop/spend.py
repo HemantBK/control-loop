@@ -14,7 +14,9 @@ against the part of each key after "provider/". An unknown model raises UnknownM
 Verification: every price was checked once against the provider's pricing page on 2026-10-21; the
 per-price result (date and URL, or "unverified") is in VERIFIED and docs/prices_verified_2026-10-21.md.
 Two prices differ from the page and were NOT changed (owner's decision pending): Sonnet 5.5 and Opus 5.5
-cache_read are 0.1x base input here, 0.05x on Anthropic's page. Nothing has been checked against an invoice.
+cache_read are 0.1x base input here, 0.05x on Anthropic's page. [2026-10-22: no longer so; the owner changed
+both to the page's 0.05x that day: Sonnet 5.5 cache_read 0.20 -> 0.10, Opus 5.5 0.40 -> 0.20 (see the PRICES
+lines).] Nothing has been checked against an invoice.
 """
 from __future__ import annotations
 
@@ -86,7 +88,8 @@ VERIFIED: dict[str, dict[str, str]] = {
                       "output": _D + _OPENAI},
     "openai/gpt-4o-mini": {"input": _D + _OPENAI, "cache_read": _D + _OPENAI, "cache_write": "unverified",
                            "output": _D + _OPENAI},
-    # Page: 2.00 / 0.10 (DIFFERS: table 0.20) / 2.50 (5m) / 10.00.
+    # Page: 2.00 / 0.10 (DIFFERS: table 0.20) / 2.50 (5m) / 10.00. [2026-10-22: table now 0.10, equal to the page;
+    # the "DIFFERS page=0.10" text below records the 2026-10-21 check.]
     "anthropic/claude-sonnet-5-5": {"input": _D + _ANTHROPIC, "cache_read": _D + _ANTHROPIC + " DIFFERS page=0.10",
                                     "cache_write": _D + _ANTHROPIC, "output": _D + _ANTHROPIC},
     # Page: 4.00 / 0.20 (DIFFERS: table 0.40) / 5.00 (5m) / 20.00.

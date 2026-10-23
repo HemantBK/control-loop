@@ -1,0 +1,36 @@
+nvcc: Build cuda_12.9.r12.9/compiler.36037853_0
+archs: 90
+dir: /home/fable/work/patched/stock
+--- nvcc attention.cu
+OK   attention.cu (0 warnings)
+--- nvcc fused_mlp.cu
+OK   fused_mlp.cu (0 warnings)
+--- nvcc rmsnorm.cu
+OK   rmsnorm.cu (0 warnings)
+--- nvcc rotary_embedding.cu
+OK   rotary_embedding.cu (0 warnings)
+--- g++ bindings.cpp
+OK   bindings.cpp
+--- link agent_ops.so (shared; CUDA runtime from the extracted toolkit; torch libs from the CPU wheel)
+FAIL link
+/usr/bin/ld: /home/fable/work/patched/stock/_build/bindings.o: in function `pybind11::handle::dec_ref() const & [clone .isra.0]':
+bindings.cpp:(.text+0x700): undefined reference to `PyGILState_Check'
+/usr/bin/ld: /home/fable/work/patched/stock/_build/bindings.o: in function `pybind11::cpp_function::destruct(pybind11::detail::function_record*, bool) [clone .constprop.0]':
+bindings.cpp:(.text+0x7f9): undefined reference to `PyGILState_Check'
+/usr/bin/ld: bindings.cpp:(.text+0x815): undefined reference to `_Py_Dealloc'
+/usr/bin/ld: /home/fable/work/patched/stock/_build/bindings.o: in function `pybind11::detail::type_caster<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, void>& pybind11::detail::load_type<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, void>(pybind11::detail::type_caster<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, void>&, pybind11::handle const&) [clone .isra.0]':
+bindings.cpp:(.text+0x93e): undefined reference to `PyUnicode_AsUTF8AndSize'
+/usr/bin/ld: bindings.cpp:(.text+0x9ee): undefined reference to `PyByteArray_Type'
+/usr/bin/ld: bindings.cpp:(.text+0x9f8): undefined reference to `PyType_IsSubtype'
+/usr/bin/ld: bindings.cpp:(.text+0xa34): undefined reference to `PyByteArray_AsString'
+/usr/bin/ld: bindings.cpp:(.text+0xa48): undefined reference to `PyByteArray_Size'
+/usr/bin/ld: bindings.cpp:(.text+0xabc): undefined reference to `PyBytes_AsString'
+/usr/bin/ld: bindings.cpp:(.text+0xad8): undefined reference to `PyBytes_Size'
+/usr/bin/ld: bindings.cpp:(.text+0xb21): undefined reference to `PyErr_Clear'
+/usr/bin/ld: /home/fable/work/patched/stock/_build/bindings.o: in function `PyInit_agent_ops':
+bindings.cpp:(.text+0xbe2): undefined reference to `Py_GetVersion'
+/usr/bin/ld: bindings.cpp:(.text+0xd03): undefined reference to `PyExc_ImportError'
+/usr/bin/ld: bindings.cpp:(.text+0xd1a): undefined reference to `PyErr_Format'
+/usr/bin/ld: /home/fable/work/patched/stock/_build/bindings.o: in function `pybind11::detail::function_record_PyTypeObject_methods::reduce_ex_impl(_object*, _object*, _object*)':
+bindings.cpp:(.text+0xdfe): undefined reference to `PyModule_Type'
+RESULT: COMPILE_FAIL

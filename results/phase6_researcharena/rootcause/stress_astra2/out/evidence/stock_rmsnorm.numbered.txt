@@ -1,0 +1,90 @@
+     1	/*
+     2	 * RMSNorm CUDA kernel — optimized implementation
+     3	 *
+     4	 * Computes: output = (x / rms(x)) * weight
+     5	 * where rms(x) = sqrt(mean(x^2) + eps)
+     6	 */
+     7	
+     8	#include <torch/extension.h>
+     9	#include <cuda_runtime.h>
+    10	#include <cuda_fp16.h>
+    11	#include <math.h>
+    12	
+    13	template <typename scalar_t>
+    14	__global__ __launch_bounds__(1024)
+    15	void rmsnorm_kernel(
+    16	    const scalar_t* __restrict__ input,
+    17	    const scalar_t* __restrict__ weight,
+    18	    scalar_t* __restrict__ output,
+    19	    int hidden_size,
+    20	    float eps
+    21	) {
+    22	    int row = blockIdx.x;
+    23	    const scalar_t* x = input + row * hidden_size;
+    24	    scalar_t* o = output + row * hidden_size;
+    25	
+    26	    // Step 1: compute sum of squares
+    27	    float sum_sq = 0.0f;
+    28	    for (int i = threadIdx.x; i < hidden_size; i += blockDim.x) {
+    29	        float val = static_cast<float>(__ldg(&x[i]));
+    30	        sum_sq += val * val;
+    31	    }
+    32	
+    33	    // Warp-level reduction
+    34	    for (int offset = warpSize / 2; offset > 0; offset >>= 1)
+    35	        sum_sq += __shfl_down_sync(0xffffffff, sum_sq, offset);
+    36	
+    37	    __shared__ float shared[32];
+    38	    int lane = threadIdx.x & 31;
+    39	    int warp_id = threadIdx.x >> 5;
+    40	
+    41	    if (lane == 0) shared[warp_id] = sum_sq;
+    42	    __syncthreads();
+    43	
+    44	    if (warp_id == 0) {
+    45	        int num_warps = (blockDim.x + 31) >> 5;
+    46	        sum_sq = (lane < num_warps) ? shared[lane] : 0.0f;
+    47	        for (int offset = warpSize / 2; offset > 0; offset >>= 1)
+    48	            sum_sq += __shfl_down_sync(0xffffffff, sum_sq, offset);
+    49	    }
+    50	
+    51	    __shared__ float s_rms_inv;
+    52	    if (threadIdx.x == 0) {
+    53	        s_rms_inv = rsqrtf(sum_sq / hidden_size + eps);
+    54	    }
+    55	    __syncthreads();
+    56	
+    57	    float rms_inv = s_rms_inv;
+    58	
+    59	    // Step 2: normalize and scale
+    60	    for (int i = threadIdx.x; i < hidden_size; i += blockDim.x) {
+    61	        float val = static_cast<float>(__ldg(&x[i]));
+    62	        float w = static_cast<float>(__ldg(&weight[i]));
+    63	        o[i] = static_cast<scalar_t>(val * rms_inv * w);
+    64	    }
+    65	}
+    66	
+    67	// ─── Host wrapper ────────────────────────────────────────────────────────────
+    68	
+    69	torch::Tensor agent_rmsnorm(torch::Tensor input, torch::Tensor weight, double eps) {
+    70	    auto output = torch::empty_like(input);
+    71	    int batch = input.size(0);
+    72	    int hidden = input.size(1);
+    73	
+    74	    dim3 grid(batch);
+    75	    dim3 block(min(hidden, 1024));
+    76	
+    77	    AT_DISPATCH_FLOATING_TYPES_AND2(
+    78	        at::ScalarType::Half, at::ScalarType::BFloat16,
+    79	        input.scalar_type(), "rmsnorm", [&] {
+    80	            rmsnorm_kernel<scalar_t><<<grid, block>>>(
+    81	                input.data_ptr<scalar_t>(),
+    82	                weight.data_ptr<scalar_t>(),
+    83	                output.data_ptr<scalar_t>(),
+    84	                hidden, static_cast<float>(eps)
+    85	            );
+    86	        }
+    87	    );
+    88	
+    89	    return output;
+    90	}

@@ -1,0 +1,87 @@
+INFO {'transformers': '4.53.3', 'torch': '2.10.0+cpu', 'dtype': 'float16', 'attn_implementation': 'sdpa', 'num_attention_heads': 32, 'num_key_value_heads': 4, 'head_dim': 64, 'layers': 22, 'rope_theta': 10000.0}
+
+=== prompt 'Hello' T=2 input_ids=[1, 15043] generated=[29892, 2787, 29991] text='<s> Hello, World!'
+[prefill] model.forward input_ids=shape=[1, 2] stride=[2, 1] contig=True int64 (16 B) cache_position=[0, 1] attention_mask=shape=[1, 2] stride=[2, 1] contig=True int64 (16 B) position_ids=None
+[prefill] rotary_emb: position_ids=shape=[1, 2] stride=[2, 1] contig=True int64 (16 B) values=[0, 1] cos=shape=[1, 2, 64] stride=[128, 64, 1] contig=True float16 (256 B)
+[prefill] apply_rotary_pos_emb (layer0; 22 calls this step)
+      q=shape=[1, 32, 2, 64] stride=[4096, 64, 2048, 1] contig=False float16 (8192 B)
+      k=shape=[1, 4, 2, 64] stride=[512, 64, 256, 1] contig=False float16 (1024 B)
+      cos=shape=[1, 2, 64] stride=[128, 64, 1] contig=True float16 (256 B) sin=shape=[1, 2, 64] stride=[128, 64, 1] contig=True float16 (256 B) position_ids_arg=None
+      inject.py positions=arange: shape=[1, 2] stride=[2, 1] contig=True int32 (8 B) values=[0, 1]
+      q_t=shape=[1, 2, 32, 64] stride=[4096, 2048, 64, 1] contig=True float16 (8192 B)
+      k_t=shape=[1, 2, 4, 64] stride=[512, 256, 64, 1] contig=True float16 (1024 B)
+      STOCK LAUNCH q: B=1 T=2 H=32 D=64 total_pairs=2048 blocks=8x256 launched=2048 OOB_threads=0 x_numel=4096 (8192 B) positions_numel=2 -> oob threads reading positions past end=0 (max index -1), oob threads r/w x past end=0 (max index -1, 0 B past end); in-bounds threads stay inside=True
+      STOCK LAUNCH k: B=1 T=2 H=4 D=64 total_pairs=256 blocks=1x256 launched=256 OOB_threads=0 x_numel=512 (1024 B) positions_numel=2 -> oob threads reading positions past end=0 (max index -1), oob threads r/w x past end=0 (max index -1, 0 B past end); in-bounds threads stay inside=True
+[prefill] cache.update layer0: key_states_in=shape=[1, 4, 2, 64] stride=[512, 64, 256, 1] contig=False float16 (1024 B) key_cache_before=None after=shape=[1, 4, 2, 64] stride=[512, 64, 256, 1] contig=False float16 (1024 B) branch=append (no torch.cat) cache_position=[0, 1]
+[prefill] sdpa: q=shape=[1, 32, 2, 64] stride=[4096, 128, 64, 1] contig=True float16 (8192 B) k=shape=[1, 32, 2, 64] stride=[4096, 128, 64, 1] contig=True float16 (8192 B) v=shape=[1, 32, 2, 64] stride=[4096, 128, 64, 1] contig=True float16 (8192 B) mask=None is_causal=True scale=0.125 extra=[] inject_would_call_ops.attention=True
+[decode1] model.forward input_ids=shape=[1, 1] stride=[1, 1] contig=True int64 (8 B) cache_position=[2] attention_mask=shape=[1, 3] stride=[3, 1] contig=True int64 (24 B) position_ids=None
+[decode1] rotary_emb: position_ids=shape=[1, 1] stride=[1, 1] contig=True int64 (8 B) values=[2] cos=shape=[1, 1, 64] stride=[64, 64, 1] contig=True float16 (128 B)
+[decode1] apply_rotary_pos_emb (layer0; 22 calls this step)
+      q=shape=[1, 32, 1, 64] stride=[2048, 64, 2048, 1] contig=True float16 (4096 B)
+      k=shape=[1, 4, 1, 64] stride=[256, 64, 256, 1] contig=True float16 (512 B)
+      cos=shape=[1, 1, 64] stride=[64, 64, 1] contig=True float16 (128 B) sin=shape=[1, 1, 64] stride=[64, 64, 1] contig=True float16 (128 B) position_ids_arg=None
+      inject.py positions=arange: shape=[1, 1] stride=[1, 1] contig=True int32 (4 B) values=[0]
+      q_t=shape=[1, 1, 32, 64] stride=[2048, 2048, 64, 1] contig=True float16 (4096 B)
+      k_t=shape=[1, 1, 4, 64] stride=[256, 256, 64, 1] contig=True float16 (512 B)
+      STOCK LAUNCH q: B=1 T=1 H=32 D=64 total_pairs=1024 blocks=4x256 launched=1024 OOB_threads=0 x_numel=2048 (4096 B) positions_numel=1 -> oob threads reading positions past end=0 (max index -1), oob threads r/w x past end=0 (max index -1, 0 B past end); in-bounds threads stay inside=True
+      STOCK LAUNCH k: B=1 T=1 H=4 D=64 total_pairs=128 blocks=1x256 launched=256 OOB_threads=128 x_numel=256 (512 B) positions_numel=1 -> oob threads reading positions past end=128 (max index 1), oob threads r/w x past end=128 (max index 511, 512 B past end); in-bounds threads stay inside=True
+         first OOB thread: {'idx': 128, 'block': 0, 'thread': 128, 'batch': 1, 'seq': 0, 'head': 0, 'pair_idx': 0, 'positions_index': 1, 'x_i0': 256, 'x_i1': 257}
+[decode1] cache.update layer0: key_states_in=shape=[1, 4, 1, 64] stride=[256, 64, 64, 1] contig=True float16 (512 B) key_cache_before=shape=[1, 4, 2, 64] stride=[512, 64, 256, 1] contig=False float16 (1024 B) after=shape=[1, 4, 3, 64] stride=[768, 192, 64, 1] contig=True float16 (1536 B) branch=torch.cat (cache_utils.py:557) cache_position=[2]
+[decode1] sdpa: q=shape=[1, 32, 1, 64] stride=[2048, 64, 64, 1] contig=True float16 (4096 B) k=shape=[1, 32, 3, 64] stride=[6144, 192, 64, 1] contig=True float16 (12288 B) v=shape=[1, 32, 3, 64] stride=[6144, 192, 64, 1] contig=True float16 (12288 B) mask=None is_causal=False scale=0.125 extra=[] inject_would_call_ops.attention=False
+[decode2] model.forward input_ids=shape=[1, 1] stride=[1, 1] contig=True int64 (8 B) cache_position=[3] attention_mask=shape=[1, 4] stride=[4, 1] contig=True int64 (32 B) position_ids=None
+[decode2] rotary_emb: position_ids=shape=[1, 1] stride=[1, 1] contig=True int64 (8 B) values=[3] cos=shape=[1, 1, 64] stride=[64, 64, 1] contig=True float16 (128 B)
+[decode2] apply_rotary_pos_emb (layer0; 22 calls this step)
+      q=shape=[1, 32, 1, 64] stride=[2048, 64, 2048, 1] contig=True float16 (4096 B)
+      k=shape=[1, 4, 1, 64] stride=[256, 64, 256, 1] contig=True float16 (512 B)
+      cos=shape=[1, 1, 64] stride=[64, 64, 1] contig=True float16 (128 B) sin=shape=[1, 1, 64] stride=[64, 64, 1] contig=True float16 (128 B) position_ids_arg=None
+      inject.py positions=arange: shape=[1, 1] stride=[1, 1] contig=True int32 (4 B) values=[0]
+      q_t=shape=[1, 1, 32, 64] stride=[2048, 2048, 64, 1] contig=True float16 (4096 B)
+      k_t=shape=[1, 1, 4, 64] stride=[256, 256, 64, 1] contig=True float16 (512 B)
+      STOCK LAUNCH q: B=1 T=1 H=32 D=64 total_pairs=1024 blocks=4x256 launched=1024 OOB_threads=0 x_numel=2048 (4096 B) positions_numel=1 -> oob threads reading positions past end=0 (max index -1), oob threads r/w x past end=0 (max index -1, 0 B past end); in-bounds threads stay inside=True
+      STOCK LAUNCH k: B=1 T=1 H=4 D=64 total_pairs=128 blocks=1x256 launched=256 OOB_threads=128 x_numel=256 (512 B) positions_numel=1 -> oob threads reading positions past end=128 (max index 1), oob threads r/w x past end=128 (max index 511, 512 B past end); in-bounds threads stay inside=True
+         first OOB thread: {'idx': 128, 'block': 0, 'thread': 128, 'batch': 1, 'seq': 0, 'head': 0, 'pair_idx': 0, 'positions_index': 1, 'x_i0': 256, 'x_i1': 257}
+[decode2] cache.update layer0: key_states_in=shape=[1, 4, 1, 64] stride=[256, 64, 64, 1] contig=True float16 (512 B) key_cache_before=shape=[1, 4, 3, 64] stride=[768, 192, 64, 1] contig=True float16 (1536 B) after=shape=[1, 4, 4, 64] stride=[1024, 256, 64, 1] contig=True float16 (2048 B) branch=torch.cat (cache_utils.py:557) cache_position=[3]
+[decode2] sdpa: q=shape=[1, 32, 1, 64] stride=[2048, 64, 64, 1] contig=True float16 (4096 B) k=shape=[1, 32, 4, 64] stride=[8192, 256, 64, 1] contig=True float16 (16384 B) v=shape=[1, 32, 4, 64] stride=[8192, 256, 64, 1] contig=True float16 (16384 B) mask=None is_causal=False scale=0.125 extra=[] inject_would_call_ops.attention=False
+
+=== prompt 'Explain the theory of relativity in simple terms.' T=12 input_ids=[1, 12027, 7420, 278, 6368, 310, 14215, 537, 297, 2560, 4958, 29889] generated=[1128, 947, 372] text='<s> Explain the theory of relativity in simple terms. How does it'
+[prefill] model.forward input_ids=shape=[1, 12] stride=[12, 1] contig=True int64 (96 B) cache_position=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] attention_mask=shape=[1, 12] stride=[12, 1] contig=True int64 (96 B) position_ids=None
+[prefill] rotary_emb: position_ids=shape=[1, 12] stride=[12, 1] contig=True int64 (96 B) values=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] cos=shape=[1, 12, 64] stride=[768, 64, 1] contig=True float16 (1536 B)
+[prefill] apply_rotary_pos_emb (layer0; 22 calls this step)
+      q=shape=[1, 32, 12, 64] stride=[24576, 64, 2048, 1] contig=False float16 (49152 B)
+      k=shape=[1, 4, 12, 64] stride=[3072, 64, 256, 1] contig=False float16 (6144 B)
+      cos=shape=[1, 12, 64] stride=[768, 64, 1] contig=True float16 (1536 B) sin=shape=[1, 12, 64] stride=[768, 64, 1] contig=True float16 (1536 B) position_ids_arg=None
+      inject.py positions=arange: shape=[1, 12] stride=[12, 1] contig=True int32 (48 B) values=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+      q_t=shape=[1, 12, 32, 64] stride=[24576, 2048, 64, 1] contig=True float16 (49152 B)
+      k_t=shape=[1, 12, 4, 64] stride=[3072, 256, 64, 1] contig=True float16 (6144 B)
+      STOCK LAUNCH q: B=1 T=12 H=32 D=64 total_pairs=12288 blocks=48x256 launched=12288 OOB_threads=0 x_numel=24576 (49152 B) positions_numel=12 -> oob threads reading positions past end=0 (max index -1), oob threads r/w x past end=0 (max index -1, 0 B past end); in-bounds threads stay inside=True
+      STOCK LAUNCH k: B=1 T=12 H=4 D=64 total_pairs=1536 blocks=6x256 launched=1536 OOB_threads=0 x_numel=3072 (6144 B) positions_numel=12 -> oob threads reading positions past end=0 (max index -1), oob threads r/w x past end=0 (max index -1, 0 B past end); in-bounds threads stay inside=True
+[prefill] cache.update layer0: key_states_in=shape=[1, 4, 12, 64] stride=[3072, 64, 256, 1] contig=False float16 (6144 B) key_cache_before=None after=shape=[1, 4, 12, 64] stride=[3072, 64, 256, 1] contig=False float16 (6144 B) branch=append (no torch.cat) cache_position=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+[prefill] sdpa: q=shape=[1, 32, 12, 64] stride=[24576, 768, 64, 1] contig=True float16 (49152 B) k=shape=[1, 32, 12, 64] stride=[24576, 768, 64, 1] contig=True float16 (49152 B) v=shape=[1, 32, 12, 64] stride=[24576, 768, 64, 1] contig=True float16 (49152 B) mask=None is_causal=True scale=0.125 extra=[] inject_would_call_ops.attention=True
+[decode1] model.forward input_ids=shape=[1, 1] stride=[1, 1] contig=True int64 (8 B) cache_position=[12] attention_mask=shape=[1, 13] stride=[13, 1] contig=True int64 (104 B) position_ids=None
+[decode1] rotary_emb: position_ids=shape=[1, 1] stride=[1, 1] contig=True int64 (8 B) values=[12] cos=shape=[1, 1, 64] stride=[64, 64, 1] contig=True float16 (128 B)
+[decode1] apply_rotary_pos_emb (layer0; 22 calls this step)
+      q=shape=[1, 32, 1, 64] stride=[2048, 64, 2048, 1] contig=True float16 (4096 B)
+      k=shape=[1, 4, 1, 64] stride=[256, 64, 256, 1] contig=True float16 (512 B)
+      cos=shape=[1, 1, 64] stride=[64, 64, 1] contig=True float16 (128 B) sin=shape=[1, 1, 64] stride=[64, 64, 1] contig=True float16 (128 B) position_ids_arg=None
+      inject.py positions=arange: shape=[1, 1] stride=[1, 1] contig=True int32 (4 B) values=[0]
+      q_t=shape=[1, 1, 32, 64] stride=[2048, 2048, 64, 1] contig=True float16 (4096 B)
+      k_t=shape=[1, 1, 4, 64] stride=[256, 256, 64, 1] contig=True float16 (512 B)
+      STOCK LAUNCH q: B=1 T=1 H=32 D=64 total_pairs=1024 blocks=4x256 launched=1024 OOB_threads=0 x_numel=2048 (4096 B) positions_numel=1 -> oob threads reading positions past end=0 (max index -1), oob threads r/w x past end=0 (max index -1, 0 B past end); in-bounds threads stay inside=True
+      STOCK LAUNCH k: B=1 T=1 H=4 D=64 total_pairs=128 blocks=1x256 launched=256 OOB_threads=128 x_numel=256 (512 B) positions_numel=1 -> oob threads reading positions past end=128 (max index 1), oob threads r/w x past end=128 (max index 511, 512 B past end); in-bounds threads stay inside=True
+         first OOB thread: {'idx': 128, 'block': 0, 'thread': 128, 'batch': 1, 'seq': 0, 'head': 0, 'pair_idx': 0, 'positions_index': 1, 'x_i0': 256, 'x_i1': 257}
+[decode1] cache.update layer0: key_states_in=shape=[1, 4, 1, 64] stride=[256, 64, 64, 1] contig=True float16 (512 B) key_cache_before=shape=[1, 4, 12, 64] stride=[3072, 64, 256, 1] contig=False float16 (6144 B) after=shape=[1, 4, 13, 64] stride=[3328, 832, 64, 1] contig=True float16 (6656 B) branch=torch.cat (cache_utils.py:557) cache_position=[12]
+[decode1] sdpa: q=shape=[1, 32, 1, 64] stride=[2048, 64, 64, 1] contig=True float16 (4096 B) k=shape=[1, 32, 13, 64] stride=[26624, 832, 64, 1] contig=True float16 (53248 B) v=shape=[1, 32, 13, 64] stride=[26624, 832, 64, 1] contig=True float16 (53248 B) mask=None is_causal=False scale=0.125 extra=[] inject_would_call_ops.attention=False
+[decode2] model.forward input_ids=shape=[1, 1] stride=[1, 1] contig=True int64 (8 B) cache_position=[13] attention_mask=shape=[1, 14] stride=[14, 1] contig=True int64 (112 B) position_ids=None
+[decode2] rotary_emb: position_ids=shape=[1, 1] stride=[1, 1] contig=True int64 (8 B) values=[13] cos=shape=[1, 1, 64] stride=[64, 64, 1] contig=True float16 (128 B)
+[decode2] apply_rotary_pos_emb (layer0; 22 calls this step)
+      q=shape=[1, 32, 1, 64] stride=[2048, 64, 2048, 1] contig=True float16 (4096 B)
+      k=shape=[1, 4, 1, 64] stride=[256, 64, 256, 1] contig=True float16 (512 B)
+      cos=shape=[1, 1, 64] stride=[64, 64, 1] contig=True float16 (128 B) sin=shape=[1, 1, 64] stride=[64, 64, 1] contig=True float16 (128 B) position_ids_arg=None
+      inject.py positions=arange: shape=[1, 1] stride=[1, 1] contig=True int32 (4 B) values=[0]
+      q_t=shape=[1, 1, 32, 64] stride=[2048, 2048, 64, 1] contig=True float16 (4096 B)
+      k_t=shape=[1, 1, 4, 64] stride=[256, 256, 64, 1] contig=True float16 (512 B)
+      STOCK LAUNCH q: B=1 T=1 H=32 D=64 total_pairs=1024 blocks=4x256 launched=1024 OOB_threads=0 x_numel=2048 (4096 B) positions_numel=1 -> oob threads reading positions past end=0 (max index -1), oob threads r/w x past end=0 (max index -1, 0 B past end); in-bounds threads stay inside=True
+      STOCK LAUNCH k: B=1 T=1 H=4 D=64 total_pairs=128 blocks=1x256 launched=256 OOB_threads=128 x_numel=256 (512 B) positions_numel=1 -> oob threads reading positions past end=128 (max index 1), oob threads r/w x past end=128 (max index 511, 512 B past end); in-bounds threads stay inside=True
+         first OOB thread: {'idx': 128, 'block': 0, 'thread': 128, 'batch': 1, 'seq': 0, 'head': 0, 'pair_idx': 0, 'positions_index': 1, 'x_i0': 256, 'x_i1': 257}
+[decode2] cache.update layer0: key_states_in=shape=[1, 4, 1, 64] stride=[256, 64, 64, 1] contig=True float16 (512 B) key_cache_before=shape=[1, 4, 13, 64] stride=[3328, 832, 64, 1] contig=True float16 (6656 B) after=shape=[1, 4, 14, 64] stride=[3584, 896, 64, 1] contig=True float16 (7168 B) branch=torch.cat (cache_utils.py:557) cache_position=[13]
+[decode2] sdpa: q=shape=[1, 32, 1, 64] stride=[2048, 64, 64, 1] contig=True float16 (4096 B) k=shape=[1, 32, 14, 64] stride=[28672, 896, 64, 1] contig=True float16 (57344 B) v=shape=[1, 32, 14, 64] stride=[28672, 896, 64, 1] contig=True float16 (57344 B) mask=None is_causal=False scale=0.125 extra=[] inject_would_call_ops.attention=False

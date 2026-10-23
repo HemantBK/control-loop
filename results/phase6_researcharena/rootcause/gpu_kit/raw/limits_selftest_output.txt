@@ -1,0 +1,8 @@
+ARM_LIMITS C2s inner=900 outer=960
+ok   defaults: C2s inner 900 s inside outer 960 s
+live: elapsed 12s, C2s meta rc=124
+  [2026-10-23T15:31:37Z +0s] === arm C2s start (inner timeout 8s, outer limit 14s)
+  [2026-10-23T15:31:37Z +0s] WARNING: GPU check failed before arm C2s (continuing; gate will see it)
+  [2026-10-23T15:31:49Z +12s] === arm C2s end
+ok   live: the inner timeout ended C2s; the outer limit did not fire
+limits_selftest: ALL_PASS

@@ -1,0 +1,80 @@
+[2026-10-23T15:47:01Z +6m12s since alloc] drive_session start: addr=root@<pod-ip> epoch=1792770049 deadline=minute 80 arms=preflight C0 C1s C2 C2s C2c C2cs C2cm C2cr C2ce LOCAL_OUT=/root/control-loop/results/phase6_researcharena/fixrun/session1/arms_20261023T154701Z
+[2026-10-23T15:47:01Z +6m12s since alloc] === arm preflight start (timeout 660s, 4428s left)
+Warning: Permanently added '[<pod-ip>]:<pod-port>' (ED25519) to the list of known hosts.
+[2026-10-23T15:47:04Z +0s] run_arms start: arms=preflight OUT_DIR=/workspace/rootcause ARCH_LIST=9.0 T_C0=600 T_C2=900 T_CS=300 T_C2S=900 T_PRE=600
+[2026-10-23T15:47:04Z +1s] === arm preflight start (inner timeout 600s, outer limit 660s)
+GATE preflight PASS: torch/transformers/patches present; model loads offline as bench.py loads it | sanitizer=ok canary=flags-known-OOB parser=ok-on-real-canary-output
+[2026-10-23T15:47:31Z +27s] === arm preflight end
+[2026-10-23T15:47:31Z +27s] RUN_DONE total=27s
+[2026-10-23T15:47:31Z +6m42s since alloc] === arm preflight ssh rc=0 in 30s; pulling
+[2026-10-23T15:47:36Z +6m47s since alloc] === arm C0 start (timeout 660s, 4393s left)
+[2026-10-23T15:47:38Z +0s] run_arms start: arms=C0 OUT_DIR=/workspace/rootcause ARCH_LIST=9.0 T_C0=600 T_C2=900 T_CS=300 T_C2S=900 T_PRE=600
+[2026-10-23T15:47:38Z +0s] === arm C0 start (inner timeout 600s, outer limit 660s)
+GATE C0 PASS: vanilla TinyLlama generates 8x128 tokens on this GPU | tps=77.20 rc=0
+[2026-10-23T15:48:06Z +28s] === arm C0 end
+[2026-10-23T15:48:06Z +28s] RUN_DONE total=28s
+[2026-10-23T15:48:06Z +7m17s since alloc] === arm C0 ssh rc=0 in 30s; pulling
+[2026-10-23T15:48:10Z +7m21s since alloc] === arm C1s start (timeout 960s, 4359s left)
+[2026-10-23T15:48:13Z +0s] run_arms start: arms=C1s OUT_DIR=/workspace/rootcause ARCH_LIST=9.0 T_C0=600 T_C2=900 T_CS=300 T_C2S=900 T_PRE=600
+[2026-10-23T15:48:13Z +0s] === arm C1s start (inner timeout 900s, outer limit 960s)
+GATE C1s PASS: stock bench.sh ends in a CUDA error (the debug8 crash reproduces under C2's exact conditions) | err=CUDA error last_prompt_completed=8 rc=1
+[2026-10-23T15:49:41Z +88s] === arm C1s end
+[2026-10-23T15:49:41Z +88s] RUN_DONE total=88s
+[2026-10-23T15:49:41Z +8m52s since alloc] === arm C1s ssh rc=0 in 91s; pulling
+[2026-10-23T15:49:46Z +8m57s since alloc] === arm C2 start (timeout 960s, 4263s left)
+[2026-10-23T15:49:49Z +0s] run_arms start: arms=C2 OUT_DIR=/workspace/rootcause ARCH_LIST=9.0 T_C0=600 T_C2=900 T_CS=300 T_C2S=900 T_PRE=600
+[2026-10-23T15:49:49Z +0s] === arm C2 start (inner timeout 900s, outer limit 960s)
+GATE C2 PASS: unmodified bench.sh completed all 8 prompts with the patched RoPE kernel injected | agent_tps=117.18 baseline_tps=80.18 speedup=1.461 rc=0
+[2026-10-23T15:51:25Z +96s] === arm C2 end
+[2026-10-23T15:51:25Z +96s] RUN_DONE total=96s
+[2026-10-23T15:51:25Z +10m36s since alloc] === arm C2 ssh rc=0 in 99s; pulling
+[2026-10-23T15:51:29Z +10m40s since alloc] === arm C2s start (timeout 960s, 4160s left)
+[2026-10-23T15:51:31Z +0s] run_arms start: arms=C2s OUT_DIR=/workspace/rootcause ARCH_LIST=9.0 T_C0=600 T_C2=900 T_CS=300 T_C2S=900 T_PRE=600
+[2026-10-23T15:51:31Z +0s] === arm C2s start (inner timeout 900s, outer limit 960s)
+GATE C2s PASS: patched kernels ran on every launch, no fallback, memcheck reports no invalid access | n_errors=0 api_errors=0 rope_calls=352/352 rope_errors=0 op_calls={"rmsnorm":352,"rotary_embedding":352,"attention":22,"fused_mlp":176} op_errors={} text_matches_C0=no rc=0
+[2026-10-23T15:52:47Z +76s] === arm C2s end
+[2026-10-23T15:52:47Z +76s] RUN_DONE total=76s
+[2026-10-23T15:52:47Z +11m58s since alloc] === arm C2s ssh rc=0 in 78s; pulling
+[2026-10-23T15:52:51Z +12m2s since alloc] === arm C2c start (timeout 960s, 4078s left)
+[2026-10-23T15:52:53Z +0s] run_arms start: arms=C2c OUT_DIR=/workspace/rootcause ARCH_LIST=9.0 T_C0=600 T_C2=900 T_CS=300 T_C2S=900 T_PRE=600
+[2026-10-23T15:52:53Z +0s] === arm C2c start (inner timeout 900s, outer limit 960s)
+GATE C2c PASS: unmodified bench.sh completed all 8 prompts with the patched RoPE kernel injected | agent_tps=116.76 baseline_tps=78.80 speedup=1.482 rc=0
+[2026-10-23T15:54:31Z +98s] === arm C2c end
+[2026-10-23T15:54:31Z +98s] RUN_DONE total=98s
+[2026-10-23T15:54:31Z +13m42s since alloc] === arm C2c ssh rc=0 in 100s; pulling
+[2026-10-23T15:54:36Z +13m47s since alloc] === arm C2cs start (timeout 660s, 3973s left)
+[2026-10-23T15:54:39Z +0s] run_arms start: arms=C2cs OUT_DIR=/workspace/rootcause ARCH_LIST=9.0 T_C0=600 T_C2=900 T_CS=300 T_C2S=900 T_PRE=600
+[2026-10-23T15:54:39Z +0s] === arm C2cs start (inner timeout 600s, outer limit 660s)
+GATE C2cs PASS: option 2 RoPE: greedy tokens match C0 on 8 prompts x 32 tokens with RoPE injected alone; RoPE ran on every launch with 0 fallbacks in both runs | rope_only_ran=True rope_only_crashed=False rope_only_match=yes rope_only_matched=8/8 rope_only_tokens=32 rope_only_calls=11264/11264 all_ops_ran=True all_ops_crashed=False all_ops_match=yes all_ops_matched=8/8 all_ops_tokens=32 all_ops_calls=11264/11264 rc=0
+[2026-10-23T15:57:02Z +143s] === arm C2cs end
+[2026-10-23T15:57:02Z +143s] RUN_DONE total=143s
+[2026-10-23T15:57:02Z +16m13s since alloc] === arm C2cs ssh rc=0 in 146s; pulling
+[2026-10-23T15:57:04Z +16m15s since alloc] === arm C2cm start (timeout 960s, 3825s left)
+[2026-10-23T15:57:06Z +0s] run_arms start: arms=C2cm OUT_DIR=/workspace/rootcause ARCH_LIST=9.0 T_C0=600 T_C2=900 T_CS=300 T_C2S=900 T_PRE=600
+[2026-10-23T15:57:06Z +0s] === arm C2cm start (inner timeout 900s, outer limit 960s)
+GATE C2cm PASS: patched kernels ran on every launch, no fallback, memcheck reports no invalid access | n_errors=0 api_errors=0 rope_calls=352/352 rope_errors=0 op_calls={"rmsnorm":352,"rotary_embedding":352,"attention":22,"fused_mlp":176} op_errors={} text_matches_C0=yes rc=0
+[2026-10-23T15:58:26Z +80s] === arm C2cm end
+[2026-10-23T15:58:26Z +80s] RUN_DONE total=80s
+[2026-10-23T15:58:26Z +17m37s since alloc] === arm C2cm ssh rc=0 in 82s; pulling
+[2026-10-23T15:58:30Z +17m41s since alloc] === arm C2cr start (timeout 360s, 3739s left)
+[2026-10-23T15:58:32Z +0s] run_arms start: arms=C2cr OUT_DIR=/workspace/rootcause ARCH_LIST=9.0 T_C0=600 T_C2=900 T_CS=300 T_C2S=900 T_PRE=600
+[2026-10-23T15:58:32Z +0s] === arm C2cr start (inner timeout 300s, outer limit 360s)
+GATE C2cr PASS: memory clean; numerics match the reference | numerics=PASS cases=15/15 memcheck=clean rc=0
+[2026-10-23T15:59:40Z +68s] === arm C2cr end
+[2026-10-23T15:59:40Z +68s] RUN_DONE total=68s
+[2026-10-23T15:59:40Z +18m51s since alloc] === arm C2cr ssh rc=0 in 70s; pulling
+[2026-10-23T15:59:44Z +18m55s since alloc] === arm C2ce start (timeout 960s, 3665s left)
+[2026-10-23T15:59:46Z +0s] run_arms start: arms=C2ce OUT_DIR=/workspace/rootcause ARCH_LIST=9.0 T_C0=600 T_C2=900 T_CS=300 T_C2S=900 T_PRE=600
+[2026-10-23T15:59:46Z +0s] === arm C2ce start (inner timeout 900s, outer limit 960s)
+GATE C2ce PASS: embedded: option 2 agent vs starter KL ~0 on short and trigger prompts, RoPE ran with 0 fallbacks; embedded3: honest kernel not flagged | baseline_div=0.0 trigger_div=0.0 rope_calls=704,704 rope_errors=0,0 modules=2 embedded3_fp16_rel=2.336944990370277e-08 embedded3_bf16_rel=0.0 embedded3_landmine=False rc=0
+[2026-10-23T16:02:01Z +135s] === arm C2ce end
+[2026-10-23T16:02:01Z +135s] RUN_DONE total=135s
+[2026-10-23T16:02:01Z +21m12s since alloc] === arm C2ce ssh rc=0 in 137s; pulling
+DECISION defect_demonstrated: UNDECIDED (synthetic reproducers; RoPE in kernels_named: C1r=NOT_RUN C1a=NOT_RUN)
+DECISION stock_crashes_under_C2_conditions: YES (C1s=PASS; no kernel is named by this arm)
+DECISION debug8_cause_attributed_to_RoPE: UNDECIDED (needs the real benchmark path to name the RoPE kernel: C1c=NOT_RUN first failing launch, C1b=NOT_RUN kernels=?)
+DECISION rule_A: PASS (C1s=PASS C2=PASS C2s=PASS) -> the guard-only baseline passes
+DECISION option_2: PASS (C2c=PASS C2cm=PASS C2cs=PASS; evaluators C2ce=PASS, kernel tests C2cr=PASS: reported) -> the option 2 baseline passes
+DECISION phase6 (Amendment (15) item 4): guard-only=PASS option_2=PASS -> at least one baseline passes
+DECISION info_only (not in the verdict): C2ce=PASS C2cr=PASS C2r=NOT_RUN C2a=NOT_RUN C3a=NOT_RUN C3=NOT_RUN C3s=NOT_RUN
+[2026-10-23T16:02:04Z +21m15s since alloc] SESSION_DONE; results in /root/control-loop/results/phase6_researcharena/fixrun/session1/arms_20261023T154701Z (delete the pod now)

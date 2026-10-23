@@ -1,0 +1,8 @@
+GATE C0 PASS: vanilla TinyLlama generates 8x128 tokens on this GPU | tps=102.53 rc=0
+GATE C1a PASS: first invalid access is in rotary_embedding_kernel (RoPE confirmed) | kernel=rotary_embedding_kernel what="Invalid __global__ read of size 4 bytes" src_line=34 thread=128,0,0 block=0,0,0 bytes_after_alloc=1 alloc_size=4 n_errors=257 all_kernels_with_invalid_access=rotary_embedding_kernel rc=1
+GATE C1c PASS: under CUDA_LAUNCH_BLOCKING=1 the first launch that fails is ops.rotary_embedding (an illegal memory access was encountered) | all_named=rotary_embedding rc=1
+GATE C2 PASS: unmodified bench.sh completed all 8 prompts with the patched RoPE kernel injected | agent_tps=98.40 baseline_tps=102.53 speedup=0.960 rc=0
+GATE C2s PASS: patched kernels ran on every launch, no fallback, memcheck reports no invalid access | n_errors=0 api_errors=0 rope_calls=176/176 rope_errors=0 op_calls={"rmsnorm":176,"fused_mlp":88,"attention":22,"rotary_embedding":176} op_errors={} text_matches_C0=no rc=0
+GATE C1a FAIL: first invalid access is in attention_kernel, not the RoPE kernel: hypothesis contradicted | kernel=attention_kernel what="Invalid __global__ read of size 4 bytes" src_line=63 thread=128,0,0 block=0,0,0 bytes_after_alloc=1 alloc_size=4 n_errors=257 all_kernels_with_invalid_access=attention_kernel rc=1
+GATE C2 FAIL: CUDA error with the patched kernels: the patch does not remove the fault (or a second fault exists) | rc=1 err=CUDA error
+GATE C2s FAIL: patched RoPE did not run on every launch (exception -> inject.py fell back to PyTorch) or run incomplete | rope_calls=176/176 rope_errors=176 op_calls={"rmsnorm":176,"fused_mlp":88,"attention":22,"rotary_embedding":176} op_errors={} text_matches_C0=no rc=0

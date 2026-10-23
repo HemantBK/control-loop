@@ -64,7 +64,7 @@ Content of `<session scratch>/council/myview_p6smoke5.md`, verbatim; file mtime 
 ### The manager's view (Claude Opus 5.5), written 2026-10-22 before reading either opinion, from the smoke5 logs only
 
 1. **Cause.** A readiness race, not a network fault: RunPod reported the pod ready (`pod_create done ... in 612s`, SSH address
-   31.24.80.42:19291) at 17:13:17Z, the driver opened its first SSH session in the same second (`setup started`), and the remote
+   <pod-ip>:<pod-port>) at 17:13:17Z, the driver opened its first SSH session in the same second (`setup started`), and the remote
    host closed that connection before the tar push completed (ssh rc 255). The 612 s are the first pull of the 16.25 GB image;
    RunPod publishes the port mapping when the container starts, while the image's start script is still bringing sshd up
    (host keys, config), so the first connection hit an sshd that was not yet serving, or that restarted. The driver makes one

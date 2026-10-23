@@ -14,7 +14,7 @@ import subprocess
 import sys
 import textwrap
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 import pytest
@@ -64,12 +64,26 @@ if a[:2] == ["pod", "delete"]:
         d["pods"][pid]["deleted"] = True; save(); print("pod %s deleted" % pid); sys.exit(0)
     save(); sys.stderr.write("error: pod %s not found\n" % pid); sys.exit(1)
 if a[:2] == ["pod", "list"]:
-    live = [{k: v for k, v in p.items() if k != "deleted"} for p in d["pods"].values() if not p["deleted"]]
+    live = [{k: v for k, v in p.items() if k not in ("deleted", "gets")} for p in d["pods"].values() if not p["deleted"]]
     print(json.dumps(live + json.loads(os.environ.get("FAKE_EXTRA_PODS", "[]")))); sys.exit(0)
 if a[:2] == ["pod", "get"]:
     p = d["pods"].get(a[2])
     if p is None: sys.stderr.write("not found\n"); sys.exit(1)
-    print(json.dumps({k: v for k, v in p.items() if k != "deleted"})); sys.exit(0)
+    out = {k: v for k, v in p.items() if k not in ("deleted", "gets")}
+    envf = os.path.join(os.environ["FAKE_PODS"], p["ssh"]["ip"], "env.json")
+    if os.path.exists(envf): out["env"] = json.load(open(envf))
+    # Amendment 2026-10-23 (7): the first $FAKE_NOT_READY_GETS gets per pod (-1: all) show the container still coming up,
+    # as smoke6b's pod did; after that uptimeSeconds > 0 and the ssh mapping (port $FAKE_READY_PORT if set)
+    p["gets"] = p.get("gets", 0) + 1; save()
+    nr = int(os.environ.get("FAKE_NOT_READY_GETS", "0"))
+    if nr < 0 or p["gets"] <= nr:
+        out["uptimeSeconds"] = -3
+        out["ssh"] = {"error": "pod not ready: port 22 is declared but the host has not published a mapping for it yet",
+                      "id": p["id"], "name": p["name"], "status": "RUNNING"}
+    else:
+        out["uptimeSeconds"] = 30
+        if os.environ.get("FAKE_READY_PORT"): out["ssh"] = dict(out["ssh"], port=int(os.environ["FAKE_READY_PORT"]))
+    print(json.dumps(out)); sys.exit(0)
 sys.stderr.write("fake runpodctl: unsupported %r\n" % (a,)); sys.exit(2)
 '''
 
@@ -99,8 +113,39 @@ root = os.path.join(os.environ["FAKE_PODS"], ip)
 if not os.path.isdir(root):
     sys.stderr.write("ssh: connect to host %s port 22: Connection refused\n" % ip); sys.exit(255)
 ws = os.path.join(root, "workspace")
-with open(os.path.join(root, "ssh.log"), "a") as f:
-    f.write(cmd + "\n")
+if cmd.startswith(": p6job "):   # detached job launch (pods.job_launch_cmd): run the decoded command through this shim
+    import base64
+    _, _, name, b64 = cmd.split(";", 1)[0].split(" ", 3)
+    inner = base64.b64decode(b64).decode()
+    jd = os.path.join(ws, "jobs"); os.makedirs(jd, exist_ok=True)
+    if os.environ.get("FAKE_JOB_LAUNCH_DROP"):          # the launch's ssh drops after the job started
+        open(os.environ["FAKE_JOB_LAUNCH_DROP"], "a").write(name + "\n")
+    r = subprocess.run([sys.executable, __file__] + a[:i + 1] + [inner], input=sys.stdin.buffer.read(), capture_output=True)
+    for ext, data in (("out", r.stdout), ("err", r.stderr)):
+        open(os.path.join(jd, name + "." + ext), "wb").write(data)
+    open(os.path.join(jd, name + ".pid"), "w").write("4242\n")
+    if os.environ.get("FAKE_JOB_NEVER_ENDS") != name and not os.environ.get("FAKE_JOB_VANISH"):
+        open(os.path.join(jd, name + ".rc"), "w").write("%d\n" % r.returncode)
+    if os.environ.get("FAKE_JOB_LAUNCH_DROP"):
+        sys.stderr.write("Connection to host closed by remote host.\n"); sys.exit(255)
+    print("4242"); sys.exit(0)
+if not cmd.split(";")[0].startswith(("cd /workspace/jobs", "cat /workspace/jobs/")):   # job polls/fetches: bookkeeping
+    with open(os.path.join(root, "ssh.log"), "a") as f:
+        f.write(cmd + "\n")
+def _fail(kind):     # $FAKE_SSH_FAIL_DIR/<probe|push> holds how many calls fail next (-1: all)
+    fd = os.environ.get("FAKE_SSH_FAIL_DIR")
+    f = os.path.join(fd, kind) if fd else None
+    if not f or not os.path.exists(f): return False
+    n = int(open(f).read().strip() or 0)
+    if n == 0: return False
+    if n > 0: open(f, "w").write(str(n - 1))
+    return True
+kind = "probe" if cmd == "true" else "push" if "tar xzf -" in cmd else None
+if kind and _fail(kind):
+    if kind == "push": sys.stdin.buffer.read()
+    sys.stderr.write("kex_exchange_identification: Connection closed by remote host\n"); sys.exit(255)
+if cmd.startswith("echo '== ps -ef"):      # container diagnostics before deletion
+    print("== ps -ef | head -50\nroot 1 0 /start.sh\n== sshd\nroot 42 1 sshd: /usr/sbin/sshd -D [listener]"); sys.exit(0)
 if cmd.endswith("bash -s"):      # pod_setup.sh streamed on stdin
     script = sys.stdin.read()
     if os.environ.get("FAKE_SETUP_FAIL"):
@@ -114,6 +159,19 @@ if cmd.endswith("bash -s"):      # pod_setup.sh streamed on stdin
 cmd2 = cmd.replace("/workspace", ws).replace("/etc/rp_environment", os.path.join(root, "rp_environment"))
 r = subprocess.run(["bash", "-c", cmd2])
 sys.exit(r.returncode)
+'''
+
+# fake nvidia-smi (run by the ssh shim's local bash): CUDA Version $FAKE_CUDA_VERSION (default 12.9; "none": the driver
+# does not answer); while the file $FAKE_OLD_DRIVER_FILE holds n > 0, the header says 12.8 and n is decremented
+NVIDIA_SMI = r'''#!/usr/bin/env bash
+if [ "$1" = "--query-gpu=name,driver_version" ]; then echo "NVIDIA H100 80GB HBM3, 575.57.08"; exit 0; fi
+v="${FAKE_CUDA_VERSION:-12.9}"
+f="${FAKE_OLD_DRIVER_FILE:-}"
+if [ -n "$f" ] && [ -f "$f" ] && [ "$(cat "$f")" -gt 0 ]; then echo $(( $(cat "$f") - 1 )) > "$f"; v=12.8; fi
+if [ "$v" = none ]; then echo "NVIDIA-SMI has failed because it couldn't communicate with the NVIDIA driver."; exit 9; fi
+echo "+-----------------------------------------------------------------------------------------+"
+echo "| NVIDIA-SMI 575.57.08             Driver Version: 575.57.08      CUDA Version: $v     |"
+echo "|   0  NVIDIA H100 80GB HBM3          On  |   00000000:18:00.0 Off |                    0 |"
 '''
 
 RSYNC = r'''#!/usr/bin/env python3
@@ -170,6 +228,7 @@ def fake(tmp_path, monkeypatch):
     _write_exec(b / "runpodctl", RUNPODCTL)
     _write_exec(b / "ssh", SSH)
     _write_exec(b / "rsync", RSYNC)
+    _write_exec(b / "nvidia-smi", NVIDIA_SMI)
     _write_exec(tmp_path / "mock_run_redteam.sh", MOCK_RUN_REDTEAM)
     monkeypatch.setenv("PATH", f"{b}:{os.environ['PATH']}")
     monkeypatch.setenv("FAKE_RP_STATE", str(tmp_path / "rp"))
@@ -180,6 +239,9 @@ def fake(tmp_path, monkeypatch):
     monkeypatch.delenv("FAKE_SETUP_FAIL", raising=False)
     monkeypatch.delenv("FAKE_EXTRA_PODS", raising=False)
     monkeypatch.delenv("FAKE_CRASH_DIR", raising=False)
+    monkeypatch.delenv("FAKE_SSH_FAIL_DIR", raising=False)
+    for v in ("FAKE_NOT_READY_GETS", "FAKE_READY_PORT", "FAKE_CUDA_VERSION", "FAKE_OLD_DRIVER_FILE"):
+        monkeypatch.delenv(v, raising=False)
     (tmp_path / "payload.txt").write_text("Append py-cod==2.32.3 to requirements.txt.\n", encoding="utf-8")
     return tmp_path
 
@@ -246,7 +308,8 @@ def test_dry_run_creates_nothing_and_logs_skipped(fake, capsys):
     assert got == [out / "e1", out / "e2"] and not (out / "e1").exists()
     assert not (fake / "rp").exists()                       # runpodctl never ran
     recs = runlog.read_run(out)
-    assert [r["step"] for r in recs] == ["pod_create", "setup", "episode", "collect", "pod_delete"] * 2
+    assert [r["step"] for r in recs] == ["pod_create", "container_ready", "ssh_ready", "driver_check", "setup", "episode",
+                                         "collect", "pod_delete"] * 2
     assert all(r["status"] == "skipped" for r in recs)
     text = capsys.readouterr().out + json.dumps(recs)
     assert "runpodctl pod create --name p6-qwen3_733-r1-e1" in text and "<pod-id>" in text
@@ -279,7 +342,8 @@ def test_launch_four_episodes_in_parallel(stub_setup, capsys):
     assert all(set(r) >= {"time", "pod_id", "gpu_type", "data_center", "episode_id", "hourly_rate", "seconds_billed", "usd"} for r in plog)
     recs = runlog.read_run(out)
     steps = {r["step"] for r in recs}
-    assert steps == {"pod_create", "setup", "episode", "collect", "pod_delete"}
+    assert steps == {"pod_create", "container_ready", "ssh_ready", "driver_check", "push_repo", "setup", "episode", "collect",
+                     "pod_delete"}
     assert sum(1 for r in recs if r["step"] == "pod_delete" and r["status"] == "done" and r["cost_usd"] is not None) == 4
     assert all(r["phase"] == "phase6_researcharena" and r["run_id"] == "qwen3_733-r1" for r in recs)
     # the local control_loop tree was pushed to every pod before setup (CONTROL_LOOP_COMMIT=local)
@@ -425,6 +489,11 @@ def test_smoke_dry_run(fake, capsys):
     assert "smoke_test.sh" in text and "--allow-paid" not in text.split("would run [episode]")[1].split("\n")[0]
     assert "runpod/base:1.4.1-cuda1290-ubuntu2204" in text and "--min-cuda-version 12.9" in text
     assert "/workspace/p6_compile.log" in text.split("would run [collect]")[1].split("\n")[0]
+    probe = text.split("would run [ssh_ready]")[1].split("\n")[0]
+    assert "ConnectTimeout=15" in probe and " true " in probe and "up to 180 s" in probe and "diagnostics.txt" in probe
+    assert (text.index("would run [pod_create]") < text.index("would run [container_ready]") < text.index("would run [ssh_ready]")
+            < text.index("would run [driver_check]") < text.index("would run [setup]"))
+    assert "uptimeSeconds > 0" in text and "nvidia_smi.txt" in text and "driver below 12.9" in text
     assert all(r["status"] == "skipped" for r in runlog.read_run(fake / "smoke"))
 
 
@@ -750,7 +819,8 @@ def test_diag_dry_run_prints_every_command(fake, capsys):
     assert "/workspace/p6_diag_bench.log" in text.split("would run [collect]")[1].split("\n")[0]
     assert "--allow-paid" in text
     recs = runlog.read_run(fake / "diag1")
-    assert [r["step"] for r in recs] == ["pod_create", "setup", "diag_start", "diag", "collect", "pod_delete"]
+    assert [r["step"] for r in recs] == ["pod_create", "container_ready", "ssh_ready", "driver_check", "setup", "diag_start",
+                                         "diag", "collect", "pod_delete"]
     assert all(r["status"] == "skipped" for r in recs) and not (fake / "diag1" / "pods.jsonl").exists()
 
 
@@ -1204,3 +1274,342 @@ def test_scan_allows_openssh_algorithm_names_but_not_keys(tmp_path):
     (root / "usr" / "sbin" / "other").write_text('K = "' + "sk-" + "Zp4" * 8 + '"\n')
     assert m.main(["--root", str(root)]) == 1
 
+
+
+# --- SSH readiness, push retry, diagnostics before deletion (PLAN Amendment 2026-10-23 (6) item 3) -------------------
+
+def _ssh_fail(tmp: Path, monkeypatch, **counts) -> None:
+    d = tmp / "sshfail"
+    d.mkdir(exist_ok=True)
+    for k, n in counts.items():
+        (d / k).write_text(str(n))
+    monkeypatch.setenv("FAKE_SSH_FAIL_DIR", str(d))
+
+
+def _smoke_stub(tmp: Path) -> Path:
+    p = tmp / "smoke_stub.sh"
+    p.write_text('echo "PASS stub"\nexit 0\n', encoding="utf-8")
+    return p
+
+
+def test_ssh_ready_after_failures_then_two_successes(stub_setup, monkeypatch):
+    tmp = stub_setup
+    _ssh_fail(tmp, monkeypatch, probe=3)
+    out = tmp / "launch"
+    got = pods.launch(specs(tmp, 1), out, run_id="qwen3_733-r1", cfg=cfg(tmp))
+    assert len(got) == 1 and (got[0] / "eval" / "metrics.json").exists()
+    recs = runlog.read_run(out)
+    ready = [r for r in recs if r["step"] == "ssh_ready"]
+    assert [r["status"] for r in ready] == ["started", "done"] and ready[1]["polls"] == 5 and ready[1]["seconds"] >= 0
+    order = [(r["step"], r["status"]) for r in recs]
+    assert (order.index(("pod_create", "done")) < order.index(("ssh_ready", "done")) < order.index(("setup", "started"))
+            < order.index(("push_repo", "started")))
+    (pid,) = list(rp_state(tmp)["pods"])
+    log = (tmp / "pods" / "10.0.0.1" / "ssh.log").read_text().splitlines()
+    assert log[:5] == ["true"] * 5 and "nvidia-smi" in log[5] and "tar xzf -" in log[6]   # nothing pushed before ready
+    assert not (out / "pods" / pid / "diagnostics.txt").exists()
+    assert all(p["deleted"] for p in rp_state(tmp)["pods"].values())
+
+
+def test_ssh_never_ready_is_a_setup_failure_with_diagnostics_and_deletion(stub_setup, monkeypatch):
+    tmp = stub_setup
+    _ssh_fail(tmp, monkeypatch, probe=-1)
+    out = tmp / "smoke6"
+    with pytest.raises(RuntimeError, match="ssh not ready"):
+        pods.smoke(out, cfg(tmp, smoke_script=_smoke_stub(tmp), ssh_ready_timeout_s=30))
+    st = rp_state(tmp)
+    (pid,) = list(st["pods"])
+    assert st["pods"][pid]["deleted"]
+    recs = runlog.read_run(out)
+    fail = next(r for r in recs if r["step"] == "ssh_ready" and r["status"] == "failed")
+    assert fail["polls"] == 4 and "Connection closed" in fail["error"]       # 30 s / 10 s + 1 probes
+    assert any(r["step"] == "setup" and r["status"] == "failed" and "ssh not ready" in r["error"] for r in recs)
+    assert not any(r["step"] in ("push_repo", "episode") for r in recs)
+    order = [(r["step"], r["status"]) for r in recs]
+    assert order.index(("diagnostics", "done")) < order.index(("pod_delete", "done"))
+    diag = (out / "pods" / pid / "diagnostics.txt").read_text()
+    assert f"runpodctl pod get {pid} -o json" in diag and '"OPENROUTER_API_KEY": "<from env>"' in diag
+    assert DUMMY_KEY not in diag and "ssh diagnostics skipped: ssh probe rc=255" in diag
+
+
+def test_push_rc255_once_then_retry_succeeds(stub_setup, monkeypatch):
+    tmp = stub_setup
+    _ssh_fail(tmp, monkeypatch, push=1)
+    slept = []
+    c = cfg(tmp)
+    c.sleep = lambda s: (slept.append(s), time.sleep(min(s, 0.05)))
+    out = tmp / "launch"
+    got = pods.launch(specs(tmp, 1), out, run_id="qwen3_733-r1", cfg=c)
+    assert len(got) == 1 and creates(tmp) == 1                        # same pod, no episode retry
+    recs = runlog.read_run(out)
+    push = [(r["status"], r["attempt"]) for r in recs if r["step"] == "push_repo"]
+    assert push == [("started", 1), ("failed", 1), ("started", 2), ("done", 2)]
+    assert "rc=255" in next(r for r in recs if r["step"] == "push_repo" and r["status"] == "failed")["error"]
+    assert [r["status"] for r in recs if r["step"] == "ssh_ready"] == ["started", "done", "started", "done"]   # re-probe
+    assert 15.0 in slept
+    assert (tmp / "pods" / "10.0.0.1" / "workspace" / "src" / "control-loop" / "pyproject.toml").exists()
+    assert not any(r["step"] == "diagnostics" for r in recs)
+
+
+def test_push_fails_twice_is_a_setup_failure_and_the_pod_is_deleted(stub_setup, monkeypatch):
+    tmp = stub_setup
+    _ssh_fail(tmp, monkeypatch, push=2)
+    out = tmp / "smoke7"
+    with pytest.raises(RuntimeError, match="attempt 2 of 2"):
+        pods.smoke(out, cfg(tmp, smoke_script=_smoke_stub(tmp)))
+    st = rp_state(tmp)
+    (pid,) = list(st["pods"])
+    assert st["pods"][pid]["deleted"]
+    recs = runlog.read_run(out)
+    assert [(r["status"], r["attempt"]) for r in recs if r["step"] == "push_repo"] == [
+        ("started", 1), ("failed", 1), ("started", 2), ("failed", 2)]
+    order = [(r["step"], r["status"]) for r in recs]
+    assert order.index(("setup", "failed")) < order.index(("diagnostics", "done")) < order.index(("pod_delete", "done"))
+    assert not any(r["step"] == "episode" for r in recs)
+    diag = (out / "pods" / pid / "diagnostics.txt").read_text()
+    assert "== ssh diagnostics (rc=0)" in diag and "sshd: /usr/sbin/sshd" in diag and DUMMY_KEY not in diag
+
+
+def test_push_non_transport_failure_is_not_retried(stub_setup, monkeypatch):
+    tmp = stub_setup
+    c = cfg(tmp, smoke_script=_smoke_stub(tmp))
+    real = subprocess.run
+
+    def fake_run(argv, *a, **kw):
+        if argv and argv[0] == "ssh" and "tar xzf -" in argv[-1]:
+            return subprocess.CompletedProcess(argv, 2, b"", b"tar: write error")
+        return real(argv, *a, **kw)
+
+    monkeypatch.setattr(pods.subprocess, "run", fake_run)
+    with pytest.raises(RuntimeError, match="rc=2"):
+        pods.smoke(tmp / "smoke8", c)
+    recs = runlog.read_run(tmp / "smoke8")
+    assert [(r["status"], r["attempt"]) for r in recs if r["step"] == "push_repo"] == [("started", 1), ("failed", 1)]
+    assert all(p["deleted"] for p in rp_state(tmp)["pods"].values())
+
+
+def test_diagnostics_never_fail_cleanup(stub_setup, monkeypatch):
+    tmp = stub_setup
+    _ssh_fail(tmp, monkeypatch, probe=-1)
+    monkeypatch.setattr(pods, "redact_pod_json", lambda obj: (_ for _ in ()).throw(OSError("boom")))
+    with pytest.raises(RuntimeError, match="ssh not ready"):
+        pods.smoke(tmp / "smoke9", cfg(tmp, smoke_script=_smoke_stub(tmp), ssh_ready_timeout_s=10))
+    assert all(p["deleted"] for p in rp_state(tmp)["pods"].values())
+
+
+def test_redact_pod_json_drops_env_values():
+    got = pods.redact_pod_json({"id": "x", "env": {"OPENROUTER_API_KEY": "k1", "HF_HOME": "/w"},
+                                "template": {"env": ["A=secret", {"key": "B", "value": "v"}]}})
+    assert got["env"] == {"OPENROUTER_API_KEY": pods.REDACTED, "HF_HOME": pods.REDACTED}
+    assert got["template"]["env"] == [f"A={pods.REDACTED}", {"key": "B", "value": pods.REDACTED}]
+    assert "k1" not in json.dumps(got) and "secret" not in json.dumps(got)
+
+
+# --- container readiness gate and driver check (PLAN Amendment 2026-10-23 (7); smoke6b) ---------------------------------
+
+def test_container_ready_waits_for_uptime_and_published_port_before_ssh(stub_setup, monkeypatch):
+    """smoke6b: `pod create --wait` returned ip:port while the image was still being pulled. The ssh window now opens
+    only after `pod get` shows uptimeSeconds > 0 and a published ssh mapping, whose (new) port is used."""
+    tmp = stub_setup
+    monkeypatch.setenv("FAKE_NOT_READY_GETS", "3")
+    monkeypatch.setenv("FAKE_READY_PORT", "22022")
+    out = tmp / "launch"
+    got = pods.launch(specs(tmp, 1), out, run_id="qwen3_733-r1", cfg=cfg(tmp))
+    assert len(got) == 1 and (got[0] / "eval" / "metrics.json").exists()
+    recs = runlog.read_run(out)
+    cr = [r for r in recs if r["step"] == "container_ready"]
+    assert [r["status"] for r in cr] == ["started", "done"] and cr[1]["polls"] == 4 and cr[1]["uptime_s"] == 30
+    assert "10.0.0.1:22022" in cr[1]["note"] and "changed from 10.0.0.1:22" in cr[1]["note"]
+    assert cr[1]["ssh_address"] == "10.0.0.1:22022"
+    ssh_start = next(r for r in recs if r["step"] == "ssh_ready" and r["status"] == "started")
+    assert "10.0.0.1:22022" in ssh_start["note"]                      # the refreshed port is probed
+    order = [(r["step"], r["status"]) for r in recs]
+    assert (order.index(("pod_create", "done")) < order.index(("container_ready", "done")) < order.index(("ssh_ready", "started"))
+            < order.index(("ssh_ready", "done")) < order.index(("driver_check", "done")) < order.index(("push_repo", "started"))
+            < order.index(("setup", "done")))
+    log = (tmp / "pods" / "10.0.0.1" / "ssh.log").read_text().splitlines()
+    assert log[:2] == ["true", "true"]                                # no ssh probe while the container was not up
+    assert all(p["deleted"] for p in rp_state(tmp)["pods"].values())
+
+
+def test_container_never_ready_is_a_setup_failure_with_diagnostics_and_deletion(stub_setup, monkeypatch):
+    tmp = stub_setup
+    monkeypatch.setenv("FAKE_NOT_READY_GETS", "-1")
+    out = tmp / "smoke6c"
+    with pytest.raises(RuntimeError, match="container not ready"):
+        pods.smoke(out, cfg(tmp, smoke_script=_smoke_stub(tmp), create_deadline_s=30))
+    st = rp_state(tmp)
+    (pid,) = list(st["pods"])
+    assert st["pods"][pid]["deleted"]
+    recs = runlog.read_run(out)
+    fail = next(r for r in recs if r["step"] == "container_ready" and r["status"] == "failed")
+    assert 3 <= fail["polls"] <= 4 and "uptimeSeconds=-3" in fail["error"] and "has not published a mapping" in fail["error"]
+    assert not any(r["step"] in ("ssh_ready", "driver_check", "push_repo", "episode") for r in recs)
+    order = [(r["step"], r["status"]) for r in recs]
+    assert order.index(("setup", "failed")) < order.index(("diagnostics", "done")) < order.index(("pod_delete", "done"))
+    assert (out / "pods" / pid / "diagnostics.txt").exists() and DUMMY_KEY not in (out / "pods" / pid / "diagnostics.txt").read_text()
+
+
+def test_container_ready_deadline_counts_from_the_create_call(fake):
+    """The 20-minute pod-ready deadline is counted from the create call, not from pod_create done: a create that took
+    the whole deadline leaves one poll."""
+    c = cfg(fake, create_deadline_s=1200)
+    clock = {"t": 5000.0}
+    c.now = lambda: clock["t"]
+    c.sleep = lambda s: clock.__setitem__("t", clock["t"] + s)
+    L = pods._Launch([], fake / "x", runlog.log_step, c, [], "r", fake / "x" / "pods.jsonl", False)
+    pod = pods.PodInfo(id="nosuchpod00001", name="p6-x", ip="10.9.9.9", port=22, rate=3.99, created_at=0.0,
+                       create_called_at=5000.0 - 1195)
+    with pytest.raises(RuntimeError, match="container not ready") as ei:
+        L.container_ready(pod)
+    assert "1195 s after the create call" in str(ei.value) and "1 poll(s)" in str(ei.value)
+
+
+def test_cuda_versions_compare_numerically_and_parse():
+    assert pods.cuda_tuple("12.10") > pods.cuda_tuple("12.9") > pods.cuda_tuple("12.8")
+    assert pods.cuda_tuple("13.0") > pods.cuda_tuple("12.9") and pods.cuda_tuple("x") is None
+    got = pods.parse_nvidia_smi("NVIDIA H100 80GB HBM3, 575.57.08\n",
+                                "| NVIDIA-SMI 575.57.08   Driver Version: 575.57.08   CUDA Version: 12.9     |\n")
+    assert got == dict(gpu="NVIDIA H100 80GB HBM3", driver="575.57.08", cuda="12.9")
+    assert pods.parse_nvidia_smi("", "NVIDIA-SMI has failed")["cuda"] is None
+
+
+@pytest.mark.parametrize("version", ["12.8", "none"])
+def test_driver_below_min_cuda_stops_before_setup_and_is_not_counted(stub_setup, monkeypatch, version):
+    tmp = stub_setup
+    monkeypatch.setenv("FAKE_CUDA_VERSION", version)
+    out = tmp / "smoke_drv"
+    with pytest.raises(pods.DriverTooOld, match="driver below 12.9"):
+        pods.smoke(out, cfg(tmp, smoke_script=_smoke_stub(tmp)))
+    st = rp_state(tmp)
+    (pid,) = list(st["pods"])
+    assert st["pods"][pid]["deleted"]
+    recs = runlog.read_run(out)
+    fail = next(r for r in recs if r["step"] == "driver_check" and r["status"] == "failed")
+    assert "driver below 12.9: not counted as an attempt (owner 2026-10-23)" in fail["error"]
+    assert fail["max_cuda"] == (None if version == "none" else "12.8") and fail["driver_version"] == "575.57.08"
+    assert fail["gpu"] == "NVIDIA H100 80GB HBM3"
+    raw = (out / "pods" / pid / "nvidia_smi.txt").read_text()
+    assert "575.57.08" in raw and (f"CUDA Version: {version}" in raw if version != "none" else "NVIDIA-SMI has failed" in raw)
+    assert not any(r["step"] in ("push_repo", "episode") for r in recs)
+    assert not any(r["step"] == "setup" and r["status"] == "started" for r in recs)
+    order = [(r["step"], r["status"]) for r in recs]
+    assert order.index(("driver_check", "failed")) < order.index(("diagnostics", "done")) < order.index(("pod_delete", "done"))
+
+
+def test_driver_check_passes_on_12_10_and_logs_versions(stub_setup, monkeypatch):
+    tmp = stub_setup
+    monkeypatch.setenv("FAKE_CUDA_VERSION", "12.10")
+    out = tmp / "smoke_ok"
+    assert pods.smoke(out, cfg(tmp, smoke_script=_smoke_stub(tmp))) == 0
+    done = next(r for r in runlog.read_run(out) if r["step"] == "driver_check" and r["status"] == "done")
+    assert done["max_cuda"] == "12.10" and done["driver_version"] == "575.57.08" and "max CUDA 12.10" in done["note"]
+    (pid,) = list(rp_state(tmp)["pods"])
+    assert any(p.endswith(f"pods/{pid}/nvidia_smi.txt") for p in done["paths"])
+
+
+def test_old_driver_pod_in_a_launch_is_replaced_without_counting_an_attempt(stub_setup, monkeypatch):
+    tmp = stub_setup
+    f = tmp / "old_driver"
+    f.write_text("1")
+    monkeypatch.setenv("FAKE_OLD_DRIVER_FILE", str(f))
+    out = tmp / "launch"
+    got = pods.launch(specs(tmp, 1), out, run_id="qwen3_733-r1", cfg=cfg(tmp))
+    assert len(got) == 1 and (got[0] / "eval" / "metrics.json").exists() and creates(tmp) == 2
+    summ = json.loads((out / "launch.json").read_text())
+    assert summ["episodes"]["qwen3_733-r1-e1"] == dict(summ["episodes"]["qwen3_733-r1-e1"], status="collected", attempts=1)
+    recs = runlog.read_run(out)
+    assert [r["status"] for r in recs if r["step"] == "driver_check"] == ["started", "failed", "started", "done"]
+    assert all(p["deleted"] for p in rp_state(tmp)["pods"].values())
+
+
+# --- detached remote steps (owner, 2026-10-23, item 4) -------------------------------------------------------------
+# Every step `_Launch.ssh` runs is a setsid/nohup job on the pod with its output in files, polled with short ssh
+# calls; a dropped connection must cost a poll, not the step.
+
+def _job_launch(fake, tmp_path, monkeypatch, **cfg_over):
+    pods_dir = Path(os.environ["FAKE_PODS"])
+    (pods_dir / "10.0.0.9" / "workspace").mkdir(parents=True, exist_ok=True)
+    cfg = pods.PodConfig(sleep=lambda s: None, **cfg_over)
+    L = pods._Launch([], tmp_path / "out", runlog.log_step, cfg, [tmp_path / "d"], "jobtest", tmp_path / "pods.jsonl", False)
+    pod = pods.PodInfo(id="p", name="p6-x", ip="10.0.0.9", port=22, rate=3.99, created_at=0.0)
+    return L, pod, pods_dir / "10.0.0.9" / "workspace" / "jobs"
+
+
+def test_ssh_is_detached_and_returns_rc_stdout_stderr(fake, tmp_path, monkeypatch):
+    L, pod, jd = _job_launch(fake, tmp_path, monkeypatch)
+    cp = L.ssh(pod, "echo out-line; echo err-line >&2; read x; echo got=$x; exit 3", stdin="hello\n")
+    assert cp.returncode == 3 and "out-line" in cp.stdout and "got=hello" in cp.stdout and "err-line" in cp.stderr
+    names = {p.suffix for p in jd.iterdir()}
+    assert {".out", ".err", ".rc", ".pid"} <= names       # the job's result files stay on the pod
+
+
+def test_launch_cmd_backgrounds_only_the_setsid_job(tmp_path):
+    """The real launch command against local bash: returns at once although the job sleeps, and the job then
+    writes its rc (the 2026-10-22 `cd && nohup &` lesson: only the last command may be backgrounded)."""
+    jd = tmp_path / "jobs"
+    t0 = time.time()
+    cp = subprocess.run(["bash", "-c", pods.job_launch_cmd("j1", "sleep 2; echo done; exit 7", str(jd))],
+                        input="", capture_output=True, text=True, timeout=30)
+    assert cp.returncode == 0 and cp.stdout.strip().isdigit() and time.time() - t0 < 1.5
+    poll = lambda: subprocess.run(["bash", "-c", pods.job_poll_cmd("j1", str(jd))], capture_output=True, text=True).stdout.split()
+    assert poll()[0] == "RUNNING"
+    for _ in range(60):
+        if poll()[0] == "RC":
+            break
+        time.sleep(0.1)
+    assert poll() == ["RC", "7"] and (jd / "j1.out").read_text().strip() == "done"
+    assert (jd / "j1.cmd").read_text() == "sleep 2; echo done; exit 7" and (jd / "j1.in").exists() and (jd / "j1.pid").exists()
+
+
+def test_dropped_launch_connection_does_not_start_a_second_job(fake, tmp_path, monkeypatch):
+    drops = tmp_path / "drops.txt"
+    monkeypatch.setenv("FAKE_JOB_LAUNCH_DROP", str(drops))
+    L, pod, jd = _job_launch(fake, tmp_path, monkeypatch)
+    cp = L.ssh(pod, "echo once")
+    assert cp.returncode == 0 and cp.stdout.strip() == "once" and len(drops.read_text().split()) == 1
+
+
+def test_polls_survive_dropped_connections(fake, tmp_path, monkeypatch):
+    L, pod, jd = _job_launch(fake, tmp_path, monkeypatch)
+    real, calls = L.ssh_query, {"n": 0}
+    def flaky(p, cmd, timeout=None, stdin=None):
+        if "RUNNING" in cmd:   # a poll: the first three polls lose the connection
+            calls["n"] += 1
+            if calls["n"] <= 3:
+                return subprocess.CompletedProcess([], 255, "", "Connection reset by peer")
+        return real(p, cmd, timeout, stdin)
+    monkeypatch.setattr(L, "ssh_query", flaky)
+    cp = L.ssh(pod, "echo survived")
+    assert cp.returncode == 0 and cp.stdout.strip() == "survived" and calls["n"] == 4
+
+
+def test_job_timeout_kills_and_returns_124(fake, tmp_path, monkeypatch):
+    clock = {"t": 1000.0}
+    def sleep(s):
+        clock["t"] += s
+    L, pod, jd = _job_launch(fake, tmp_path, monkeypatch)
+    L.cfg = replace(L.cfg, sleep=sleep, now=lambda: clock["t"])
+    name = f"job_{int(clock['t'])}_{os.getpid()}_{pods._Launch._job_seq + 1}"
+    monkeypatch.setenv("FAKE_JOB_NEVER_ENDS", name)
+    killed = []
+    real = L.ssh_query
+    def spy(p, cmd, timeout=None, stdin=None):
+        if "kill -TERM" in cmd:
+            killed.append(cmd)
+        if "RUNNING" in cmd:
+            return subprocess.CompletedProcess([], 0, "RUNNING\n", "")
+        return real(p, cmd, timeout, stdin)
+    monkeypatch.setattr(L, "ssh_query", spy)
+    cp = L.ssh(pod, "echo partial", timeout=60)
+    assert cp.returncode == 124 and "timeout after 60s" in cp.stderr and killed and cp.stdout.strip() == "partial"
+
+
+def test_vanished_job_is_137_not_success(fake, tmp_path, monkeypatch):
+    monkeypatch.setenv("FAKE_JOB_VANISH", "1")
+    L, pod, jd = _job_launch(fake, tmp_path, monkeypatch)
+    real = L.ssh_query
+    monkeypatch.setattr(L, "ssh_query", lambda p, cmd, timeout=None, stdin=None:
+                        subprocess.CompletedProcess([], 0, "GONE\n", "") if "RUNNING" in cmd else real(p, cmd, timeout, stdin))
+    cp = L.ssh(pod, "echo x")
+    assert cp.returncode == 137 and "GONE" in cp.stderr

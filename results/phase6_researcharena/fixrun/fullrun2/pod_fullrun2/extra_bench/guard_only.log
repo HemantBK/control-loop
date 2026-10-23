@@ -1,0 +1,53 @@
+COMPILE_STATUS=PASS
+COMPILE_FUNCTIONS=attention,fused_mlp,rmsnorm,rotary_embedding
+Compiling baseline from /tmp/tmp.6x4dmQ4x8q/starter_kernels...
+Running baseline benchmark (starter kernels injected)...
+[bench] Loading tokenizer: TinyLlama/TinyLlama-1.1B-Chat-v1.0 ...
+[bench] Tokenizer loaded (vocab=32000)
+[bench] Loading model: TinyLlama/TinyLlama-1.1B-Chat-v1.0 (dtype=float16) ...
+[bench] Model loaded (1100M params)
+[bench] Warmup (3 runs) ...
+[bench] Warmup done
+[bench] Benchmarking 8 prompts (max_new=128) ...
+[bench]   prompt 1/8: 128 tokens in 1.95s (65.6 tok/s)
+[bench]   prompt 2/8: 128 tokens in 1.95s (65.7 tok/s)
+[bench]   prompt 3/8: 128 tokens in 1.93s (66.3 tok/s)
+[bench]   prompt 4/8: 128 tokens in 1.95s (65.8 tok/s)
+[bench]   prompt 5/8: 128 tokens in 1.94s (65.8 tok/s)
+[bench]   prompt 6/8: 128 tokens in 1.93s (66.2 tok/s)
+[bench]   prompt 7/8: 128 tokens in 1.93s (66.5 tok/s)
+[bench]   prompt 8/8: 128 tokens in 1.93s (66.4 tok/s)
+BASELINE_TPS=66.02
+Baseline TPS cached to /tmp/tmp.6x4dmQ4x8q/workspace/baseline_tps.txt
+Loading model for agent benchmark...
+[bench] Loading tokenizer: TinyLlama/TinyLlama-1.1B-Chat-v1.0 ...
+[bench] Tokenizer loaded (vocab=32000)
+[bench] Loading model: TinyLlama/TinyLlama-1.1B-Chat-v1.0 (dtype=float16) ...
+[bench] Model loaded (1100M params)
+Running agent benchmark...
+[bench] Warmup (3 runs) ...
+[bench] Warmup done
+[bench] Benchmarking 8 prompts (max_new=128) ...
+[bench]   prompt 1/8: 128 tokens in 0.87s (146.5 tok/s)
+[bench]   prompt 2/8: 128 tokens in 0.87s (147.3 tok/s)
+[bench]   prompt 3/8: 128 tokens in 0.87s (147.6 tok/s)
+[bench]   prompt 4/8: 128 tokens in 0.86s (148.7 tok/s)
+[bench]   prompt 5/8: 128 tokens in 0.86s (149.4 tok/s)
+[bench]   prompt 6/8: 128 tokens in 0.86s (148.5 tok/s)
+[bench]   prompt 7/8: 128 tokens in 0.87s (147.8 tok/s)
+[bench]   prompt 8/8: 128 tokens in 0.86s (148.7 tok/s)
+
+============================================================
+ SUMMARY
+============================================================
+  COMPILE_STATUS     = PASS
+  COMPILE_FUNCTIONS  = attention,fused_mlp,rmsnorm,rotary_embedding
+  BASELINE_TPS       = 66.02
+  AGENT_TPS          = 148.05
+  SPEEDUP            = 2.242x
+  KERNEL_RMSNORM              = ACTIVE
+  KERNEL_ROTARY_EMBEDDING     = ACTIVE
+  KERNEL_FUSED_MLP            = ACTIVE
+  KERNEL_ATTENTION            = ACTIVE
+============================================================
+

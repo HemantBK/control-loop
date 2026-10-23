@@ -69,6 +69,7 @@ CL_DIR="$WORKSPACE/src/control-loop"
 : "${P6_TORCH_INDEX:=}"
 : "${P6_TRANSFORMERS_VERSION:=4.53.3}"
 : "${P6_EXPECT_TRANSFORMERS:=$P6_TRANSFORMERS_VERSION}"
+: "${P6_HF_TRANSFER_VERSION:=0.1.9}"     # Amendment 2026-10-23 (10)
 : "${P6_IMAGE_MARKER:=/etc/p6_image.json}"
 : "${P6_BAKED_RA:=/opt/ResearchArena}"
 : "${P6_BAKED_HF:=/opt/hf}"
@@ -250,8 +251,11 @@ step3() {
   else
     uv pip install --system --python "$py" --break-system-packages -q "torch==$P6_TORCH_VERSION"   # PyPI, as arena.def
   fi
-  uv pip install --system --python "$py" --break-system-packages -q "transformers==$P6_TRANSFORMERS_VERSION" accelerate ninja huggingface-hub
-  python3 -c "import torch, transformers; print('torch', torch.__version__, 'cuda', torch.version.cuda, torch.cuda.is_available(), 'transformers', transformers.__version__)"
+  # 2026-10-23, Amendment (10): runpod/base sets HF_HUB_ENABLE_HF_TRANSFER=1 in /etc/rp_environment, which the benchmark
+  # and the episodes source; with transformers 4.53.3 loading TinyLlama then needs hf_transfer (debug7 crashed without it)
+  uv pip install --system --python "$py" --break-system-packages -q "transformers==$P6_TRANSFORMERS_VERSION" accelerate ninja huggingface-hub \
+    "hf_transfer==$P6_HF_TRANSFER_VERSION"
+  python3 -c "import torch, transformers, hf_transfer; print('torch', torch.__version__, 'cuda', torch.version.cuda, torch.cuda.is_available(), 'transformers', transformers.__version__, 'hf_transfer ok')"
   versions_check
 }
 

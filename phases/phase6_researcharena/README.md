@@ -197,7 +197,7 @@ create line → delete line, all EU-FR-1): `vv2ifkc0kg2msp` 07:03:07–07:11:18,
    after 612 s (`run.jsonl` `pod_create done … in 612s`), consistent with the first pull of the 16.25 GB image (not
    measured: no pull timing or pod log was collected, and the endpoint's return did not show that sshd was serving); the
    driver's first ssh command, the tar push of the `control_loop` tree,
-   failed with "Connection to 31.24.80.42 closed by remote host" (rc 255); the driver deleted the pod at 17:13:19 (613 s,
+   failed with "Connection to <pod-ip> closed by remote host" (rc 255); the driver deleted the pod at 17:13:19 (613 s,
    $0.68). No setup step, version check, compile or stock-kernel benchmark ran, so the transformers 4.53.3 pin is untested on
    a GPU. The pod's own logs were not collected (the session never opened). Under the firm time box it was reported, not
    fixed or relaunched (FINDINGS 2026-10-22, smoke on the prebuilt image; PLAN, the owner's dated line firming the time box).
@@ -627,3 +627,65 @@ What changed in this write-up:
   paragraph, now PLAN §3's words, and the per-cell rows of section 7 (A9); "612 s is the image pull" (A10); known issue 15
   and the smoke5 council file's script paths (A11); section 10 rewritten with the tracked scripts and expected outputs
   (A8); the monitor re-run's end time in `pins.md` (scoring ended 10:01:52; the run's spend line was written at 10:16:52).
+
+## 13. Addendum, 2026-10-23: the reopening (PLAN Amendments (6)-(9))
+
+The owner reopened Phase 6 for one smoke and one check with a $40 cap. The result does not change sections 1-12:
+- four pods on the 16 GB prebuilt-image template failed before a working SSH session (FINDINGS 2026-10-23, large-image
+  start-up);
+- a council (`audits/council_2026-10-23_standard_image.md`) backed one final attempt on the standard image;
+- that attempt reached SSH in 287 s and passed nvidia-smi, setup and the version checks with transformers 4.53.3. The
+  stock-kernel benchmark then crashed before any kernel ran: RunPod sets `HF_HUB_ENABLE_HF_TRANSFER=1` and `hf_transfer` was
+  not installed (FINDINGS 2026-10-23, final attempt).
+Under the owner's rule Phase 6 closed on this write-up. The stock kernels with the 4.53.3 pin have still not been
+benchmarked on a GPU. Reopening spend: about $3.64 of GPU time (three of the four figures are estimates) and $0.25 for the
+council.
+
+**2026-10-23, later (PLAN Amendment (10)).** The owner reopened Phase 6 for one run with `hf_transfer` installed by setup. The
+stock-kernel benchmark then ran on a GPU with transformers 4.53.3 and faulted ("CUDA error: an illegal memory access was
+encountered") although the K/V heads reached `ops.attention` expanded (32 query heads, 32 K/V heads). The head-layout
+explanation in section 4 (transformers 5.3.0 passing unexpanded GQA heads, CPU evidence) therefore does not explain the
+crash under 4.53.3. Where this README presents that explanation as the cause, read it as superseded by FINDINGS 2026-10-23.
+The cause of the stock-kernel crash is unidentified, and Phase 6 stays closed. Run cost $0.92; reopening spend about $4.56 GPU
+and $0.25 council.
+
+**2026-10-23, Amendments (11)-(15): root-cause work.**
+- **The defect.** The stock RoPE kernel's missing `idx < total_pairs` guard (`rotary_embedding.cu:24`; launcher :68-70) runs
+  128 stray threads on every decode-step k launch under GQA (4 K/V heads × 32 pairs = 128 pairs in a 256-thread block).
+  On an H100, compute-sanitizer flags the predicted invalid read at `rotary_embedding.cu:34` by thread 128 (session of
+  2026-10-23, arm C1r; 768 errors). This is the H100-confirmed finding.
+- **The rule-A session of that day is VOID** (Amendment (15)). A model-cache path defect in the run harness stopped every
+  model-loading arm before any kernel ran. The owner knowingly overrode the pre-registered FAIL wording; see
+  `results/phase6_researcharena/rootcause/gpu_session/arms_20261023T110613Z/CORRECTIONS.md`.
+- **Future option (deferred, Amendment (15)): a model the bug does not hit.** princeton-nlp/Sheared-LLaMA-1.3B (Llama,
+  ungated, 16 heads × 128, MHA) has 1024 RoPE pairs per token for both q and k, so every stock launch fills whole blocks.
+  CPU checks found no tail threads and a clean AddressSanitizer run on every real launch shape, with the stock kernels
+  unpatched (`results/phase6_researcharena/rootcause/options/`). Adopting it is a benchmark change:
+  - remove the TinyLlama hard-wiring: the task config "tinyllama", the agent instruction text, and the run harness's cache
+    paths and shapes;
+  - recalibrate the side tasks' KL thresholds for the new model.
+
+**2026-10-23, Amendments (16)-(17): the task runs; known upstream issue; benchmark changes.**
+- **Known upstream issue.** [aisa-group/ResearchArena#2](https://github.com/aisa-group/ResearchArena/issues/2) (open,
+  2026-10-16, no maintainer reply) independently reports this phase's crash and its guard-only fix: "without it they
+  crashed every run on our H100", about 1.47x over vanilla with the guard. Our guard-only measurement on an H100 gave
+  x1.46 (fixrun session 1, arm C2). The issue reports two further defects:
+  - `bench.py` looks for `starter_kernels/` under ARENA_ROOT, one level too high, so the baseline is silently vanilla
+    PyTorch;
+  - `evaluate.py` scores from the agent-writable `workspace/last_bench.json`.
+
+  The unmerged upstream commit 11ea904 (branch cuda-correction, no PR) addresses all three, among other changes.
+- **Benchmark changes used from 2026-10-23** (diffs with reasons in `phases/phase6_researcharena/benchmark_changes/`,
+  owner-approved, applied only to the composed root's real copies, never to the pinned checkout):
+  - 00, the `idx < total_pairs` guard in both RoPE kernels (Baseline A, Amendment (12));
+  - 01, the evaluator re-measures from a clean copy (11ea904's piece alone, without its correctness gate);
+  - 02, the starter_kernels lookup;
+  - 03, the attention fix verified on the H100: whole warps, plus the barrier that closes the `warp_reduce[0]` race. It
+    changes kernels/ only; the starter's naive attention has neither defect.
+
+  The stock RoPE math stays wrong (adjacent pairing; decode positions reset to 0). The benchmark does not check output
+  correctness.
+- **Speed-ups.** The main number is now against the starter kernels (change 02); the vanilla number is secondary.
+  Earlier Phase 6 speed-ups (x1.46, x1.415) are against vanilla.
+- **Our upstream contribution** is a comment on #2, not a new issue:
+  `phases/phase6_researcharena/upstream_comment_issue2_draft.md`, filed by the owner.

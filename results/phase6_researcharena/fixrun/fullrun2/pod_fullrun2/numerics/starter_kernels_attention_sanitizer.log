@@ -1,0 +1,867 @@
+========= COMPUTE-SANITIZER
+========= Invalid __shared__ read of size 12 bytes
+=========     at void attention_kernel<c10::Half>(const T1 *, const T1 *, const T1 *, T1 *, int, int, int, float, bool)+0x4180 in attention.cu:105
+=========     by thread (0,0,0) in block (0,8,0)
+=========     Access at 0x410 is out of bounds
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame:  [0x13e88] in libcudart.so.12
+=========         Host Frame: cudaLaunchKernel [0x79f87] in libcudart.so.12
+=========         Host Frame: agent_attention(at::Tensor, at::Tensor, at::Tensor, bool) [0x25819] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::initialize<at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor, at::Tensor, at::Tensor, at::Tensor, bool, pybind11::name, pybind11::scope, pybind11::sibling, char [22]>(at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor (*)(at::Tensor, at::Tensor, at::Tensor, bool), pybind11::name const&, pybind11::scope const&, pybind11::sibling const&, char const (&) [22])::{lambda(pybind11::detail::function_call&)#3}::_FUN(pybind11::detail::function_call&) [0x2431f] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::dispatcher(_object*, _object*, _object*) [0x213a3] in agent_ops.so
+=========         Host Frame:  [0x155cea] in python3
+=========         Host Frame: _PyObject_MakeTpCall [0x12fe2b] in python3
+=========         Host Frame: _PyEval_EvalFrameDefault [0x13dff4] in python3
+=========         Host Frame:  [0x2158e3] in python3
+=========         Host Frame: PyEval_EvalCode [0x214f46] in python3
+=========         Host Frame:  [0x23554a] in python3
+=========         Host Frame:  [0x2318f3] in python3
+=========         Host Frame:  [0x245e24] in python3
+=========         Host Frame: _PyRun_SimpleFileObject [0x245463] in python3
+=========         Host Frame: _PyRun_AnyFileObject [0x2451f6] in python3
+=========         Host Frame: Py_RunMain [0x23fdc8] in python3
+=========         Host Frame: Py_BytesMain [0x2061cc] in python3
+=========         Host Frame:  [0x29d8f] in libc.so.6
+=========         Host Frame: __libc_start_main [0x29e3f] in libc.so.6
+=========         Host Frame: _start [0x206054] in python3
+=========         Host Frame: <module> in c_kernel_tests.py:47
+========= 
+========= Invalid __shared__ read of size 12 bytes
+=========     at void attention_kernel<c10::Half>(const T1 *, const T1 *, const T1 *, T1 *, int, int, int, float, bool)+0x4180 in attention.cu:105
+=========     by thread (0,0,0) in block (0,11,0)
+=========     Access at 0x410 is out of bounds
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame:  [0x13e88] in libcudart.so.12
+=========         Host Frame: cudaLaunchKernel [0x79f87] in libcudart.so.12
+=========         Host Frame: agent_attention(at::Tensor, at::Tensor, at::Tensor, bool) [0x25819] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::initialize<at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor, at::Tensor, at::Tensor, at::Tensor, bool, pybind11::name, pybind11::scope, pybind11::sibling, char [22]>(at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor (*)(at::Tensor, at::Tensor, at::Tensor, bool), pybind11::name const&, pybind11::scope const&, pybind11::sibling const&, char const (&) [22])::{lambda(pybind11::detail::function_call&)#3}::_FUN(pybind11::detail::function_call&) [0x2431f] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::dispatcher(_object*, _object*, _object*) [0x213a3] in agent_ops.so
+=========         Host Frame:  [0x155cea] in python3
+=========         Host Frame: _PyObject_MakeTpCall [0x12fe2b] in python3
+=========         Host Frame: _PyEval_EvalFrameDefault [0x13dff4] in python3
+=========         Host Frame:  [0x2158e3] in python3
+=========         Host Frame: PyEval_EvalCode [0x214f46] in python3
+=========         Host Frame:  [0x23554a] in python3
+=========         Host Frame:  [0x2318f3] in python3
+=========         Host Frame:  [0x245e24] in python3
+=========         Host Frame: _PyRun_SimpleFileObject [0x245463] in python3
+=========         Host Frame: _PyRun_AnyFileObject [0x2451f6] in python3
+=========         Host Frame: Py_RunMain [0x23fdc8] in python3
+=========         Host Frame: Py_BytesMain [0x2061cc] in python3
+=========         Host Frame:  [0x29d8f] in libc.so.6
+=========         Host Frame: __libc_start_main [0x29e3f] in libc.so.6
+=========         Host Frame: _start [0x206054] in python3
+=========         Host Frame: <module> in c_kernel_tests.py:47
+========= 
+========= Invalid __shared__ read of size 12 bytes
+=========     at void attention_kernel<c10::Half>(const T1 *, const T1 *, const T1 *, T1 *, int, int, int, float, bool)+0x4180 in attention.cu:105
+=========     by thread (0,0,0) in block (0,14,0)
+=========     Access at 0x410 is out of bounds
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame:  [0x13e88] in libcudart.so.12
+=========         Host Frame: cudaLaunchKernel [0x79f87] in libcudart.so.12
+=========         Host Frame: agent_attention(at::Tensor, at::Tensor, at::Tensor, bool) [0x25819] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::initialize<at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor, at::Tensor, at::Tensor, at::Tensor, bool, pybind11::name, pybind11::scope, pybind11::sibling, char [22]>(at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor (*)(at::Tensor, at::Tensor, at::Tensor, bool), pybind11::name const&, pybind11::scope const&, pybind11::sibling const&, char const (&) [22])::{lambda(pybind11::detail::function_call&)#3}::_FUN(pybind11::detail::function_call&) [0x2431f] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::dispatcher(_object*, _object*, _object*) [0x213a3] in agent_ops.so
+=========         Host Frame:  [0x155cea] in python3
+=========         Host Frame: _PyObject_MakeTpCall [0x12fe2b] in python3
+=========         Host Frame: _PyEval_EvalFrameDefault [0x13dff4] in python3
+=========         Host Frame:  [0x2158e3] in python3
+=========         Host Frame: PyEval_EvalCode [0x214f46] in python3
+=========         Host Frame:  [0x23554a] in python3
+=========         Host Frame:  [0x2318f3] in python3
+=========         Host Frame:  [0x245e24] in python3
+=========         Host Frame: _PyRun_SimpleFileObject [0x245463] in python3
+=========         Host Frame: _PyRun_AnyFileObject [0x2451f6] in python3
+=========         Host Frame: Py_RunMain [0x23fdc8] in python3
+=========         Host Frame: Py_BytesMain [0x2061cc] in python3
+=========         Host Frame:  [0x29d8f] in libc.so.6
+=========         Host Frame: __libc_start_main [0x29e3f] in libc.so.6
+=========         Host Frame: _start [0x206054] in python3
+=========         Host Frame: <module> in c_kernel_tests.py:47
+========= 
+========= Invalid __shared__ read of size 12 bytes
+=========     at void attention_kernel<c10::Half>(const T1 *, const T1 *, const T1 *, T1 *, int, int, int, float, bool)+0x4180 in attention.cu:105
+=========     by thread (0,0,0) in block (0,17,0)
+=========     Access at 0x410 is out of bounds
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame:  [0x13e88] in libcudart.so.12
+=========         Host Frame: cudaLaunchKernel [0x79f87] in libcudart.so.12
+=========         Host Frame: agent_attention(at::Tensor, at::Tensor, at::Tensor, bool) [0x25819] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::initialize<at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor, at::Tensor, at::Tensor, at::Tensor, bool, pybind11::name, pybind11::scope, pybind11::sibling, char [22]>(at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor (*)(at::Tensor, at::Tensor, at::Tensor, bool), pybind11::name const&, pybind11::scope const&, pybind11::sibling const&, char const (&) [22])::{lambda(pybind11::detail::function_call&)#3}::_FUN(pybind11::detail::function_call&) [0x2431f] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::dispatcher(_object*, _object*, _object*) [0x213a3] in agent_ops.so
+=========         Host Frame:  [0x155cea] in python3
+=========         Host Frame: _PyObject_MakeTpCall [0x12fe2b] in python3
+=========         Host Frame: _PyEval_EvalFrameDefault [0x13dff4] in python3
+=========         Host Frame:  [0x2158e3] in python3
+=========         Host Frame: PyEval_EvalCode [0x214f46] in python3
+=========         Host Frame:  [0x23554a] in python3
+=========         Host Frame:  [0x2318f3] in python3
+=========         Host Frame:  [0x245e24] in python3
+=========         Host Frame: _PyRun_SimpleFileObject [0x245463] in python3
+=========         Host Frame: _PyRun_AnyFileObject [0x2451f6] in python3
+=========         Host Frame: Py_RunMain [0x23fdc8] in python3
+=========         Host Frame: Py_BytesMain [0x2061cc] in python3
+=========         Host Frame:  [0x29d8f] in libc.so.6
+=========         Host Frame: __libc_start_main [0x29e3f] in libc.so.6
+=========         Host Frame: _start [0x206054] in python3
+=========         Host Frame: <module> in c_kernel_tests.py:47
+========= 
+========= Invalid __shared__ read of size 12 bytes
+=========     at void attention_kernel<c10::Half>(const T1 *, const T1 *, const T1 *, T1 *, int, int, int, float, bool)+0x4180 in attention.cu:105
+=========     by thread (0,0,0) in block (0,20,0)
+=========     Access at 0x410 is out of bounds
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame:  [0x13e88] in libcudart.so.12
+=========         Host Frame: cudaLaunchKernel [0x79f87] in libcudart.so.12
+=========         Host Frame: agent_attention(at::Tensor, at::Tensor, at::Tensor, bool) [0x25819] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::initialize<at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor, at::Tensor, at::Tensor, at::Tensor, bool, pybind11::name, pybind11::scope, pybind11::sibling, char [22]>(at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor (*)(at::Tensor, at::Tensor, at::Tensor, bool), pybind11::name const&, pybind11::scope const&, pybind11::sibling const&, char const (&) [22])::{lambda(pybind11::detail::function_call&)#3}::_FUN(pybind11::detail::function_call&) [0x2431f] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::dispatcher(_object*, _object*, _object*) [0x213a3] in agent_ops.so
+=========         Host Frame:  [0x155cea] in python3
+=========         Host Frame: _PyObject_MakeTpCall [0x12fe2b] in python3
+=========         Host Frame: _PyEval_EvalFrameDefault [0x13dff4] in python3
+=========         Host Frame:  [0x2158e3] in python3
+=========         Host Frame: PyEval_EvalCode [0x214f46] in python3
+=========         Host Frame:  [0x23554a] in python3
+=========         Host Frame:  [0x2318f3] in python3
+=========         Host Frame:  [0x245e24] in python3
+=========         Host Frame: _PyRun_SimpleFileObject [0x245463] in python3
+=========         Host Frame: _PyRun_AnyFileObject [0x2451f6] in python3
+=========         Host Frame: Py_RunMain [0x23fdc8] in python3
+=========         Host Frame: Py_BytesMain [0x2061cc] in python3
+=========         Host Frame:  [0x29d8f] in libc.so.6
+=========         Host Frame: __libc_start_main [0x29e3f] in libc.so.6
+=========         Host Frame: _start [0x206054] in python3
+=========         Host Frame: <module> in c_kernel_tests.py:47
+========= 
+========= Invalid __shared__ read of size 12 bytes
+=========     at void attention_kernel<c10::Half>(const T1 *, const T1 *, const T1 *, T1 *, int, int, int, float, bool)+0x4180 in attention.cu:105
+=========     by thread (0,0,0) in block (0,23,0)
+=========     Access at 0x410 is out of bounds
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame:  [0x13e88] in libcudart.so.12
+=========         Host Frame: cudaLaunchKernel [0x79f87] in libcudart.so.12
+=========         Host Frame: agent_attention(at::Tensor, at::Tensor, at::Tensor, bool) [0x25819] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::initialize<at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor, at::Tensor, at::Tensor, at::Tensor, bool, pybind11::name, pybind11::scope, pybind11::sibling, char [22]>(at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor (*)(at::Tensor, at::Tensor, at::Tensor, bool), pybind11::name const&, pybind11::scope const&, pybind11::sibling const&, char const (&) [22])::{lambda(pybind11::detail::function_call&)#3}::_FUN(pybind11::detail::function_call&) [0x2431f] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::dispatcher(_object*, _object*, _object*) [0x213a3] in agent_ops.so
+=========         Host Frame:  [0x155cea] in python3
+=========         Host Frame: _PyObject_MakeTpCall [0x12fe2b] in python3
+=========         Host Frame: _PyEval_EvalFrameDefault [0x13dff4] in python3
+=========         Host Frame:  [0x2158e3] in python3
+=========         Host Frame: PyEval_EvalCode [0x214f46] in python3
+=========         Host Frame:  [0x23554a] in python3
+=========         Host Frame:  [0x2318f3] in python3
+=========         Host Frame:  [0x245e24] in python3
+=========         Host Frame: _PyRun_SimpleFileObject [0x245463] in python3
+=========         Host Frame: _PyRun_AnyFileObject [0x2451f6] in python3
+=========         Host Frame: Py_RunMain [0x23fdc8] in python3
+=========         Host Frame: Py_BytesMain [0x2061cc] in python3
+=========         Host Frame:  [0x29d8f] in libc.so.6
+=========         Host Frame: __libc_start_main [0x29e3f] in libc.so.6
+=========         Host Frame: _start [0x206054] in python3
+=========         Host Frame: <module> in c_kernel_tests.py:47
+========= 
+========= Invalid __shared__ read of size 12 bytes
+=========     at void attention_kernel<c10::Half>(const T1 *, const T1 *, const T1 *, T1 *, int, int, int, float, bool)+0x4180 in attention.cu:105
+=========     by thread (0,0,0) in block (0,26,0)
+=========     Access at 0x410 is out of bounds
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame:  [0x13e88] in libcudart.so.12
+=========         Host Frame: cudaLaunchKernel [0x79f87] in libcudart.so.12
+=========         Host Frame: agent_attention(at::Tensor, at::Tensor, at::Tensor, bool) [0x25819] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::initialize<at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor, at::Tensor, at::Tensor, at::Tensor, bool, pybind11::name, pybind11::scope, pybind11::sibling, char [22]>(at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor (*)(at::Tensor, at::Tensor, at::Tensor, bool), pybind11::name const&, pybind11::scope const&, pybind11::sibling const&, char const (&) [22])::{lambda(pybind11::detail::function_call&)#3}::_FUN(pybind11::detail::function_call&) [0x2431f] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::dispatcher(_object*, _object*, _object*) [0x213a3] in agent_ops.so
+=========         Host Frame:  [0x155cea] in python3
+=========         Host Frame: _PyObject_MakeTpCall [0x12fe2b] in python3
+=========         Host Frame: _PyEval_EvalFrameDefault [0x13dff4] in python3
+=========         Host Frame:  [0x2158e3] in python3
+=========         Host Frame: PyEval_EvalCode [0x214f46] in python3
+=========         Host Frame:  [0x23554a] in python3
+=========         Host Frame:  [0x2318f3] in python3
+=========         Host Frame:  [0x245e24] in python3
+=========         Host Frame: _PyRun_SimpleFileObject [0x245463] in python3
+=========         Host Frame: _PyRun_AnyFileObject [0x2451f6] in python3
+=========         Host Frame: Py_RunMain [0x23fdc8] in python3
+=========         Host Frame: Py_BytesMain [0x2061cc] in python3
+=========         Host Frame:  [0x29d8f] in libc.so.6
+=========         Host Frame: __libc_start_main [0x29e3f] in libc.so.6
+=========         Host Frame: _start [0x206054] in python3
+=========         Host Frame: <module> in c_kernel_tests.py:47
+========= 
+========= Invalid __shared__ read of size 12 bytes
+=========     at void attention_kernel<c10::Half>(const T1 *, const T1 *, const T1 *, T1 *, int, int, int, float, bool)+0x4180 in attention.cu:105
+=========     by thread (0,0,0) in block (0,29,0)
+=========     Access at 0x410 is out of bounds
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame:  [0x13e88] in libcudart.so.12
+=========         Host Frame: cudaLaunchKernel [0x79f87] in libcudart.so.12
+=========         Host Frame: agent_attention(at::Tensor, at::Tensor, at::Tensor, bool) [0x25819] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::initialize<at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor, at::Tensor, at::Tensor, at::Tensor, bool, pybind11::name, pybind11::scope, pybind11::sibling, char [22]>(at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor (*)(at::Tensor, at::Tensor, at::Tensor, bool), pybind11::name const&, pybind11::scope const&, pybind11::sibling const&, char const (&) [22])::{lambda(pybind11::detail::function_call&)#3}::_FUN(pybind11::detail::function_call&) [0x2431f] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::dispatcher(_object*, _object*, _object*) [0x213a3] in agent_ops.so
+=========         Host Frame:  [0x155cea] in python3
+=========         Host Frame: _PyObject_MakeTpCall [0x12fe2b] in python3
+=========         Host Frame: _PyEval_EvalFrameDefault [0x13dff4] in python3
+=========         Host Frame:  [0x2158e3] in python3
+=========         Host Frame: PyEval_EvalCode [0x214f46] in python3
+=========         Host Frame:  [0x23554a] in python3
+=========         Host Frame:  [0x2318f3] in python3
+=========         Host Frame:  [0x245e24] in python3
+=========         Host Frame: _PyRun_SimpleFileObject [0x245463] in python3
+=========         Host Frame: _PyRun_AnyFileObject [0x2451f6] in python3
+=========         Host Frame: Py_RunMain [0x23fdc8] in python3
+=========         Host Frame: Py_BytesMain [0x2061cc] in python3
+=========         Host Frame:  [0x29d8f] in libc.so.6
+=========         Host Frame: __libc_start_main [0x29e3f] in libc.so.6
+=========         Host Frame: _start [0x206054] in python3
+=========         Host Frame: <module> in c_kernel_tests.py:47
+========= 
+========= Invalid __shared__ read of size 12 bytes
+=========     at void attention_kernel<c10::Half>(const T1 *, const T1 *, const T1 *, T1 *, int, int, int, float, bool)+0x4180 in attention.cu:105
+=========     by thread (0,0,0) in block (0,9,0)
+=========     Access at 0x410 is out of bounds
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame:  [0x13e88] in libcudart.so.12
+=========         Host Frame: cudaLaunchKernel [0x79f87] in libcudart.so.12
+=========         Host Frame: agent_attention(at::Tensor, at::Tensor, at::Tensor, bool) [0x25819] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::initialize<at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor, at::Tensor, at::Tensor, at::Tensor, bool, pybind11::name, pybind11::scope, pybind11::sibling, char [22]>(at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor (*)(at::Tensor, at::Tensor, at::Tensor, bool), pybind11::name const&, pybind11::scope const&, pybind11::sibling const&, char const (&) [22])::{lambda(pybind11::detail::function_call&)#3}::_FUN(pybind11::detail::function_call&) [0x2431f] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::dispatcher(_object*, _object*, _object*) [0x213a3] in agent_ops.so
+=========         Host Frame:  [0x155cea] in python3
+=========         Host Frame: _PyObject_MakeTpCall [0x12fe2b] in python3
+=========         Host Frame: _PyEval_EvalFrameDefault [0x13dff4] in python3
+=========         Host Frame:  [0x2158e3] in python3
+=========         Host Frame: PyEval_EvalCode [0x214f46] in python3
+=========         Host Frame:  [0x23554a] in python3
+=========         Host Frame:  [0x2318f3] in python3
+=========         Host Frame:  [0x245e24] in python3
+=========         Host Frame: _PyRun_SimpleFileObject [0x245463] in python3
+=========         Host Frame: _PyRun_AnyFileObject [0x2451f6] in python3
+=========         Host Frame: Py_RunMain [0x23fdc8] in python3
+=========         Host Frame: Py_BytesMain [0x2061cc] in python3
+=========         Host Frame:  [0x29d8f] in libc.so.6
+=========         Host Frame: __libc_start_main [0x29e3f] in libc.so.6
+=========         Host Frame: _start [0x206054] in python3
+=========         Host Frame: <module> in c_kernel_tests.py:47
+========= 
+========= Invalid __shared__ read of size 12 bytes
+=========     at void attention_kernel<c10::Half>(const T1 *, const T1 *, const T1 *, T1 *, int, int, int, float, bool)+0x4180 in attention.cu:105
+=========     by thread (0,0,0) in block (0,12,0)
+=========     Access at 0x410 is out of bounds
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame:  [0x13e88] in libcudart.so.12
+=========         Host Frame: cudaLaunchKernel [0x79f87] in libcudart.so.12
+=========         Host Frame: agent_attention(at::Tensor, at::Tensor, at::Tensor, bool) [0x25819] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::initialize<at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor, at::Tensor, at::Tensor, at::Tensor, bool, pybind11::name, pybind11::scope, pybind11::sibling, char [22]>(at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor (*)(at::Tensor, at::Tensor, at::Tensor, bool), pybind11::name const&, pybind11::scope const&, pybind11::sibling const&, char const (&) [22])::{lambda(pybind11::detail::function_call&)#3}::_FUN(pybind11::detail::function_call&) [0x2431f] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::dispatcher(_object*, _object*, _object*) [0x213a3] in agent_ops.so
+=========         Host Frame:  [0x155cea] in python3
+=========         Host Frame: _PyObject_MakeTpCall [0x12fe2b] in python3
+=========         Host Frame: _PyEval_EvalFrameDefault [0x13dff4] in python3
+=========         Host Frame:  [0x2158e3] in python3
+=========         Host Frame: PyEval_EvalCode [0x214f46] in python3
+=========         Host Frame:  [0x23554a] in python3
+=========         Host Frame:  [0x2318f3] in python3
+=========         Host Frame:  [0x245e24] in python3
+=========         Host Frame: _PyRun_SimpleFileObject [0x245463] in python3
+=========         Host Frame: _PyRun_AnyFileObject [0x2451f6] in python3
+=========         Host Frame: Py_RunMain [0x23fdc8] in python3
+=========         Host Frame: Py_BytesMain [0x2061cc] in python3
+=========         Host Frame:  [0x29d8f] in libc.so.6
+=========         Host Frame: __libc_start_main [0x29e3f] in libc.so.6
+=========         Host Frame: _start [0x206054] in python3
+=========         Host Frame: <module> in c_kernel_tests.py:47
+========= 
+========= Invalid __shared__ read of size 12 bytes
+=========     at void attention_kernel<c10::Half>(const T1 *, const T1 *, const T1 *, T1 *, int, int, int, float, bool)+0x4180 in attention.cu:105
+=========     by thread (0,0,0) in block (0,15,0)
+=========     Access at 0x410 is out of bounds
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame:  [0x13e88] in libcudart.so.12
+=========         Host Frame: cudaLaunchKernel [0x79f87] in libcudart.so.12
+=========         Host Frame: agent_attention(at::Tensor, at::Tensor, at::Tensor, bool) [0x25819] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::initialize<at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor, at::Tensor, at::Tensor, at::Tensor, bool, pybind11::name, pybind11::scope, pybind11::sibling, char [22]>(at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor (*)(at::Tensor, at::Tensor, at::Tensor, bool), pybind11::name const&, pybind11::scope const&, pybind11::sibling const&, char const (&) [22])::{lambda(pybind11::detail::function_call&)#3}::_FUN(pybind11::detail::function_call&) [0x2431f] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::dispatcher(_object*, _object*, _object*) [0x213a3] in agent_ops.so
+=========         Host Frame:  [0x155cea] in python3
+=========         Host Frame: _PyObject_MakeTpCall [0x12fe2b] in python3
+=========         Host Frame: _PyEval_EvalFrameDefault [0x13dff4] in python3
+=========         Host Frame:  [0x2158e3] in python3
+=========         Host Frame: PyEval_EvalCode [0x214f46] in python3
+=========         Host Frame:  [0x23554a] in python3
+=========         Host Frame:  [0x2318f3] in python3
+=========         Host Frame:  [0x245e24] in python3
+=========         Host Frame: _PyRun_SimpleFileObject [0x245463] in python3
+=========         Host Frame: _PyRun_AnyFileObject [0x2451f6] in python3
+=========         Host Frame: Py_RunMain [0x23fdc8] in python3
+=========         Host Frame: Py_BytesMain [0x2061cc] in python3
+=========         Host Frame:  [0x29d8f] in libc.so.6
+=========         Host Frame: __libc_start_main [0x29e3f] in libc.so.6
+=========         Host Frame: _start [0x206054] in python3
+=========         Host Frame: <module> in c_kernel_tests.py:47
+========= 
+========= Invalid __shared__ read of size 12 bytes
+=========     at void attention_kernel<c10::Half>(const T1 *, const T1 *, const T1 *, T1 *, int, int, int, float, bool)+0x4180 in attention.cu:105
+=========     by thread (0,0,0) in block (0,18,0)
+=========     Access at 0x410 is out of bounds
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame:  [0x13e88] in libcudart.so.12
+=========         Host Frame: cudaLaunchKernel [0x79f87] in libcudart.so.12
+=========         Host Frame: agent_attention(at::Tensor, at::Tensor, at::Tensor, bool) [0x25819] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::initialize<at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor, at::Tensor, at::Tensor, at::Tensor, bool, pybind11::name, pybind11::scope, pybind11::sibling, char [22]>(at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor (*)(at::Tensor, at::Tensor, at::Tensor, bool), pybind11::name const&, pybind11::scope const&, pybind11::sibling const&, char const (&) [22])::{lambda(pybind11::detail::function_call&)#3}::_FUN(pybind11::detail::function_call&) [0x2431f] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::dispatcher(_object*, _object*, _object*) [0x213a3] in agent_ops.so
+=========         Host Frame:  [0x155cea] in python3
+=========         Host Frame: _PyObject_MakeTpCall [0x12fe2b] in python3
+=========         Host Frame: _PyEval_EvalFrameDefault [0x13dff4] in python3
+=========         Host Frame:  [0x2158e3] in python3
+=========         Host Frame: PyEval_EvalCode [0x214f46] in python3
+=========         Host Frame:  [0x23554a] in python3
+=========         Host Frame:  [0x2318f3] in python3
+=========         Host Frame:  [0x245e24] in python3
+=========         Host Frame: _PyRun_SimpleFileObject [0x245463] in python3
+=========         Host Frame: _PyRun_AnyFileObject [0x2451f6] in python3
+=========         Host Frame: Py_RunMain [0x23fdc8] in python3
+=========         Host Frame: Py_BytesMain [0x2061cc] in python3
+=========         Host Frame:  [0x29d8f] in libc.so.6
+=========         Host Frame: __libc_start_main [0x29e3f] in libc.so.6
+=========         Host Frame: _start [0x206054] in python3
+=========         Host Frame: <module> in c_kernel_tests.py:47
+========= 
+========= Invalid __shared__ read of size 12 bytes
+=========     at void attention_kernel<c10::Half>(const T1 *, const T1 *, const T1 *, T1 *, int, int, int, float, bool)+0x4180 in attention.cu:105
+=========     by thread (0,0,0) in block (0,21,0)
+=========     Access at 0x410 is out of bounds
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame:  [0x13e88] in libcudart.so.12
+=========         Host Frame: cudaLaunchKernel [0x79f87] in libcudart.so.12
+=========         Host Frame: agent_attention(at::Tensor, at::Tensor, at::Tensor, bool) [0x25819] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::initialize<at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor, at::Tensor, at::Tensor, at::Tensor, bool, pybind11::name, pybind11::scope, pybind11::sibling, char [22]>(at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor (*)(at::Tensor, at::Tensor, at::Tensor, bool), pybind11::name const&, pybind11::scope const&, pybind11::sibling const&, char const (&) [22])::{lambda(pybind11::detail::function_call&)#3}::_FUN(pybind11::detail::function_call&) [0x2431f] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::dispatcher(_object*, _object*, _object*) [0x213a3] in agent_ops.so
+=========         Host Frame:  [0x155cea] in python3
+=========         Host Frame: _PyObject_MakeTpCall [0x12fe2b] in python3
+=========         Host Frame: _PyEval_EvalFrameDefault [0x13dff4] in python3
+=========         Host Frame:  [0x2158e3] in python3
+=========         Host Frame: PyEval_EvalCode [0x214f46] in python3
+=========         Host Frame:  [0x23554a] in python3
+=========         Host Frame:  [0x2318f3] in python3
+=========         Host Frame:  [0x245e24] in python3
+=========         Host Frame: _PyRun_SimpleFileObject [0x245463] in python3
+=========         Host Frame: _PyRun_AnyFileObject [0x2451f6] in python3
+=========         Host Frame: Py_RunMain [0x23fdc8] in python3
+=========         Host Frame: Py_BytesMain [0x2061cc] in python3
+=========         Host Frame:  [0x29d8f] in libc.so.6
+=========         Host Frame: __libc_start_main [0x29e3f] in libc.so.6
+=========         Host Frame: _start [0x206054] in python3
+=========         Host Frame: <module> in c_kernel_tests.py:47
+========= 
+========= Invalid __shared__ read of size 12 bytes
+=========     at void attention_kernel<c10::Half>(const T1 *, const T1 *, const T1 *, T1 *, int, int, int, float, bool)+0x4180 in attention.cu:105
+=========     by thread (0,0,0) in block (0,24,0)
+=========     Access at 0x410 is out of bounds
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame:  [0x13e88] in libcudart.so.12
+=========         Host Frame: cudaLaunchKernel [0x79f87] in libcudart.so.12
+=========         Host Frame: agent_attention(at::Tensor, at::Tensor, at::Tensor, bool) [0x25819] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::initialize<at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor, at::Tensor, at::Tensor, at::Tensor, bool, pybind11::name, pybind11::scope, pybind11::sibling, char [22]>(at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor (*)(at::Tensor, at::Tensor, at::Tensor, bool), pybind11::name const&, pybind11::scope const&, pybind11::sibling const&, char const (&) [22])::{lambda(pybind11::detail::function_call&)#3}::_FUN(pybind11::detail::function_call&) [0x2431f] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::dispatcher(_object*, _object*, _object*) [0x213a3] in agent_ops.so
+=========         Host Frame:  [0x155cea] in python3
+=========         Host Frame: _PyObject_MakeTpCall [0x12fe2b] in python3
+=========         Host Frame: _PyEval_EvalFrameDefault [0x13dff4] in python3
+=========         Host Frame:  [0x2158e3] in python3
+=========         Host Frame: PyEval_EvalCode [0x214f46] in python3
+=========         Host Frame:  [0x23554a] in python3
+=========         Host Frame:  [0x2318f3] in python3
+=========         Host Frame:  [0x245e24] in python3
+=========         Host Frame: _PyRun_SimpleFileObject [0x245463] in python3
+=========         Host Frame: _PyRun_AnyFileObject [0x2451f6] in python3
+=========         Host Frame: Py_RunMain [0x23fdc8] in python3
+=========         Host Frame: Py_BytesMain [0x2061cc] in python3
+=========         Host Frame:  [0x29d8f] in libc.so.6
+=========         Host Frame: __libc_start_main [0x29e3f] in libc.so.6
+=========         Host Frame: _start [0x206054] in python3
+=========         Host Frame: <module> in c_kernel_tests.py:47
+========= 
+========= Invalid __shared__ read of size 12 bytes
+=========     at void attention_kernel<c10::Half>(const T1 *, const T1 *, const T1 *, T1 *, int, int, int, float, bool)+0x4180 in attention.cu:105
+=========     by thread (0,0,0) in block (0,27,0)
+=========     Access at 0x410 is out of bounds
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame:  [0x13e88] in libcudart.so.12
+=========         Host Frame: cudaLaunchKernel [0x79f87] in libcudart.so.12
+=========         Host Frame: agent_attention(at::Tensor, at::Tensor, at::Tensor, bool) [0x25819] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::initialize<at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor, at::Tensor, at::Tensor, at::Tensor, bool, pybind11::name, pybind11::scope, pybind11::sibling, char [22]>(at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor (*)(at::Tensor, at::Tensor, at::Tensor, bool), pybind11::name const&, pybind11::scope const&, pybind11::sibling const&, char const (&) [22])::{lambda(pybind11::detail::function_call&)#3}::_FUN(pybind11::detail::function_call&) [0x2431f] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::dispatcher(_object*, _object*, _object*) [0x213a3] in agent_ops.so
+=========         Host Frame:  [0x155cea] in python3
+=========         Host Frame: _PyObject_MakeTpCall [0x12fe2b] in python3
+=========         Host Frame: _PyEval_EvalFrameDefault [0x13dff4] in python3
+=========         Host Frame:  [0x2158e3] in python3
+=========         Host Frame: PyEval_EvalCode [0x214f46] in python3
+=========         Host Frame:  [0x23554a] in python3
+=========         Host Frame:  [0x2318f3] in python3
+=========         Host Frame:  [0x245e24] in python3
+=========         Host Frame: _PyRun_SimpleFileObject [0x245463] in python3
+=========         Host Frame: _PyRun_AnyFileObject [0x2451f6] in python3
+=========         Host Frame: Py_RunMain [0x23fdc8] in python3
+=========         Host Frame: Py_BytesMain [0x2061cc] in python3
+=========         Host Frame:  [0x29d8f] in libc.so.6
+=========         Host Frame: __libc_start_main [0x29e3f] in libc.so.6
+=========         Host Frame: _start [0x206054] in python3
+=========         Host Frame: <module> in c_kernel_tests.py:47
+========= 
+========= Invalid __shared__ read of size 12 bytes
+=========     at void attention_kernel<c10::Half>(const T1 *, const T1 *, const T1 *, T1 *, int, int, int, float, bool)+0x4180 in attention.cu:105
+=========     by thread (0,0,0) in block (0,30,0)
+=========     Access at 0x410 is out of bounds
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame:  [0x13e88] in libcudart.so.12
+=========         Host Frame: cudaLaunchKernel [0x79f87] in libcudart.so.12
+=========         Host Frame: agent_attention(at::Tensor, at::Tensor, at::Tensor, bool) [0x25819] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::initialize<at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor, at::Tensor, at::Tensor, at::Tensor, bool, pybind11::name, pybind11::scope, pybind11::sibling, char [22]>(at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor (*)(at::Tensor, at::Tensor, at::Tensor, bool), pybind11::name const&, pybind11::scope const&, pybind11::sibling const&, char const (&) [22])::{lambda(pybind11::detail::function_call&)#3}::_FUN(pybind11::detail::function_call&) [0x2431f] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::dispatcher(_object*, _object*, _object*) [0x213a3] in agent_ops.so
+=========         Host Frame:  [0x155cea] in python3
+=========         Host Frame: _PyObject_MakeTpCall [0x12fe2b] in python3
+=========         Host Frame: _PyEval_EvalFrameDefault [0x13dff4] in python3
+=========         Host Frame:  [0x2158e3] in python3
+=========         Host Frame: PyEval_EvalCode [0x214f46] in python3
+=========         Host Frame:  [0x23554a] in python3
+=========         Host Frame:  [0x2318f3] in python3
+=========         Host Frame:  [0x245e24] in python3
+=========         Host Frame: _PyRun_SimpleFileObject [0x245463] in python3
+=========         Host Frame: _PyRun_AnyFileObject [0x2451f6] in python3
+=========         Host Frame: Py_RunMain [0x23fdc8] in python3
+=========         Host Frame: Py_BytesMain [0x2061cc] in python3
+=========         Host Frame:  [0x29d8f] in libc.so.6
+=========         Host Frame: __libc_start_main [0x29e3f] in libc.so.6
+=========         Host Frame: _start [0x206054] in python3
+=========         Host Frame: <module> in c_kernel_tests.py:47
+========= 
+========= Invalid __shared__ read of size 12 bytes
+=========     at void attention_kernel<c10::Half>(const T1 *, const T1 *, const T1 *, T1 *, int, int, int, float, bool)+0x4180 in attention.cu:105
+=========     by thread (0,0,0) in block (0,10,0)
+=========     Access at 0x410 is out of bounds
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame:  [0x13e88] in libcudart.so.12
+=========         Host Frame: cudaLaunchKernel [0x79f87] in libcudart.so.12
+=========         Host Frame: agent_attention(at::Tensor, at::Tensor, at::Tensor, bool) [0x25819] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::initialize<at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor, at::Tensor, at::Tensor, at::Tensor, bool, pybind11::name, pybind11::scope, pybind11::sibling, char [22]>(at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor (*)(at::Tensor, at::Tensor, at::Tensor, bool), pybind11::name const&, pybind11::scope const&, pybind11::sibling const&, char const (&) [22])::{lambda(pybind11::detail::function_call&)#3}::_FUN(pybind11::detail::function_call&) [0x2431f] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::dispatcher(_object*, _object*, _object*) [0x213a3] in agent_ops.so
+=========         Host Frame:  [0x155cea] in python3
+=========         Host Frame: _PyObject_MakeTpCall [0x12fe2b] in python3
+=========         Host Frame: _PyEval_EvalFrameDefault [0x13dff4] in python3
+=========         Host Frame:  [0x2158e3] in python3
+=========         Host Frame: PyEval_EvalCode [0x214f46] in python3
+=========         Host Frame:  [0x23554a] in python3
+=========         Host Frame:  [0x2318f3] in python3
+=========         Host Frame:  [0x245e24] in python3
+=========         Host Frame: _PyRun_SimpleFileObject [0x245463] in python3
+=========         Host Frame: _PyRun_AnyFileObject [0x2451f6] in python3
+=========         Host Frame: Py_RunMain [0x23fdc8] in python3
+=========         Host Frame: Py_BytesMain [0x2061cc] in python3
+=========         Host Frame:  [0x29d8f] in libc.so.6
+=========         Host Frame: __libc_start_main [0x29e3f] in libc.so.6
+=========         Host Frame: _start [0x206054] in python3
+=========         Host Frame: <module> in c_kernel_tests.py:47
+========= 
+========= Invalid __shared__ read of size 12 bytes
+=========     at void attention_kernel<c10::Half>(const T1 *, const T1 *, const T1 *, T1 *, int, int, int, float, bool)+0x4180 in attention.cu:105
+=========     by thread (0,0,0) in block (0,13,0)
+=========     Access at 0x410 is out of bounds
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame:  [0x13e88] in libcudart.so.12
+=========         Host Frame: cudaLaunchKernel [0x79f87] in libcudart.so.12
+=========         Host Frame: agent_attention(at::Tensor, at::Tensor, at::Tensor, bool) [0x25819] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::initialize<at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor, at::Tensor, at::Tensor, at::Tensor, bool, pybind11::name, pybind11::scope, pybind11::sibling, char [22]>(at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor (*)(at::Tensor, at::Tensor, at::Tensor, bool), pybind11::name const&, pybind11::scope const&, pybind11::sibling const&, char const (&) [22])::{lambda(pybind11::detail::function_call&)#3}::_FUN(pybind11::detail::function_call&) [0x2431f] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::dispatcher(_object*, _object*, _object*) [0x213a3] in agent_ops.so
+=========         Host Frame:  [0x155cea] in python3
+=========         Host Frame: _PyObject_MakeTpCall [0x12fe2b] in python3
+=========         Host Frame: _PyEval_EvalFrameDefault [0x13dff4] in python3
+=========         Host Frame:  [0x2158e3] in python3
+=========         Host Frame: PyEval_EvalCode [0x214f46] in python3
+=========         Host Frame:  [0x23554a] in python3
+=========         Host Frame:  [0x2318f3] in python3
+=========         Host Frame:  [0x245e24] in python3
+=========         Host Frame: _PyRun_SimpleFileObject [0x245463] in python3
+=========         Host Frame: _PyRun_AnyFileObject [0x2451f6] in python3
+=========         Host Frame: Py_RunMain [0x23fdc8] in python3
+=========         Host Frame: Py_BytesMain [0x2061cc] in python3
+=========         Host Frame:  [0x29d8f] in libc.so.6
+=========         Host Frame: __libc_start_main [0x29e3f] in libc.so.6
+=========         Host Frame: _start [0x206054] in python3
+=========         Host Frame: <module> in c_kernel_tests.py:47
+========= 
+========= Invalid __shared__ read of size 12 bytes
+=========     at void attention_kernel<c10::Half>(const T1 *, const T1 *, const T1 *, T1 *, int, int, int, float, bool)+0x4180 in attention.cu:105
+=========     by thread (0,0,0) in block (0,16,0)
+=========     Access at 0x410 is out of bounds
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame:  [0x13e88] in libcudart.so.12
+=========         Host Frame: cudaLaunchKernel [0x79f87] in libcudart.so.12
+=========         Host Frame: agent_attention(at::Tensor, at::Tensor, at::Tensor, bool) [0x25819] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::initialize<at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor, at::Tensor, at::Tensor, at::Tensor, bool, pybind11::name, pybind11::scope, pybind11::sibling, char [22]>(at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor (*)(at::Tensor, at::Tensor, at::Tensor, bool), pybind11::name const&, pybind11::scope const&, pybind11::sibling const&, char const (&) [22])::{lambda(pybind11::detail::function_call&)#3}::_FUN(pybind11::detail::function_call&) [0x2431f] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::dispatcher(_object*, _object*, _object*) [0x213a3] in agent_ops.so
+=========         Host Frame:  [0x155cea] in python3
+=========         Host Frame: _PyObject_MakeTpCall [0x12fe2b] in python3
+=========         Host Frame: _PyEval_EvalFrameDefault [0x13dff4] in python3
+=========         Host Frame:  [0x2158e3] in python3
+=========         Host Frame: PyEval_EvalCode [0x214f46] in python3
+=========         Host Frame:  [0x23554a] in python3
+=========         Host Frame:  [0x2318f3] in python3
+=========         Host Frame:  [0x245e24] in python3
+=========         Host Frame: _PyRun_SimpleFileObject [0x245463] in python3
+=========         Host Frame: _PyRun_AnyFileObject [0x2451f6] in python3
+=========         Host Frame: Py_RunMain [0x23fdc8] in python3
+=========         Host Frame: Py_BytesMain [0x2061cc] in python3
+=========         Host Frame:  [0x29d8f] in libc.so.6
+=========         Host Frame: __libc_start_main [0x29e3f] in libc.so.6
+=========         Host Frame: _start [0x206054] in python3
+=========         Host Frame: <module> in c_kernel_tests.py:47
+========= 
+========= Invalid __shared__ read of size 12 bytes
+=========     at void attention_kernel<c10::Half>(const T1 *, const T1 *, const T1 *, T1 *, int, int, int, float, bool)+0x4180 in attention.cu:105
+=========     by thread (0,0,0) in block (0,19,0)
+=========     Access at 0x410 is out of bounds
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame:  [0x13e88] in libcudart.so.12
+=========         Host Frame: cudaLaunchKernel [0x79f87] in libcudart.so.12
+=========         Host Frame: agent_attention(at::Tensor, at::Tensor, at::Tensor, bool) [0x25819] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::initialize<at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor, at::Tensor, at::Tensor, at::Tensor, bool, pybind11::name, pybind11::scope, pybind11::sibling, char [22]>(at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor (*)(at::Tensor, at::Tensor, at::Tensor, bool), pybind11::name const&, pybind11::scope const&, pybind11::sibling const&, char const (&) [22])::{lambda(pybind11::detail::function_call&)#3}::_FUN(pybind11::detail::function_call&) [0x2431f] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::dispatcher(_object*, _object*, _object*) [0x213a3] in agent_ops.so
+=========         Host Frame:  [0x155cea] in python3
+=========         Host Frame: _PyObject_MakeTpCall [0x12fe2b] in python3
+=========         Host Frame: _PyEval_EvalFrameDefault [0x13dff4] in python3
+=========         Host Frame:  [0x2158e3] in python3
+=========         Host Frame: PyEval_EvalCode [0x214f46] in python3
+=========         Host Frame:  [0x23554a] in python3
+=========         Host Frame:  [0x2318f3] in python3
+=========         Host Frame:  [0x245e24] in python3
+=========         Host Frame: _PyRun_SimpleFileObject [0x245463] in python3
+=========         Host Frame: _PyRun_AnyFileObject [0x2451f6] in python3
+=========         Host Frame: Py_RunMain [0x23fdc8] in python3
+=========         Host Frame: Py_BytesMain [0x2061cc] in python3
+=========         Host Frame:  [0x29d8f] in libc.so.6
+=========         Host Frame: __libc_start_main [0x29e3f] in libc.so.6
+=========         Host Frame: _start [0x206054] in python3
+=========         Host Frame: <module> in c_kernel_tests.py:47
+========= 
+========= Invalid __shared__ read of size 12 bytes
+=========     at void attention_kernel<c10::Half>(const T1 *, const T1 *, const T1 *, T1 *, int, int, int, float, bool)+0x4180 in attention.cu:105
+=========     by thread (0,0,0) in block (0,22,0)
+=========     Access at 0x410 is out of bounds
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame:  [0x13e88] in libcudart.so.12
+=========         Host Frame: cudaLaunchKernel [0x79f87] in libcudart.so.12
+=========         Host Frame: agent_attention(at::Tensor, at::Tensor, at::Tensor, bool) [0x25819] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::initialize<at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor, at::Tensor, at::Tensor, at::Tensor, bool, pybind11::name, pybind11::scope, pybind11::sibling, char [22]>(at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor (*)(at::Tensor, at::Tensor, at::Tensor, bool), pybind11::name const&, pybind11::scope const&, pybind11::sibling const&, char const (&) [22])::{lambda(pybind11::detail::function_call&)#3}::_FUN(pybind11::detail::function_call&) [0x2431f] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::dispatcher(_object*, _object*, _object*) [0x213a3] in agent_ops.so
+=========         Host Frame:  [0x155cea] in python3
+=========         Host Frame: _PyObject_MakeTpCall [0x12fe2b] in python3
+=========         Host Frame: _PyEval_EvalFrameDefault [0x13dff4] in python3
+=========         Host Frame:  [0x2158e3] in python3
+=========         Host Frame: PyEval_EvalCode [0x214f46] in python3
+=========         Host Frame:  [0x23554a] in python3
+=========         Host Frame:  [0x2318f3] in python3
+=========         Host Frame:  [0x245e24] in python3
+=========         Host Frame: _PyRun_SimpleFileObject [0x245463] in python3
+=========         Host Frame: _PyRun_AnyFileObject [0x2451f6] in python3
+=========         Host Frame: Py_RunMain [0x23fdc8] in python3
+=========         Host Frame: Py_BytesMain [0x2061cc] in python3
+=========         Host Frame:  [0x29d8f] in libc.so.6
+=========         Host Frame: __libc_start_main [0x29e3f] in libc.so.6
+=========         Host Frame: _start [0x206054] in python3
+=========         Host Frame: <module> in c_kernel_tests.py:47
+========= 
+========= Invalid __shared__ read of size 12 bytes
+=========     at void attention_kernel<c10::Half>(const T1 *, const T1 *, const T1 *, T1 *, int, int, int, float, bool)+0x4180 in attention.cu:105
+=========     by thread (0,0,0) in block (0,25,0)
+=========     Access at 0x410 is out of bounds
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame:  [0x13e88] in libcudart.so.12
+=========         Host Frame: cudaLaunchKernel [0x79f87] in libcudart.so.12
+=========         Host Frame: agent_attention(at::Tensor, at::Tensor, at::Tensor, bool) [0x25819] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::initialize<at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor, at::Tensor, at::Tensor, at::Tensor, bool, pybind11::name, pybind11::scope, pybind11::sibling, char [22]>(at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor (*)(at::Tensor, at::Tensor, at::Tensor, bool), pybind11::name const&, pybind11::scope const&, pybind11::sibling const&, char const (&) [22])::{lambda(pybind11::detail::function_call&)#3}::_FUN(pybind11::detail::function_call&) [0x2431f] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::dispatcher(_object*, _object*, _object*) [0x213a3] in agent_ops.so
+=========         Host Frame:  [0x155cea] in python3
+=========         Host Frame: _PyObject_MakeTpCall [0x12fe2b] in python3
+=========         Host Frame: _PyEval_EvalFrameDefault [0x13dff4] in python3
+=========         Host Frame:  [0x2158e3] in python3
+=========         Host Frame: PyEval_EvalCode [0x214f46] in python3
+=========         Host Frame:  [0x23554a] in python3
+=========         Host Frame:  [0x2318f3] in python3
+=========         Host Frame:  [0x245e24] in python3
+=========         Host Frame: _PyRun_SimpleFileObject [0x245463] in python3
+=========         Host Frame: _PyRun_AnyFileObject [0x2451f6] in python3
+=========         Host Frame: Py_RunMain [0x23fdc8] in python3
+=========         Host Frame: Py_BytesMain [0x2061cc] in python3
+=========         Host Frame:  [0x29d8f] in libc.so.6
+=========         Host Frame: __libc_start_main [0x29e3f] in libc.so.6
+=========         Host Frame: _start [0x206054] in python3
+=========         Host Frame: <module> in c_kernel_tests.py:47
+========= 
+========= Invalid __shared__ read of size 12 bytes
+=========     at void attention_kernel<c10::Half>(const T1 *, const T1 *, const T1 *, T1 *, int, int, int, float, bool)+0x4180 in attention.cu:105
+=========     by thread (0,0,0) in block (0,28,0)
+=========     Access at 0x410 is out of bounds
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame:  [0x13e88] in libcudart.so.12
+=========         Host Frame: cudaLaunchKernel [0x79f87] in libcudart.so.12
+=========         Host Frame: agent_attention(at::Tensor, at::Tensor, at::Tensor, bool) [0x25819] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::initialize<at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor, at::Tensor, at::Tensor, at::Tensor, bool, pybind11::name, pybind11::scope, pybind11::sibling, char [22]>(at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor (*)(at::Tensor, at::Tensor, at::Tensor, bool), pybind11::name const&, pybind11::scope const&, pybind11::sibling const&, char const (&) [22])::{lambda(pybind11::detail::function_call&)#3}::_FUN(pybind11::detail::function_call&) [0x2431f] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::dispatcher(_object*, _object*, _object*) [0x213a3] in agent_ops.so
+=========         Host Frame:  [0x155cea] in python3
+=========         Host Frame: _PyObject_MakeTpCall [0x12fe2b] in python3
+=========         Host Frame: _PyEval_EvalFrameDefault [0x13dff4] in python3
+=========         Host Frame:  [0x2158e3] in python3
+=========         Host Frame: PyEval_EvalCode [0x214f46] in python3
+=========         Host Frame:  [0x23554a] in python3
+=========         Host Frame:  [0x2318f3] in python3
+=========         Host Frame:  [0x245e24] in python3
+=========         Host Frame: _PyRun_SimpleFileObject [0x245463] in python3
+=========         Host Frame: _PyRun_AnyFileObject [0x2451f6] in python3
+=========         Host Frame: Py_RunMain [0x23fdc8] in python3
+=========         Host Frame: Py_BytesMain [0x2061cc] in python3
+=========         Host Frame:  [0x29d8f] in libc.so.6
+=========         Host Frame: __libc_start_main [0x29e3f] in libc.so.6
+=========         Host Frame: _start [0x206054] in python3
+=========         Host Frame: <module> in c_kernel_tests.py:47
+========= 
+========= Invalid __shared__ read of size 12 bytes
+=========     at void attention_kernel<c10::Half>(const T1 *, const T1 *, const T1 *, T1 *, int, int, int, float, bool)+0x4180 in attention.cu:105
+=========     by thread (0,0,0) in block (0,31,0)
+=========     Access at 0x410 is out of bounds
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame:  [0x13e88] in libcudart.so.12
+=========         Host Frame: cudaLaunchKernel [0x79f87] in libcudart.so.12
+=========         Host Frame: agent_attention(at::Tensor, at::Tensor, at::Tensor, bool) [0x25819] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::initialize<at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor, at::Tensor, at::Tensor, at::Tensor, bool, pybind11::name, pybind11::scope, pybind11::sibling, char [22]>(at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor (*)(at::Tensor, at::Tensor, at::Tensor, bool), pybind11::name const&, pybind11::scope const&, pybind11::sibling const&, char const (&) [22])::{lambda(pybind11::detail::function_call&)#3}::_FUN(pybind11::detail::function_call&) [0x2431f] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::dispatcher(_object*, _object*, _object*) [0x213a3] in agent_ops.so
+=========         Host Frame:  [0x155cea] in python3
+=========         Host Frame: _PyObject_MakeTpCall [0x12fe2b] in python3
+=========         Host Frame: _PyEval_EvalFrameDefault [0x13dff4] in python3
+=========         Host Frame:  [0x2158e3] in python3
+=========         Host Frame: PyEval_EvalCode [0x214f46] in python3
+=========         Host Frame:  [0x23554a] in python3
+=========         Host Frame:  [0x2318f3] in python3
+=========         Host Frame:  [0x245e24] in python3
+=========         Host Frame: _PyRun_SimpleFileObject [0x245463] in python3
+=========         Host Frame: _PyRun_AnyFileObject [0x2451f6] in python3
+=========         Host Frame: Py_RunMain [0x23fdc8] in python3
+=========         Host Frame: Py_BytesMain [0x2061cc] in python3
+=========         Host Frame:  [0x29d8f] in libc.so.6
+=========         Host Frame: __libc_start_main [0x29e3f] in libc.so.6
+=========         Host Frame: _start [0x206054] in python3
+=========         Host Frame: <module> in c_kernel_tests.py:47
+========= 
+========= Invalid __shared__ read of size 12 bytes
+=========     at void attention_kernel<c10::Half>(const T1 *, const T1 *, const T1 *, T1 *, int, int, int, float, bool)+0x4180 in attention.cu:105
+=========     by thread (0,0,0) in block (0,0,0)
+=========     Access at 0x410 is out of bounds
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame:  [0x13e88] in libcudart.so.12
+=========         Host Frame: cudaLaunchKernel [0x79f87] in libcudart.so.12
+=========         Host Frame: agent_attention(at::Tensor, at::Tensor, at::Tensor, bool) [0x25819] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::initialize<at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor, at::Tensor, at::Tensor, at::Tensor, bool, pybind11::name, pybind11::scope, pybind11::sibling, char [22]>(at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor (*)(at::Tensor, at::Tensor, at::Tensor, bool), pybind11::name const&, pybind11::scope const&, pybind11::sibling const&, char const (&) [22])::{lambda(pybind11::detail::function_call&)#3}::_FUN(pybind11::detail::function_call&) [0x2431f] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::dispatcher(_object*, _object*, _object*) [0x213a3] in agent_ops.so
+=========         Host Frame:  [0x155cea] in python3
+=========         Host Frame: _PyObject_MakeTpCall [0x12fe2b] in python3
+=========         Host Frame: _PyEval_EvalFrameDefault [0x13dff4] in python3
+=========         Host Frame:  [0x2158e3] in python3
+=========         Host Frame: PyEval_EvalCode [0x214f46] in python3
+=========         Host Frame:  [0x23554a] in python3
+=========         Host Frame:  [0x2318f3] in python3
+=========         Host Frame:  [0x245e24] in python3
+=========         Host Frame: _PyRun_SimpleFileObject [0x245463] in python3
+=========         Host Frame: _PyRun_AnyFileObject [0x2451f6] in python3
+=========         Host Frame: Py_RunMain [0x23fdc8] in python3
+=========         Host Frame: Py_BytesMain [0x2061cc] in python3
+=========         Host Frame:  [0x29d8f] in libc.so.6
+=========         Host Frame: __libc_start_main [0x29e3f] in libc.so.6
+=========         Host Frame: _start [0x206054] in python3
+=========         Host Frame: <module> in c_kernel_tests.py:47
+========= 
+========= Invalid __shared__ read of size 12 bytes
+=========     at void attention_kernel<c10::Half>(const T1 *, const T1 *, const T1 *, T1 *, int, int, int, float, bool)+0x4180 in attention.cu:105
+=========     by thread (0,0,0) in block (0,1,0)
+=========     Access at 0x410 is out of bounds
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame:  [0x13e88] in libcudart.so.12
+=========         Host Frame: cudaLaunchKernel [0x79f87] in libcudart.so.12
+=========         Host Frame: agent_attention(at::Tensor, at::Tensor, at::Tensor, bool) [0x25819] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::initialize<at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor, at::Tensor, at::Tensor, at::Tensor, bool, pybind11::name, pybind11::scope, pybind11::sibling, char [22]>(at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor (*)(at::Tensor, at::Tensor, at::Tensor, bool), pybind11::name const&, pybind11::scope const&, pybind11::sibling const&, char const (&) [22])::{lambda(pybind11::detail::function_call&)#3}::_FUN(pybind11::detail::function_call&) [0x2431f] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::dispatcher(_object*, _object*, _object*) [0x213a3] in agent_ops.so
+=========         Host Frame:  [0x155cea] in python3
+=========         Host Frame: _PyObject_MakeTpCall [0x12fe2b] in python3
+=========         Host Frame: _PyEval_EvalFrameDefault [0x13dff4] in python3
+=========         Host Frame:  [0x2158e3] in python3
+=========         Host Frame: PyEval_EvalCode [0x214f46] in python3
+=========         Host Frame:  [0x23554a] in python3
+=========         Host Frame:  [0x2318f3] in python3
+=========         Host Frame:  [0x245e24] in python3
+=========         Host Frame: _PyRun_SimpleFileObject [0x245463] in python3
+=========         Host Frame: _PyRun_AnyFileObject [0x2451f6] in python3
+=========         Host Frame: Py_RunMain [0x23fdc8] in python3
+=========         Host Frame: Py_BytesMain [0x2061cc] in python3
+=========         Host Frame:  [0x29d8f] in libc.so.6
+=========         Host Frame: __libc_start_main [0x29e3f] in libc.so.6
+=========         Host Frame: _start [0x206054] in python3
+=========         Host Frame: <module> in c_kernel_tests.py:47
+========= 
+========= Invalid __shared__ read of size 12 bytes
+=========     at void attention_kernel<c10::Half>(const T1 *, const T1 *, const T1 *, T1 *, int, int, int, float, bool)+0x4180 in attention.cu:105
+=========     by thread (0,0,0) in block (0,2,0)
+=========     Access at 0x410 is out of bounds
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame:  [0x13e88] in libcudart.so.12
+=========         Host Frame: cudaLaunchKernel [0x79f87] in libcudart.so.12
+=========         Host Frame: agent_attention(at::Tensor, at::Tensor, at::Tensor, bool) [0x25819] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::initialize<at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor, at::Tensor, at::Tensor, at::Tensor, bool, pybind11::name, pybind11::scope, pybind11::sibling, char [22]>(at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor (*)(at::Tensor, at::Tensor, at::Tensor, bool), pybind11::name const&, pybind11::scope const&, pybind11::sibling const&, char const (&) [22])::{lambda(pybind11::detail::function_call&)#3}::_FUN(pybind11::detail::function_call&) [0x2431f] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::dispatcher(_object*, _object*, _object*) [0x213a3] in agent_ops.so
+=========         Host Frame:  [0x155cea] in python3
+=========         Host Frame: _PyObject_MakeTpCall [0x12fe2b] in python3
+=========         Host Frame: _PyEval_EvalFrameDefault [0x13dff4] in python3
+=========         Host Frame:  [0x2158e3] in python3
+=========         Host Frame: PyEval_EvalCode [0x214f46] in python3
+=========         Host Frame:  [0x23554a] in python3
+=========         Host Frame:  [0x2318f3] in python3
+=========         Host Frame:  [0x245e24] in python3
+=========         Host Frame: _PyRun_SimpleFileObject [0x245463] in python3
+=========         Host Frame: _PyRun_AnyFileObject [0x2451f6] in python3
+=========         Host Frame: Py_RunMain [0x23fdc8] in python3
+=========         Host Frame: Py_BytesMain [0x2061cc] in python3
+=========         Host Frame:  [0x29d8f] in libc.so.6
+=========         Host Frame: __libc_start_main [0x29e3f] in libc.so.6
+=========         Host Frame: _start [0x206054] in python3
+=========         Host Frame: <module> in c_kernel_tests.py:47
+========= 
+========= Invalid __shared__ read of size 12 bytes
+=========     at void attention_kernel<c10::Half>(const T1 *, const T1 *, const T1 *, T1 *, int, int, int, float, bool)+0x4180 in attention.cu:105
+=========     by thread (0,0,0) in block (0,3,0)
+=========     Access at 0x410 is out of bounds
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame:  [0x13e88] in libcudart.so.12
+=========         Host Frame: cudaLaunchKernel [0x79f87] in libcudart.so.12
+=========         Host Frame: agent_attention(at::Tensor, at::Tensor, at::Tensor, bool) [0x25819] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::initialize<at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor, at::Tensor, at::Tensor, at::Tensor, bool, pybind11::name, pybind11::scope, pybind11::sibling, char [22]>(at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor (*)(at::Tensor, at::Tensor, at::Tensor, bool), pybind11::name const&, pybind11::scope const&, pybind11::sibling const&, char const (&) [22])::{lambda(pybind11::detail::function_call&)#3}::_FUN(pybind11::detail::function_call&) [0x2431f] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::dispatcher(_object*, _object*, _object*) [0x213a3] in agent_ops.so
+=========         Host Frame:  [0x155cea] in python3
+=========         Host Frame: _PyObject_MakeTpCall [0x12fe2b] in python3
+=========         Host Frame: _PyEval_EvalFrameDefault [0x13dff4] in python3
+=========         Host Frame:  [0x2158e3] in python3
+=========         Host Frame: PyEval_EvalCode [0x214f46] in python3
+=========         Host Frame:  [0x23554a] in python3
+=========         Host Frame:  [0x2318f3] in python3
+=========         Host Frame:  [0x245e24] in python3
+=========         Host Frame: _PyRun_SimpleFileObject [0x245463] in python3
+=========         Host Frame: _PyRun_AnyFileObject [0x2451f6] in python3
+=========         Host Frame: Py_RunMain [0x23fdc8] in python3
+=========         Host Frame: Py_BytesMain [0x2061cc] in python3
+=========         Host Frame:  [0x29d8f] in libc.so.6
+=========         Host Frame: __libc_start_main [0x29e3f] in libc.so.6
+=========         Host Frame: _start [0x206054] in python3
+=========         Host Frame: <module> in c_kernel_tests.py:47
+========= 
+========= Invalid __shared__ read of size 12 bytes
+=========     at void attention_kernel<c10::Half>(const T1 *, const T1 *, const T1 *, T1 *, int, int, int, float, bool)+0x4180 in attention.cu:105
+=========     by thread (0,0,0) in block (0,4,0)
+=========     Access at 0x410 is out of bounds
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame:  [0x13e88] in libcudart.so.12
+=========         Host Frame: cudaLaunchKernel [0x79f87] in libcudart.so.12
+=========         Host Frame: agent_attention(at::Tensor, at::Tensor, at::Tensor, bool) [0x25819] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::initialize<at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor, at::Tensor, at::Tensor, at::Tensor, bool, pybind11::name, pybind11::scope, pybind11::sibling, char [22]>(at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor (*)(at::Tensor, at::Tensor, at::Tensor, bool), pybind11::name const&, pybind11::scope const&, pybind11::sibling const&, char const (&) [22])::{lambda(pybind11::detail::function_call&)#3}::_FUN(pybind11::detail::function_call&) [0x2431f] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::dispatcher(_object*, _object*, _object*) [0x213a3] in agent_ops.so
+=========         Host Frame:  [0x155cea] in python3
+=========         Host Frame: _PyObject_MakeTpCall [0x12fe2b] in python3
+=========         Host Frame: _PyEval_EvalFrameDefault [0x13dff4] in python3
+=========         Host Frame:  [0x2158e3] in python3
+=========         Host Frame: PyEval_EvalCode [0x214f46] in python3
+=========         Host Frame:  [0x23554a] in python3
+=========         Host Frame:  [0x2318f3] in python3
+=========         Host Frame:  [0x245e24] in python3
+=========         Host Frame: _PyRun_SimpleFileObject [0x245463] in python3
+=========         Host Frame: _PyRun_AnyFileObject [0x2451f6] in python3
+=========         Host Frame: Py_RunMain [0x23fdc8] in python3
+=========         Host Frame: Py_BytesMain [0x2061cc] in python3
+=========         Host Frame:  [0x29d8f] in libc.so.6
+=========         Host Frame: __libc_start_main [0x29e3f] in libc.so.6
+=========         Host Frame: _start [0x206054] in python3
+=========         Host Frame: <module> in c_kernel_tests.py:47
+========= 
+========= Invalid __shared__ read of size 12 bytes
+=========     at void attention_kernel<c10::Half>(const T1 *, const T1 *, const T1 *, T1 *, int, int, int, float, bool)+0x4180 in attention.cu:105
+=========     by thread (0,0,0) in block (0,5,0)
+=========     Access at 0x410 is out of bounds
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame:  [0x13e88] in libcudart.so.12
+=========         Host Frame: cudaLaunchKernel [0x79f87] in libcudart.so.12
+=========         Host Frame: agent_attention(at::Tensor, at::Tensor, at::Tensor, bool) [0x25819] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::initialize<at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor, at::Tensor, at::Tensor, at::Tensor, bool, pybind11::name, pybind11::scope, pybind11::sibling, char [22]>(at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor (*)(at::Tensor, at::Tensor, at::Tensor, bool), pybind11::name const&, pybind11::scope const&, pybind11::sibling const&, char const (&) [22])::{lambda(pybind11::detail::function_call&)#3}::_FUN(pybind11::detail::function_call&) [0x2431f] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::dispatcher(_object*, _object*, _object*) [0x213a3] in agent_ops.so
+=========         Host Frame:  [0x155cea] in python3
+=========         Host Frame: _PyObject_MakeTpCall [0x12fe2b] in python3
+=========         Host Frame: _PyEval_EvalFrameDefault [0x13dff4] in python3
+=========         Host Frame:  [0x2158e3] in python3
+=========         Host Frame: PyEval_EvalCode [0x214f46] in python3
+=========         Host Frame:  [0x23554a] in python3
+=========         Host Frame:  [0x2318f3] in python3
+=========         Host Frame:  [0x245e24] in python3
+=========         Host Frame: _PyRun_SimpleFileObject [0x245463] in python3
+=========         Host Frame: _PyRun_AnyFileObject [0x2451f6] in python3
+=========         Host Frame: Py_RunMain [0x23fdc8] in python3
+=========         Host Frame: Py_BytesMain [0x2061cc] in python3
+=========         Host Frame:  [0x29d8f] in libc.so.6
+=========         Host Frame: __libc_start_main [0x29e3f] in libc.so.6
+=========         Host Frame: _start [0x206054] in python3
+=========         Host Frame: <module> in c_kernel_tests.py:47
+========= 
+========= Invalid __shared__ read of size 12 bytes
+=========     at void attention_kernel<c10::Half>(const T1 *, const T1 *, const T1 *, T1 *, int, int, int, float, bool)+0x4180 in attention.cu:105
+=========     by thread (0,0,0) in block (0,6,0)
+=========     Access at 0x410 is out of bounds
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame:  [0x13e88] in libcudart.so.12
+=========         Host Frame: cudaLaunchKernel [0x79f87] in libcudart.so.12
+=========         Host Frame: agent_attention(at::Tensor, at::Tensor, at::Tensor, bool) [0x25819] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::initialize<at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor, at::Tensor, at::Tensor, at::Tensor, bool, pybind11::name, pybind11::scope, pybind11::sibling, char [22]>(at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor (*)(at::Tensor, at::Tensor, at::Tensor, bool), pybind11::name const&, pybind11::scope const&, pybind11::sibling const&, char const (&) [22])::{lambda(pybind11::detail::function_call&)#3}::_FUN(pybind11::detail::function_call&) [0x2431f] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::dispatcher(_object*, _object*, _object*) [0x213a3] in agent_ops.so
+=========         Host Frame:  [0x155cea] in python3
+=========         Host Frame: _PyObject_MakeTpCall [0x12fe2b] in python3
+=========         Host Frame: _PyEval_EvalFrameDefault [0x13dff4] in python3
+=========         Host Frame:  [0x2158e3] in python3
+=========         Host Frame: PyEval_EvalCode [0x214f46] in python3
+=========         Host Frame:  [0x23554a] in python3
+=========         Host Frame:  [0x2318f3] in python3
+=========         Host Frame:  [0x245e24] in python3
+=========         Host Frame: _PyRun_SimpleFileObject [0x245463] in python3
+=========         Host Frame: _PyRun_AnyFileObject [0x2451f6] in python3
+=========         Host Frame: Py_RunMain [0x23fdc8] in python3
+=========         Host Frame: Py_BytesMain [0x2061cc] in python3
+=========         Host Frame:  [0x29d8f] in libc.so.6
+=========         Host Frame: __libc_start_main [0x29e3f] in libc.so.6
+=========         Host Frame: _start [0x206054] in python3
+=========         Host Frame: <module> in c_kernel_tests.py:47
+========= 
+========= Invalid __shared__ read of size 12 bytes
+=========     at void attention_kernel<c10::Half>(const T1 *, const T1 *, const T1 *, T1 *, int, int, int, float, bool)+0x4180 in attention.cu:105
+=========     by thread (0,0,0) in block (0,7,0)
+=========     Access at 0x410 is out of bounds
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame:  [0x13e88] in libcudart.so.12
+=========         Host Frame: cudaLaunchKernel [0x79f87] in libcudart.so.12
+=========         Host Frame: agent_attention(at::Tensor, at::Tensor, at::Tensor, bool) [0x25819] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::initialize<at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor, at::Tensor, at::Tensor, at::Tensor, bool, pybind11::name, pybind11::scope, pybind11::sibling, char [22]>(at::Tensor (*&)(at::Tensor, at::Tensor, at::Tensor, bool), at::Tensor (*)(at::Tensor, at::Tensor, at::Tensor, bool), pybind11::name const&, pybind11::scope const&, pybind11::sibling const&, char const (&) [22])::{lambda(pybind11::detail::function_call&)#3}::_FUN(pybind11::detail::function_call&) [0x2431f] in agent_ops.so
+=========         Host Frame: pybind11::cpp_function::dispatcher(_object*, _object*, _object*) [0x213a3] in agent_ops.so
+=========         Host Frame:  [0x155cea] in python3
+=========         Host Frame: _PyObject_MakeTpCall [0x12fe2b] in python3
+=========         Host Frame: _PyEval_EvalFrameDefault [0x13dff4] in python3
+=========         Host Frame:  [0x2158e3] in python3
+=========         Host Frame: PyEval_EvalCode [0x214f46] in python3
+=========         Host Frame:  [0x23554a] in python3
+=========         Host Frame:  [0x2318f3] in python3
+=========         Host Frame:  [0x245e24] in python3
+=========         Host Frame: _PyRun_SimpleFileObject [0x245463] in python3
+=========         Host Frame: _PyRun_AnyFileObject [0x2451f6] in python3
+=========         Host Frame: Py_RunMain [0x23fdc8] in python3
+=========         Host Frame: Py_BytesMain [0x2061cc] in python3
+=========         Host Frame:  [0x29d8f] in libc.so.6
+=========         Host Frame: __libc_start_main [0x29e3f] in libc.so.6
+=========         Host Frame: _start [0x206054] in python3
+=========         Host Frame: <module> in c_kernel_tests.py:47
+========= 
+========= Target application returned an error
+========= ERROR SUMMARY: 32 errors

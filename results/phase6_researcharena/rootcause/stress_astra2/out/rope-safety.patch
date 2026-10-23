@@ -1,0 +1,51 @@
+--- a/kernels/rotary_embedding.cu
++++ b/kernels/rotary_embedding.cu
+@@ -11,6 +11,7 @@
+ #include <cuda_runtime.h>
+ #include <cuda_fp16.h>
+ #include <math.h>
++#include <climits>
+ 
+ template <typename scalar_t>
+ __global__ void rotary_embedding_kernel(
+@@ -19,9 +20,11 @@
+     int seq_len,
+     int num_heads,
+     int head_dim,
+-    float base
++    float base,
++    int total_pairs
+ ) {
+     int idx = blockIdx.x * blockDim.x + threadIdx.x;
++    if (idx >= total_pairs) return;
+     int half_dim = head_dim / 2;
+ 
+     int pair_idx = idx % half_dim;
+@@ -58,7 +61,18 @@
+     torch::Tensor positions,   // [batch, seq_len] int32
+     double base
+ ) {
++    TORCH_CHECK(x.is_cuda() && positions.is_cuda(), "RoPE requires CUDA tensors");
++    TORCH_CHECK(x.device() == positions.device(), "RoPE device mismatch");
++    TORCH_CHECK(x.dim() == 4 && positions.dim() == 2, "RoPE rank mismatch");
++    TORCH_CHECK(positions.scalar_type() == at::kInt, "RoPE positions must be int32");
++    TORCH_CHECK(x.size(3) > 0 && x.size(3) % 2 == 0, "RoPE requires even head_dim");
++    TORCH_CHECK(positions.size(0) == x.size(0) && positions.size(1) == x.size(1),
++                "RoPE positions shape mismatch");
++    TORCH_CHECK(x.numel() <= INT_MAX - 512, "RoPE indexing exceeds int32 range");
++    x = x.contiguous();
++    positions = positions.contiguous();
+     auto output = x.clone();
++    if (x.numel() == 0) return output;
+     int batch = x.size(0);
+     int seq_len = x.size(1);
+     int num_heads = x.size(2);
+@@ -76,7 +90,7 @@
+                 output.data_ptr<scalar_t>(),
+                 positions.data_ptr<int>(),
+                 seq_len, num_heads, head_dim,
+-                static_cast<float>(base)
++                static_cast<float>(base), total_pairs
+             );
+         }
+     );

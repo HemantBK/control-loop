@@ -1,0 +1,15 @@
+========= COMPUTE-SANITIZER
+========= Invalid __global__ write of size 4 bytes
+=========     at canary(int *, int)+0xe0 in sanitizer_canary.cu:3
+=========     by thread (0,0,0) in block (0,0,0)
+=========     Access at 0x71cd67401000 is out of bounds
+=========     and is 1 bytes after the nearest allocation at 0x71cd67400000 of size 4096 bytes
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: main [0x8c5f] in canary
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaDeviceSynchronize.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: main [0x8c64] in canary
+========= 
+========= Target application returned an error
+========= ERROR SUMMARY: 2 errors

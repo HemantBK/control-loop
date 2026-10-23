@@ -1,0 +1,43 @@
+MIN torch=2.10.0+cu128 caching=on prompt='all' n_prompts=8 max_new=32 ops=rope
+MIN_OPS_MODE=rope
+MIN_COMPILE PASS in 58s 
+MIN_STRICT=0
+[bench] Loading tokenizer: TinyLlama/TinyLlama-1.1B-Chat-v1.0 ...
+[bench] Tokenizer loaded (vocab=32000)
+[bench] Loading model: TinyLlama/TinyLlama-1.1B-Chat-v1.0 (dtype=float16) ...
+[bench] Model loaded (1100M params)
+INJECT: agent_ops has functions: ['attention', 'fused_mlp', 'rmsnorm', 'rotary_embedding']
+INJECT: rmsnorm                   SKIPPED (not in agent_ops — function missing or renamed)
+INJECT: rotary_embedding          INJECTED
+INJECT: fused_mlp                 SKIPPED (not in agent_ops — function missing or renamed)
+INJECT: attention                 SKIPPED (not in agent_ops — function missing or renamed)
+MIN_INJECTED {"rmsnorm": false, "rotary_embedding": true, "fused_mlp": false, "attention": false}
+MIN_PROMPT 1/8 T=12 (k RoPE pairs at prefill = 1536, tail threads = 0; at decode 128 pairs, tail 128)
+MIN_GENERATED 1 ids=[1128, 947, 372, 5649, 278, 6030, 310, 3618, 297, 2913, 322, 931, 29973, 1724, 526, 777, 15031, 8324, 310, 445, 6368, 297, 1432, 3250, 2834, 29973, 1128, 947, 372, 29279, 304, 278] text='How does it explain the behavior of objects in space and time? What are some practical applications of this theory in everyday life? How does it relate to the'
+MIN_PROMPT_MATCH 1 yes ref=[1128, 947, 372, 5649, 278, 6030, 310, 3618, 297, 2913, 322, 931, 29973, 1724, 526, 777, 15031, 8324, 310, 445, 6368, 297, 1432, 3250, 2834, 29973, 1128, 947, 372, 29279, 304, 278]
+MIN_PROMPT 2/8 T=14 (k RoPE pairs at prefill = 1792, tail threads = 0; at decode 128 pairs, tail 128)
+MIN_GENERATED 2 ids=[450, 740, 881, 2125, 385, 6043, 302, 408, 1881, 322, 736, 278, 302, 386, 383, 747, 265, 21566, 1353, 29889, 450, 383, 747, 265, 21566, 5665, 338, 3342, 408, 29901, 13, 13] text='The function should take an integer n as input and return the nth Fibonacci number. The Fibonacci sequence is defined as:\n\n'
+MIN_PROMPT_MATCH 2 yes ref=[450, 740, 881, 2125, 385, 6043, 302, 408, 1881, 322, 736, 278, 302, 386, 383, 747, 265, 21566, 1353, 29889, 450, 383, 747, 265, 21566, 5665, 338, 3342, 408, 29901, 13, 13]
+MIN_PROMPT 3/8 T=10 (k RoPE pairs at prefill = 1280, tail threads = 0; at decode 128 pairs, tail 128)
+MIN_GENERATED 3 ids=[1128, 508, 591, 10032, 1749, 22004, 3661, 2158, 322, 1380, 335, 403, 967, 9545, 29973, 1128, 508, 591, 7744, 304, 278, 6480, 23622, 322, 9801, 263, 15075, 475, 519, 5434, 363, 1749] text='How can we reduce our carbon footprint and mitigate its effects? How can we adapt to the changing climate and ensure a sustainable future for our'
+MIN_PROMPT_MATCH 3 yes ref=[1128, 508, 591, 10032, 1749, 22004, 3661, 2158, 322, 1380, 335, 403, 967, 9545, 29973, 1128, 508, 591, 7744, 304, 278, 6480, 23622, 322, 9801, 263, 15075, 475, 519, 5434, 363, 1749]
+MIN_PROMPT 4/8 T=13 (k RoPE pairs at prefill = 1664, tail threads = 128; at decode 128 pairs, tail 128)
+MIN_GENERATED 4 ids=[673, 29901, 9184, 29877, 322, 2739, 2035, 526, 1023, 4123, 658, 874, 515, 1422, 5264, 4413, 1058, 6416, 297, 5360, 15020, 278, 19626, 310, 1009, 13175, 29889, 2688, 526, 1716, 515, 278] text='Answer: Romeo and Juliet are two young lovers from different social classes who fall in love despite the opposition of their families. They are both from the'
+MIN_PROMPT_MATCH 4 yes ref=[673, 29901, 9184, 29877, 322, 2739, 2035, 526, 1023, 4123, 658, 874, 515, 1422, 5264, 4413, 1058, 6416, 297, 5360, 15020, 278, 19626, 310, 1009, 13175, 29889, 2688, 526, 1716, 515, 278]
+MIN_PROMPT 5/8 T=13 (k RoPE pairs at prefill = 1664, tail threads = 128; at decode 128 pairs, tail 128)
+MIN_GENERATED 5 ids=[13, 13, 14448, 29871, 29896, 29901, 12790, 13, 4819, 15788, 948, 26533, 10008, 297, 278, 10122, 310, 3578, 29889, 12790, 5864, 338, 17977, 2580, 491, 521, 5095, 3021, 15114, 29892, 607, 338] text='\n\nStep 1: Light\nPhotosynthesis occurs in the presence of light. Light energy is absorbed by chlorophyll, which is'
+MIN_PROMPT_MATCH 5 yes ref=[13, 13, 14448, 29871, 29896, 29901, 12790, 13, 4819, 15788, 948, 26533, 10008, 297, 278, 10122, 310, 3578, 29889, 12790, 5864, 338, 17977, 2580, 491, 521, 5095, 3021, 15114, 29892, 607, 338]
+MIN_PROMPT 6/8 T=11 (k RoPE pairs at prefill = 1408, tail threads = 128; at decode 128 pairs, tail 128)
+MIN_GENERATED 6 ids=[1128, 437, 896, 1163, 297, 4958, 310, 1009, 12084, 9608, 29879, 322, 22713, 3519, 29973, 12027, 7420, 920, 896, 526, 1304, 297, 3564, 12084, 322, 920, 896, 526, 15201, 491, 3564, 378] text='How do they differ in terms of their communication protocols and transmission methods? Explain how they are used in network communication and how they are affected by network con'
+MIN_PROMPT_MATCH 6 yes ref=[1128, 437, 896, 1163, 297, 4958, 310, 1009, 12084, 9608, 29879, 322, 22713, 3519, 29973, 12027, 7420, 920, 896, 526, 1304, 297, 3564, 12084, 322, 920, 896, 526, 15201, 491, 3564, 378]
+MIN_PROMPT 7/8 T=8 (k RoPE pairs at prefill = 1024, tail threads = 0; at decode 128 pairs, tail 128)
+MIN_GENERATED 7 ids=[13, 29899, 29871, 29896, 29889, 7835, 4056, 338, 263, 4086, 13, 29899, 29871, 29906, 29889, 739, 29915, 29879, 263, 982, 304, 4653, 13, 29899, 29871, 29941, 29889, 739, 29915, 29879, 263, 982] text="\n- 1. Programming is a language\n- 2. It's a way to express\n- 3. It's a way"
+MIN_PROMPT_MATCH 7 yes ref=[13, 29899, 29871, 29896, 29889, 7835, 4056, 338, 263, 4086, 13, 29899, 29871, 29906, 29889, 739, 29915, 29879, 263, 982, 304, 4653, 13, 29899, 29871, 29941, 29889, 739, 29915, 29879, 263, 982]
+MIN_PROMPT 8/8 T=10 (k RoPE pairs at prefill = 1280, tail threads = 0; at decode 128 pairs, tail 128)
+MIN_GENERATED 8 ids=[29871, 29945, 29889, 29941, 29889, 29906, 29889, 29941, 29889, 12027, 7420, 278, 6964, 310, 1250, 7728, 351, 362, 322, 920, 372, 338, 1304, 297, 19677, 14379, 29889, 29871, 29945, 29889, 29941, 29889] text='5.3.2.3. Explain the concept of backpropagation and how it is used in neural networks. 5.3.'
+MIN_PROMPT_MATCH 8 yes ref=[29871, 29945, 29889, 29941, 29889, 29906, 29889, 29941, 29889, 12027, 7420, 278, 6964, 310, 1250, 7728, 351, 362, 322, 920, 372, 338, 1304, 297, 19677, 14379, 29889, 29871, 29945, 29889, 29941, 29889]
+MIN_TEXT_MATCH_C0=yes matched=8/8 tokens_each=32
+MIN_OP_CALLS {"rotary_embedding": 11264}
+MIN_OP_ERRORS {} {}
+MIN_ROPE_CALLS expected=11264 got=11264 errors=0
+MIN_DONE rc=0

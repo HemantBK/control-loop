@@ -16,3 +16,24 @@ dist/
 results/**/task_snapshot/.git/
 # 2026-10-22: Phase 6 episode snapshots carry their own .git (embedded repos); their files are committed as red_team/task_snapshot.tar.gz, the live dirs stay on the pod
 results/phase6_researcharena/**/red_team/task_snapshot/
+
+# 2026-10-24 (owner): not committed. The Phase 6 plan documents (their content is summarised in PLAN Amendments (11) and
+# (16)), the agents' raw prompt/transcript files from the root-cause and fix sessions (they carry those plans), compiled
+# binaries, downloaded web pages, and model weights.
+phases/phase6_researcharena/fix_until_it_runs.md
+phases/phase6_researcharena/rootcause_plan.md
+results/phase6_researcharena/rootcause/*/transcript.jsonl
+results/phase6_researcharena/rootcause/*/messages.json
+results/phase6_researcharena/fixrun/research_*/transcript.jsonl
+results/phase6_researcharena/fixrun/research_*/messages.json
+results/**/preflight/canary
+results/**/out/raw/*.html
+*.so
+*.o
+*.safetensors
+*.bin
+*.pt
+*.pth
+*.ckpt
+*.gguf
+*.onnx

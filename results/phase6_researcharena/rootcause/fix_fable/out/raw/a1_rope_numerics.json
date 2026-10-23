@@ -1,0 +1,240 @@
+{
+ "rope_theta": 10000.0,
+ "prompt_lengths": {
+  "Hello": 2,
+  "Explain the theory of relativity in simple terms.": 12,
+  "Write a Python function to compute the Fibonacci sequence.": 14,
+  "What are the main causes of climate change?": 10,
+  "Summarize the plot of Romeo and Juliet.": 13,
+  "Describe the process of photosynthesis step by step.": 13,
+  "What is the difference between TCP and UDP?": 11,
+  "Write a haiku about programming.": 8,
+  "Explain how a neural network learns.": 10
+ },
+ "launch_table": [
+  {
+   "T": 1,
+   "tensor": "q",
+   "H": 32,
+   "total_pairs": 1024,
+   "blocks": 4,
+   "oob_threads": 0,
+   "bytes_past_end": 0
+  },
+  {
+   "T": 1,
+   "tensor": "k",
+   "H": 4,
+   "total_pairs": 128,
+   "blocks": 1,
+   "oob_threads": 128,
+   "bytes_past_end": 512
+  },
+  {
+   "T": 2,
+   "tensor": "q",
+   "H": 32,
+   "total_pairs": 2048,
+   "blocks": 8,
+   "oob_threads": 0,
+   "bytes_past_end": 0
+  },
+  {
+   "T": 2,
+   "tensor": "k",
+   "H": 4,
+   "total_pairs": 256,
+   "blocks": 1,
+   "oob_threads": 0,
+   "bytes_past_end": 0
+  },
+  {
+   "T": 8,
+   "tensor": "q",
+   "H": 32,
+   "total_pairs": 8192,
+   "blocks": 32,
+   "oob_threads": 0,
+   "bytes_past_end": 0
+  },
+  {
+   "T": 8,
+   "tensor": "k",
+   "H": 4,
+   "total_pairs": 1024,
+   "blocks": 4,
+   "oob_threads": 0,
+   "bytes_past_end": 0
+  },
+  {
+   "T": 10,
+   "tensor": "q",
+   "H": 32,
+   "total_pairs": 10240,
+   "blocks": 40,
+   "oob_threads": 0,
+   "bytes_past_end": 0
+  },
+  {
+   "T": 10,
+   "tensor": "k",
+   "H": 4,
+   "total_pairs": 1280,
+   "blocks": 5,
+   "oob_threads": 0,
+   "bytes_past_end": 0
+  },
+  {
+   "T": 11,
+   "tensor": "q",
+   "H": 32,
+   "total_pairs": 11264,
+   "blocks": 44,
+   "oob_threads": 0,
+   "bytes_past_end": 0
+  },
+  {
+   "T": 11,
+   "tensor": "k",
+   "H": 4,
+   "total_pairs": 1408,
+   "blocks": 6,
+   "oob_threads": 128,
+   "bytes_past_end": 512
+  },
+  {
+   "T": 12,
+   "tensor": "q",
+   "H": 32,
+   "total_pairs": 12288,
+   "blocks": 48,
+   "oob_threads": 0,
+   "bytes_past_end": 0
+  },
+  {
+   "T": 12,
+   "tensor": "k",
+   "H": 4,
+   "total_pairs": 1536,
+   "blocks": 6,
+   "oob_threads": 0,
+   "bytes_past_end": 0
+  },
+  {
+   "T": 13,
+   "tensor": "q",
+   "H": 32,
+   "total_pairs": 13312,
+   "blocks": 52,
+   "oob_threads": 0,
+   "bytes_past_end": 0
+  },
+  {
+   "T": 13,
+   "tensor": "k",
+   "H": 4,
+   "total_pairs": 1664,
+   "blocks": 7,
+   "oob_threads": 128,
+   "bytes_past_end": 512
+  },
+  {
+   "T": 14,
+   "tensor": "q",
+   "H": 32,
+   "total_pairs": 14336,
+   "blocks": 56,
+   "oob_threads": 0,
+   "bytes_past_end": 0
+  },
+  {
+   "T": 14,
+   "tensor": "k",
+   "H": 4,
+   "total_pairs": 1792,
+   "blocks": 7,
+   "oob_threads": 0,
+   "bytes_past_end": 0
+  }
+ ],
+ "numerics": [
+  {
+   "step": "prefill",
+   "T": 12,
+   "real_position_ids": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+   ],
+   "inject_arange_positions": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+   ],
+   "q": {
+    "max_abs_diff_vs_HF": {
+     "stock_kernel_math (arange positions, interleaved pairs) [= Step-B bounds patch]": 6.078125,
+     "real positions, interleaved pairs": 6.078125,
+     "arange positions, rotate_half pairs": 0.00390625,
+     "real positions, rotate_half pairs [= 11ea904 kernel + its inject.py change]": 0.00390625
+    },
+    "ref_abs_max": 6.73046875
+   },
+   "k": {
+    "max_abs_diff_vs_HF": {
+     "stock_kernel_math (arange positions, interleaved pairs) [= Step-B bounds patch]": 12.90234375,
+     "real positions, interleaved pairs": 12.90234375,
+     "arange positions, rotate_half pairs": 0.00390625,
+     "real positions, rotate_half pairs [= 11ea904 kernel + its inject.py change]": 0.00390625
+    },
+    "ref_abs_max": 11.859375
+   }
+  },
+  {
+   "step": "decode1",
+   "T": 1,
+   "real_position_ids": [
+    12
+   ],
+   "inject_arange_positions": [
+    0
+   ],
+   "q": {
+    "max_abs_diff_vs_HF": {
+     "stock_kernel_math (arange positions, interleaved pairs) [= Step-B bounds patch]": 3.38671875,
+     "real positions, interleaved pairs": 3.41015625,
+     "arange positions, rotate_half pairs": 3.38671875,
+     "real positions, rotate_half pairs [= 11ea904 kernel + its inject.py change]": 0.001953125
+    },
+    "ref_abs_max": 5.47265625
+   },
+   "k": {
+    "max_abs_diff_vs_HF": {
+     "stock_kernel_math (arange positions, interleaved pairs) [= Step-B bounds patch]": 4.35546875,
+     "real positions, interleaved pairs": 4.83935546875,
+     "arange positions, rotate_half pairs": 4.35546875,
+     "real positions, rotate_half pairs [= 11ea904 kernel + its inject.py change]": 0.001953125
+    },
+    "ref_abs_max": 9.765625
+   }
+  }
+ ]
+}

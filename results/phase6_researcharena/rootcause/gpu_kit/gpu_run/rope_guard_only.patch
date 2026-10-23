@@ -1,0 +1,25 @@
+--- a/kernels/rotary_embedding.cu
++++ b/kernels/rotary_embedding.cu
+@@ -19,9 +19,11 @@
+     int seq_len,
+     int num_heads,
+     int head_dim,
+-    float base
++    float base,
++    int total_pairs             // PATCH(guard_only): number of valid (batch, seq, head, pair) work items
+ ) {
+     int idx = blockIdx.x * blockDim.x + threadIdx.x;
++    if (idx >= total_pairs) return;   // PATCH(guard_only): the last block is partial whenever total_pairs % 256 != 0
+     int half_dim = head_dim / 2;
+ 
+     int pair_idx = idx % half_dim;
+@@ -76,7 +78,8 @@
+                 output.data_ptr<scalar_t>(),
+                 positions.data_ptr<int>(),
+                 seq_len, num_heads, head_dim,
+-                static_cast<float>(base)
++                static_cast<float>(base),
++                total_pairs
+             );
+         }
+     );

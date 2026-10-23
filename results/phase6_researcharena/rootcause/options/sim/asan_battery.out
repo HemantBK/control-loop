@@ -1,0 +1,25 @@
+## control: stock kernel, TinyLlama shapes
+OVERFLOW [stock] TinyLlama k decode (1 1 4 64): ==72762==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x502000000014 at pc 0x61e08ccd292c bp 0x7ffdd08b2210 sp 0x7ffdd08b2200
+OVERFLOW [stock] TinyLlama k prefill odd T=13 (1 13 4 64): ==72769==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x506000000054 at pc 0x57cfcba4d92c bp 0x7fff3df44510 sp 0x7fff3df44500
+CLEAN    [stock] TinyLlama q decode (1 1 32 64): launch B=1 T=1 H=32 D=64 total_pairs=1024 blocks=4 tail_threads=0
+## option 2: 11ea904 kernel, TinyLlama shapes
+CLEAN    [up] TinyLlama k T=1 (1 1 4 64): launch B=1 T=1 H=4 D=64 total_pairs=128 blocks=1 tail_threads=128
+CLEAN    [up] TinyLlama q T=1 (1 1 32 64): launch B=1 T=1 H=32 D=64 total_pairs=1024 blocks=4 tail_threads=0
+CLEAN    [up] TinyLlama k T=2 (1 2 4 64): launch B=1 T=2 H=4 D=64 total_pairs=256 blocks=1 tail_threads=0
+CLEAN    [up] TinyLlama q T=2 (1 2 32 64): launch B=1 T=2 H=32 D=64 total_pairs=2048 blocks=8 tail_threads=0
+CLEAN    [up] TinyLlama k T=11 (1 11 4 64): launch B=1 T=11 H=4 D=64 total_pairs=1408 blocks=6 tail_threads=128
+CLEAN    [up] TinyLlama q T=11 (1 11 32 64): launch B=1 T=11 H=32 D=64 total_pairs=11264 blocks=44 tail_threads=0
+CLEAN    [up] TinyLlama k T=12 (1 12 4 64): launch B=1 T=12 H=4 D=64 total_pairs=1536 blocks=6 tail_threads=0
+CLEAN    [up] TinyLlama q T=12 (1 12 32 64): launch B=1 T=12 H=32 D=64 total_pairs=12288 blocks=48 tail_threads=0
+CLEAN    [up] TinyLlama k T=13 (1 13 4 64): launch B=1 T=13 H=4 D=64 total_pairs=1664 blocks=7 tail_threads=128
+CLEAN    [up] TinyLlama q T=13 (1 13 32 64): launch B=1 T=13 H=32 D=64 total_pairs=13312 blocks=52 tail_threads=0
+CLEAN    [up] TinyLlama k T=14 (1 14 4 64): launch B=1 T=14 H=4 D=64 total_pairs=1792 blocks=7 tail_threads=0
+CLEAN    [up] TinyLlama q T=14 (1 14 32 64): launch B=1 T=14 H=32 D=64 total_pairs=14336 blocks=56 tail_threads=0
+CLEAN    [up] embedded3 probe shape (2 16 4 64): launch B=2 T=16 H=4 D=64 total_pairs=4096 blocks=16 tail_threads=0
+## option 3: STOCK kernel, no patch, Sheared-LLaMA-1.3B shapes (16 heads x 128, MHA: q and k identical)
+       40 CLEAN    [stock] Sheared q/k T=1 (1 1 16 128): launch B=1 T=1 H=16 D=128 total_pairs=1024 blocks=4 tail_threads=0
+CLEAN    [stock] Sheared q/k T=1 (1 1 16 128): launch B=1 T=1 H=16 D=128 total_pairs=1024 blocks=4 tail_threads=0
+CLEAN    [stock] Sheared q/k T=12 (1 12 16 128): launch B=1 T=12 H=16 D=128 total_pairs=12288 blocks=48 tail_threads=0
+CLEAN    [stock] Sheared q/k T=13 (1 13 16 128): launch B=1 T=13 H=16 D=128 total_pairs=13312 blocks=52 tail_threads=0
+CLEAN    [stock] Sheared q/k T=129 (1 129 16 128): launch B=1 T=129 H=16 D=128 total_pairs=132096 blocks=516 tail_threads=0
+CLEAN    [stock] Sheared q/k T=2049 (1 2049 16 128): launch B=1 T=2049 H=16 D=128 total_pairs=2098176 blocks=8196 tail_threads=0

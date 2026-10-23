@@ -1,0 +1,204 @@
+{
+  "kernel_vs_hf": [
+    {
+      "kernel": "up",
+      "S": 12,
+      "start": 0,
+      "q_max_abs": 0.00151,
+      "k_max_abs": 0.00097
+    },
+    {
+      "kernel": "up",
+      "S": 1,
+      "start": 12,
+      "q_max_abs": 0.00097,
+      "k_max_abs": 0.0009
+    },
+    {
+      "kernel": "up",
+      "S": 1,
+      "start": 40,
+      "q_max_abs": 0.00094,
+      "k_max_abs": 0.00097
+    },
+    {
+      "kernel": "up",
+      "S": 13,
+      "start": 0,
+      "q_max_abs": 0.00098,
+      "k_max_abs": 0.00096
+    },
+    {
+      "kernel": "stock",
+      "S": 12,
+      "start": 0,
+      "q_max_abs": 7.7243,
+      "k_max_abs": 4.80779
+    },
+    {
+      "kernel": "stock",
+      "S": 1,
+      "start": 12,
+      "q_max_abs": 6.11268,
+      "k_max_abs": 5.21443
+    },
+    {
+      "kernel": "stock",
+      "S": 1,
+      "start": 40,
+      "q_max_abs": 6.64915,
+      "k_max_abs": 5.0019
+    },
+    {
+      "kernel": "stock",
+      "S": 13,
+      "start": 0,
+      "q_max_abs": 7.6742,
+      "k_max_abs": 6.39113
+    }
+  ],
+  "embedded3": {
+    "up": {
+      "fp16_rel": 2.3556238162990325e-09,
+      "bf16_rel": 0.0,
+      "FP16_TOL": 0.05,
+      "BF16_DIVERGE": 0.05,
+      "fp16_within_tol": true,
+      "is_landmine": false
+    },
+    "stock": {
+      "fp16_rel": 0.0,
+      "bf16_rel": 0.0,
+      "FP16_TOL": 0.05,
+      "BF16_DIVERGE": 0.05,
+      "fp16_within_tol": true,
+      "is_landmine": false
+    },
+    "up_eval_stock_kernel": {
+      "fp16_rel": 0.590198729588483,
+      "bf16_rel": 0.5901103879876285,
+      "FP16_TOL": 0.05,
+      "BF16_DIVERGE": 0.05,
+      "fp16_within_tol": false,
+      "is_landmine": false
+    }
+  },
+  "e2e": {
+    "option2": {
+      "injected": {
+        "rmsnorm": false,
+        "rotary_embedding": true,
+        "fused_mlp": false,
+        "attention": false
+      },
+      "rope_calls": 11264,
+      "positions_first_calls": [
+        [
+          0,
+          1,
+          2
+        ],
+        [
+          0,
+          1,
+          2
+        ],
+        [
+          0,
+          1,
+          2
+        ],
+        [
+          0,
+          1,
+          2
+        ],
+        [
+          0,
+          1,
+          2
+        ],
+        [
+          0,
+          1,
+          2
+        ]
+      ],
+      "prompts_matching": "8/8",
+      "tokens_each": 32,
+      "first_divergence": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "seconds": 14,
+      "sample_text": "How does it explain the behavior of objects in space and time? What are some"
+    },
+    "stock_contrast": {
+      "injected": {
+        "rmsnorm": false,
+        "rotary_embedding": true,
+        "fused_mlp": false,
+        "attention": false
+      },
+      "rope_calls": 11264,
+      "positions_first_calls": [
+        [
+          0,
+          1,
+          2
+        ],
+        [
+          0,
+          1,
+          2
+        ],
+        [
+          0,
+          1,
+          2
+        ],
+        [
+          0,
+          1,
+          2
+        ],
+        [
+          0,
+          1,
+          2
+        ],
+        [
+          0,
+          1,
+          2
+        ]
+      ],
+      "prompts_matching": "0/8",
+      "tokens_each": 32,
+      "first_divergence": [
+        0,
+        2,
+        0,
+        0,
+        1,
+        0,
+        1,
+        0
+      ],
+      "seconds": 41,
+      "sample_text": "\n\n\n\n\n\n\n\n\n\n\n\n\n<| |"
+    }
+  },
+  "versions": {
+    "torch": "2.10.0+cu128",
+    "transformers": "4.53.3",
+    "model": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+    "revision": "fe8a4ea1ffedaf415f4da2f062534de366a451e6"
+  }
+}

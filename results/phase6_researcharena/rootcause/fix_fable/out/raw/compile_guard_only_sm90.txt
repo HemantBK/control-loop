@@ -1,0 +1,19 @@
+nvcc: Build cuda_12.9.r12.9/compiler.36037853_0
+OK   attention.cu (0 warnings)
+OK   fused_mlp.cu (0 warnings)
+OK   rmsnorm.cu (0 warnings)
+OK   rotary_embedding.cu (0 warnings)
+OK   bindings.cpp
+OK   link (587408 bytes)
+OK   no unresolved agent_*/kernel symbols (Python/torch symbols resolve at import)
+RESULT: COMPILE_OK
+=== starter_kernels/rotary_embedding.cu (guard-only) with the stock other three
+nvcc: Build cuda_12.9.r12.9/compiler.36037853_0
+OK   attention.cu (0 warnings)
+OK   fused_mlp.cu (0 warnings)
+OK   rmsnorm.cu (0 warnings)
+OK   rotary_embedding.cu (3 warnings)
+OK   bindings.cpp
+OK   link (587408 bytes)
+OK   no unresolved agent_*/kernel symbols (Python/torch symbols resolve at import)
+RESULT: COMPILE_OK

@@ -1,0 +1,90 @@
+[2026-10-23T11:06:16Z +0s] run_arms start: arms=preflight OUT_DIR=/workspace/rootcause ARCH_LIST=9.0 T_C0=600 T_C2=900 T_CS=300 T_C2S=900 T_PRE=420
+[2026-10-23T11:06:17Z +1s] === arm preflight start (inner timeout 420s, outer limit 480s)
+NVIDIA H100 80GB HBM3, 0 MiB
+GATE preflight PASS: torch/transformers/model/patches present | sanitizer=ok canary=flags-known-OOB parser=ok-on-real-canary-output
+[2026-10-23T11:06:31Z +15s] === arm preflight end
+[2026-10-23T11:06:31Z +15s] RUN_DONE total=15s
+[2026-10-23T11:06:37Z +0s] run_arms start: arms=C0 OUT_DIR=/workspace/rootcause ARCH_LIST=9.0 T_C0=600 T_C2=900 T_CS=300 T_C2S=900 T_PRE=420
+[2026-10-23T11:06:37Z +0s] === arm C0 start (inner timeout 600s, outer limit 660s)
+NVIDIA H100 80GB HBM3, 0 MiB
+GATE C0 FAIL: no C0_BASELINE_TPS>=20 / C0_DONE line | tps=None rc=1
+[2026-10-23T11:06:51Z +14s] === arm C0 end
+[2026-10-23T11:06:51Z +14s] RUN_DONE total=14s
+[2026-10-23T11:06:58Z +0s] run_arms start: arms=C1s OUT_DIR=/workspace/rootcause ARCH_LIST=9.0 T_C0=600 T_C2=900 T_CS=300 T_C2S=900 T_PRE=420
+[2026-10-23T11:06:58Z +0s] === arm C1s start (inner timeout 900s, outer limit 960s)
+NVIDIA H100 80GB HBM3, 0 MiB
+GATE C1s FAIL: stock bench.sh neither crashed with a CUDA error nor completed (timeout/other failure): rule A cannot pass | rc=1 prompt8=False
+[2026-10-23T11:08:42Z +104s] === arm C1s end
+[2026-10-23T11:08:42Z +104s] RUN_DONE total=104s
+[2026-10-23T11:08:58Z +0s] run_arms start: arms=C2 OUT_DIR=/workspace/rootcause ARCH_LIST=9.0 T_C0=600 T_C2=900 T_CS=300 T_C2S=900 T_PRE=420
+[2026-10-23T11:08:58Z +0s] === arm C2 start (inner timeout 900s, outer limit 960s)
+NVIDIA H100 80GB HBM3, 0 MiB
+GATE C2 FAIL: bench.sh did not complete | rc=1 agent_tps=None rope_active=False prompt8=False
+[2026-10-23T11:10:44Z +106s] === arm C2 end
+[2026-10-23T11:10:44Z +106s] RUN_DONE total=106s
+[2026-10-23T11:10:51Z +0s] run_arms start: arms=C2s OUT_DIR=/workspace/rootcause ARCH_LIST=9.0 T_C0=600 T_C2=900 T_CS=300 T_C2S=900 T_PRE=420
+[2026-10-23T11:10:51Z +0s] === arm C2s start (inner timeout 900s, outer limit 960s)
+NVIDIA H100 80GB HBM3, 0 MiB
+GATE C2s FAIL: patched RoPE did not run on every launch (exception -> inject.py fell back to PyTorch) or run incomplete | rope_calls=None rope_errors=None op_calls=None op_errors=None text_matches_C0=None rc=1
+[2026-10-23T11:12:40Z +109s] === arm C2s end
+[2026-10-23T11:12:40Z +109s] RUN_DONE total=109s
+[2026-10-23T11:12:47Z +0s] run_arms start: arms=C1r OUT_DIR=/workspace/rootcause ARCH_LIST=9.0 T_C0=600 T_C2=900 T_CS=300 T_C2S=900 T_PRE=420
+[2026-10-23T11:12:47Z +0s] === arm C1r start (inner timeout 300s, outer limit 360s)
+NVIDIA H100 80GB HBM3, 0 MiB
+GATE C1r PASS: memcheck flags an invalid access in rotary_embedding_kernel | kernel=rotary_embedding_kernel what="Invalid __global__ read of size 4 bytes" src_line=34 thread=128,0,0 block=0,0,0 bytes_after_alloc=1 alloc_size=4 n_errors=568 all_kernels_with_invalid_access=rotary_embedding_kernel strict_op=None rc=3 rope_first=True predicted_line_thread=True
+[2026-10-23T11:14:37Z +110s] === arm C1r end
+[2026-10-23T11:14:37Z +110s] RUN_DONE total=110s
+[2026-10-23T11:14:45Z +0s] run_arms start: arms=C1a OUT_DIR=/workspace/rootcause ARCH_LIST=9.0 T_C0=600 T_C2=900 T_CS=300 T_C2S=900 T_PRE=420
+[2026-10-23T11:14:45Z +0s] === arm C1a start (inner timeout 300s, outer limit 360s)
+NVIDIA H100 80GB HBM3, 0 MiB
+GATE C1a UNDECIDED: 0 sanitizer errors and no crash: the fault did not reproduce under the tool | n_errors=0 rc=1
+[2026-10-23T11:16:35Z +110s] === arm C1a end
+[2026-10-23T11:16:35Z +110s] RUN_DONE total=110s
+[2026-10-23T11:16:42Z +0s] run_arms start: arms=C1c OUT_DIR=/workspace/rootcause ARCH_LIST=9.0 T_C0=600 T_C2=900 T_CS=300 T_C2S=900 T_PRE=420
+[2026-10-23T11:16:42Z +0s] === arm C1c start (inner timeout 900s, outer limit 960s)
+NVIDIA H100 80GB HBM3, 0 MiB
+GATE C1c UNDECIDED: run incomplete | rc=1
+[2026-10-23T11:18:29Z +107s] === arm C1c end
+[2026-10-23T11:18:29Z +107s] RUN_DONE total=107s
+[2026-10-23T11:18:35Z +0s] run_arms start: arms=C2cs OUT_DIR=/workspace/rootcause ARCH_LIST=9.0 T_C0=600 T_C2=900 T_CS=300 T_C2S=900 T_PRE=420
+[2026-10-23T11:18:35Z +0s] === arm C2cs start (inner timeout 600s, outer limit 660s)
+NVIDIA H100 80GB HBM3, 0 MiB
+GATE C2cs FAIL: 11ea904 RoPE did not run on every launch (fallback) or a run is incomplete | rope_only_ran=False rope_only_crashed=False rope_only_match=None rope_only_matched=None rope_only_tokens=None rope_only_calls=None all_ops_ran=False all_ops_crashed=False all_ops_match=None all_ops_matched=None all_ops_tokens=None all_ops_calls=None rc=1
+[2026-10-23T11:21:54Z +199s] === arm C2cs end
+[2026-10-23T11:21:54Z +199s] RUN_DONE total=199s
+[2026-10-23T11:22:00Z +0s] run_arms start: arms=C2c OUT_DIR=/workspace/rootcause ARCH_LIST=9.0 T_C0=600 T_C2=900 T_CS=300 T_C2S=900 T_PRE=420
+[2026-10-23T11:22:00Z +0s] === arm C2c start (inner timeout 900s, outer limit 960s)
+NVIDIA H100 80GB HBM3, 0 MiB
+GATE C2c FAIL: bench.sh did not complete | rc=1 agent_tps=None rope_active=False prompt8=False
+[2026-10-23T11:23:43Z +103s] === arm C2c end
+[2026-10-23T11:23:43Z +103s] RUN_DONE total=103s
+[2026-10-23T11:23:49Z +0s] run_arms start: arms=C2cr OUT_DIR=/workspace/rootcause ARCH_LIST=9.0 T_C0=600 T_C2=900 T_CS=300 T_C2S=900 T_PRE=420
+[2026-10-23T11:23:49Z +0s] === arm C2cr start (inner timeout 300s, outer limit 360s)
+NVIDIA H100 80GB HBM3, 0 MiB
+GATE C2cr PASS: memory clean; numerics match the reference | numerics=PASS cases=15/15 memcheck=clean rc=0
+[2026-10-23T11:25:32Z +103s] === arm C2cr end
+[2026-10-23T11:25:32Z +103s] RUN_DONE total=103s
+[2026-10-23T11:25:38Z +0s] run_arms start: arms=C2r OUT_DIR=/workspace/rootcause ARCH_LIST=9.0 T_C0=600 T_C2=900 T_CS=300 T_C2S=900 T_PRE=420
+[2026-10-23T11:25:38Z +0s] === arm C2r start (inner timeout 300s, outer limit 360s)
+NVIDIA H100 80GB HBM3, 0 MiB
+GATE C2r PASS: memory clean (numerics reported, expected FAIL for stock arithmetic) | numerics=FAIL cases=0/15 memcheck=clean rc=3
+[2026-10-23T11:27:27Z +109s] === arm C2r end
+[2026-10-23T11:27:27Z +109s] RUN_DONE total=109s
+[2026-10-23T11:27:33Z +0s] run_arms start: arms=C2a OUT_DIR=/workspace/rootcause ARCH_LIST=9.0 T_C0=600 T_C2=900 T_CS=300 T_C2S=900 T_PRE=420
+[2026-10-23T11:27:33Z +0s] === arm C2a start (inner timeout 300s, outer limit 360s)
+NVIDIA H100 80GB HBM3, 0 MiB
+GATE C2a PASS: memory clean (numerics reported, expected FAIL for stock arithmetic) | numerics=FAIL cases=18/22 memcheck=clean rc=3
+[2026-10-23T11:29:20Z +107s] === arm C2a end
+[2026-10-23T11:29:20Z +107s] RUN_DONE total=107s
+[2026-10-23T11:29:27Z +0s] run_arms start: arms=C3a OUT_DIR=/workspace/rootcause ARCH_LIST=9.0 T_C0=600 T_C2=900 T_CS=300 T_C2S=900 T_PRE=420
+[2026-10-23T11:29:27Z +0s] === arm C3a start (inner timeout 300s, outer limit 360s)
+NVIDIA H100 80GB HBM3, 0 MiB
+GATE C3a PASS: memory clean; numerics match the reference | numerics=PASS cases=22/22 memcheck=clean rc=0
+[2026-10-23T11:31:15Z +108s] === arm C3a end
+[2026-10-23T11:31:15Z +108s] RUN_DONE total=108s
+[2026-10-23T11:31:22Z +0s] run_arms start: arms=C3s OUT_DIR=/workspace/rootcause ARCH_LIST=9.0 T_C0=600 T_C2=900 T_CS=300 T_C2S=900 T_PRE=420
+[2026-10-23T11:31:22Z +0s] === arm C3s start (inner timeout 300s, outer limit 360s)
+NVIDIA H100 80GB HBM3, 0 MiB
+GATE C3s FAIL: patched RoPE did not run on every launch (exception -> inject.py fell back to PyTorch) or run incomplete | rope_calls=None rope_errors=None op_calls=None op_errors=None text_matches_C0=None rc=1
+[2026-10-23T11:33:11Z +109s] === arm C3s end
+[2026-10-23T11:33:11Z +109s] RUN_DONE total=109s

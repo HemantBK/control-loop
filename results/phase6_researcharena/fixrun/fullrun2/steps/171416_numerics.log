@@ -1,0 +1,20 @@
+'=== kernels attention rc=0 | KT_COMPILE PASS in 162s  ATTENTION_NUMERIC_PASS passed=22/22  | ========= ERROR SUMMARY: 0 errors
+=== kernels rope rc=3 | KT_COMPILE PASS in 160s  ROPE_NUMERIC_FAIL passed=0/15  | ========= ERROR SUMMARY: 0 errors
+ROPE_CASE torch.float16 [1, 1, 4, 64] False maxabs 4.4644
+ROPE_CASE torch.float16 [1, 1, 32, 64] False maxabs 6.1136
+ROPE_CASE torch.float16 [1, 12, 4, 64] False maxabs 5.6259
+ROPE_CASE torch.float16 [1, 13, 4, 64] False maxabs 7.8050
+ROPE_CASE torch.float16 [2, 3, 4, 64] False maxabs 5.1954
+ROPE_CASE torch.bfloat16 [1, 1, 4, 64] False maxabs 4.1058
+=== starter_kernels attention rc=1 | KT_COMPILE PASS in 163s   | ========= ERROR SUMMARY: 32 errors
+ATTENTION_CASE 1 False EXCEPTION AcceleratorError("CUDA error: unspecified launch failure\nSearch for `cudaErrorLaunchFailure'"'"' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.\nCUDA ker
+=== starter_kernels rope rc=3 | KT_COMPILE PASS in 159s  ROPE_NUMERIC_FAIL passed=0/15  | ========= ERROR SUMMARY: 0 errors
+ROPE_CASE torch.float16 [1, 1, 4, 64] False maxabs 4.4644
+ROPE_CASE torch.float16 [1, 1, 32, 64] False maxabs 6.1136
+ROPE_CASE torch.float16 [1, 12, 4, 64] False maxabs 5.6259
+ROPE_CASE torch.float16 [1, 13, 4, 64] False maxabs 7.8050
+ROPE_CASE torch.float16 [2, 3, 4, 64] False maxabs 5.1954
+ROPE_CASE torch.bfloat16 [1, 1, 4, 64] False maxabs 4.1058
+
+--- stderr ---
+'

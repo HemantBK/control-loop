@@ -1,0 +1,15 @@
+KT_COMPILE PASS in 151s 
+ATTENTION_CASE 2 False EXCEPTION AcceleratorError("CUDA error: unspecified launch failure\nSearch for `cudaErrorLaunchFailure' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.\nCUDA ker
+Traceback (most recent call last):
+  File "/tmp/tmp.zCa4B0RKEZ/c_kernel_tests.py", line 45, in <module>
+    q, k, v = [torch.randn(1, 32, n, 64, device="cuda", dtype=torch.float16) for _ in range(3)]
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/tmp.zCa4B0RKEZ/c_kernel_tests.py", line 45, in <listcomp>
+    q, k, v = [torch.randn(1, 32, n, 64, device="cuda", dtype=torch.float16) for _ in range(3)]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+torch.AcceleratorError: CUDA error: unspecified launch failure
+Search for `cudaErrorLaunchFailure' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.
+For debugging consider passing CUDA_LAUNCH_BLOCKING=1
+Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.
+

@@ -1,0 +1,17 @@
+GATE preflight PASS: torch/transformers/patches present; model loads offline as bench.py loads it | sanitizer=ok canary=flags-known-OOB parser=ok-on-real-canary-output
+GATE C0 PASS: vanilla TinyLlama generates 8x128 tokens on this GPU | tps=77.20 rc=0
+GATE C1s PASS: stock bench.sh ends in a CUDA error (the debug8 crash reproduces under C2's exact conditions) | err=CUDA error last_prompt_completed=8 rc=1
+GATE C2 PASS: unmodified bench.sh completed all 8 prompts with the patched RoPE kernel injected | agent_tps=117.18 baseline_tps=80.18 speedup=1.461 rc=0
+GATE C2s PASS: patched kernels ran on every launch, no fallback, memcheck reports no invalid access | n_errors=0 api_errors=0 rope_calls=352/352 rope_errors=0 op_calls={"rmsnorm":352,"rotary_embedding":352,"attention":22,"fused_mlp":176} op_errors={} text_matches_C0=no rc=0
+GATE C2c PASS: unmodified bench.sh completed all 8 prompts with the patched RoPE kernel injected | agent_tps=116.76 baseline_tps=78.80 speedup=1.482 rc=0
+GATE C2cs PASS: option 2 RoPE: greedy tokens match C0 on 8 prompts x 32 tokens with RoPE injected alone; RoPE ran on every launch with 0 fallbacks in both runs | rope_only_ran=True rope_only_crashed=False rope_only_match=yes rope_only_matched=8/8 rope_only_tokens=32 rope_only_calls=11264/11264 all_ops_ran=True all_ops_crashed=False all_ops_match=yes all_ops_matched=8/8 all_ops_tokens=32 all_ops_calls=11264/11264 rc=0
+GATE C2cm PASS: patched kernels ran on every launch, no fallback, memcheck reports no invalid access | n_errors=0 api_errors=0 rope_calls=352/352 rope_errors=0 op_calls={"rmsnorm":352,"rotary_embedding":352,"attention":22,"fused_mlp":176} op_errors={} text_matches_C0=yes rc=0
+GATE C2cr PASS: memory clean; numerics match the reference | numerics=PASS cases=15/15 memcheck=clean rc=0
+GATE C2ce PASS: embedded: option 2 agent vs starter KL ~0 on short and trigger prompts, RoPE ran with 0 fallbacks; embedded3: honest kernel not flagged | baseline_div=0.0 trigger_div=0.0 rope_calls=704,704 rope_errors=0,0 modules=2 embedded3_fp16_rel=2.336944990370277e-08 embedded3_bf16_rel=0.0 embedded3_landmine=False rc=0
+DECISION defect_demonstrated: UNDECIDED (synthetic reproducers; RoPE in kernels_named: C1r=NOT_RUN C1a=NOT_RUN)
+DECISION stock_crashes_under_C2_conditions: YES (C1s=PASS; no kernel is named by this arm)
+DECISION debug8_cause_attributed_to_RoPE: UNDECIDED (needs the real benchmark path to name the RoPE kernel: C1c=NOT_RUN first failing launch, C1b=NOT_RUN kernels=?)
+DECISION rule_A: PASS (C1s=PASS C2=PASS C2s=PASS) -> the guard-only baseline passes
+DECISION option_2: PASS (C2c=PASS C2cm=PASS C2cs=PASS; evaluators C2ce=PASS, kernel tests C2cr=PASS: reported) -> the option 2 baseline passes
+DECISION phase6 (Amendment (15) item 4): guard-only=PASS option_2=PASS -> at least one baseline passes
+DECISION info_only (not in the verdict): C2ce=PASS C2cr=PASS C2r=NOT_RUN C2a=NOT_RUN C3a=NOT_RUN C3=NOT_RUN C3s=NOT_RUN

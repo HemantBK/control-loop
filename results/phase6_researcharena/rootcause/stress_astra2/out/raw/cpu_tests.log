@@ -1,0 +1,13 @@
+SAVED_A1 0 q pairs 12288 threads 12288 OOB 0
+SAVED_A1 0 k pairs 1536 threads 1536 OOB 0
+SAVED_A1 1 q pairs 1024 threads 1024 OOB 0
+SAVED_A1 1 k pairs 128 threads 256 OOB 256
+SAVED_A1 2 q pairs 1024 threads 1024 OOB 0
+SAVED_A1 2 k pairs 128 threads 256 OOB 256
+CPU_BOUNDS_PASS cases=144
+CPU_ATTENTION_WARPS_PASS lengths=1..4096
+SEMANTIC_DIFFERENCE 0 adjacent_vs_half_maxabs 0.0 decode_reset_vs_hf_maxabs 0.0
+SEMANTIC_DIFFERENCE 1 adjacent_vs_half_maxabs 2.83235502243042 decode_reset_vs_hf_maxabs 2.4986953735351562
+SEMANTIC_DIFFERENCE 12 adjacent_vs_half_maxabs 4.019786834716797 decode_reset_vs_hf_maxabs 3.5654377937316895
+SEMANTIC_DIFFERENCE 13 adjacent_vs_half_maxabs 3.9531569480895996 decode_reset_vs_hf_maxabs 3.5359959602355957
+CPU_TEST_PASS; no GPU correctness claim

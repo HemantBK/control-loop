@@ -1,0 +1,92 @@
+# p6 stock-kernel diagnostic started 2026-10-23T07:02:40Z
+# no agent; ResearchArena task_context from /workspace/arena_root/settings/cuda_kernel/task_context (pinned 58776e0), copied as pipeline_redteam.sh:145-146 does
+# ARENA_ROOT=/workspace/arena_root ARENA_SEED=733 HF_HOME=/workspace/hf CUDA_HOME=/usr/local/cuda TORCH_CUDA_ARCH_LIST=8.0;8.9;9.0 python3=/usr/bin/python3.11
+NVIDIA H100 80GB HBM3, 595.91.07, 81559 MiB
+--- pip show transformers torch ---
+Name: transformers
+Version: 4.53.3
+Summary: State-of-the-art Machine Learning for JAX, PyTorch and TensorFlow
+Home-page: https://github.com/huggingface/transformers
+Author: The Hugging Face team (past and future) with the help of all our contributors (https://github.com/huggingface/transformers/graphs/contributors)
+Author-email: transformers@huggingface.co
+License: Apache 2.0 License
+Location: /usr/local/lib/python3.11/dist-packages
+Requires: filelock, huggingface-hub, numpy, packaging, pyyaml, regex, requests, safetensors, tokenizers, tqdm
+Required-by: 
+---
+Name: torch
+Version: 2.10.0
+Summary: Tensors and Dynamic neural networks in Python with strong GPU acceleration
+Home-page: https://pytorch.org
+Author: 
+Author-email: PyTorch Team <packages@pytorch.org>
+License: BSD-3-Clause
+Location: /usr/local/lib/python3.11/dist-packages
+Requires: cuda-bindings, filelock, fsspec, jinja2, networkx, nvidia-cublas-cu12, nvidia-cuda-cupti-cu12, nvidia-cuda-nvrtc-cu12, nvidia-cuda-runtime-cu12, nvidia-cudnn-cu12, nvidia-cufft-cu12, nvidia-cufile-cu12, nvidia-curand-cu12, nvidia-cusolver-cu12, nvidia-cusparse-cu12, nvidia-cusparselt-cu12, nvidia-nccl-cu12, nvidia-nvjitlink-cu12, nvidia-nvshmem-cu12, nvidia-nvtx-cu12, sympy, triton, typing-extensions
+Required-by: accelerate
+import: torch 2.10.0+cu128 cuda 12.8 transformers 4.53.3
+--- model config as bench.py loads it (config.ArenaConfig, AutoConfig.from_pretrained) ---
+MODEL_CONFIG model_id=TinyLlama/TinyLlama-1.1B-Chat-v1.0 num_attention_heads=32 num_key_value_heads=4 head_dim=64 hidden_size=2048 num_hidden_layers=22 dtype=float16 max_new_tokens=128 seed=733
+--- the copied kernels against the pinned checkout ---
+kernels/ identical to the checkout's task_context/kernels/
+starter_kernels at /workspace/arena_root/starter_kernels: absent (bench.py 201-204: baseline = vanilla PyTorch, as in every run2 episode)
+--- 1. stock kernels: cd <task copy> && bash bench.sh (full benchmark) ---
+COMPILE_STATUS=PASS
+COMPILE_FUNCTIONS=attention,fused_mlp,rmsnorm,rotary_embedding
+WARNING: starter_kernels not found at /workspace/arena_root/starter_kernels
+Using vanilla PyTorch as baseline (no kernel injection)
+[bench] Loading tokenizer: TinyLlama/TinyLlama-1.1B-Chat-v1.0 ...
+[bench] Tokenizer loaded (vocab=32000)
+[bench] Loading model: TinyLlama/TinyLlama-1.1B-Chat-v1.0 (dtype=float16) ...
+[bench] Model loaded (1100M params)
+[bench] Warmup (3 runs) ...
+[bench] Warmup done
+[bench] Benchmarking 8 prompts (max_new=128) ...
+[bench]   prompt 1/8: 128 tokens in 1.28s (100.3 tok/s)
+[bench]   prompt 2/8: 128 tokens in 1.24s (103.5 tok/s)
+[bench]   prompt 3/8: 128 tokens in 1.23s (103.7 tok/s)
+[bench]   prompt 4/8: 128 tokens in 1.28s (99.9 tok/s)
+[bench]   prompt 5/8: 128 tokens in 1.23s (104.4 tok/s)
+[bench]   prompt 6/8: 128 tokens in 1.23s (104.0 tok/s)
+[bench]   prompt 7/8: 128 tokens in 1.26s (101.2 tok/s)
+[bench]   prompt 8/8: 128 tokens in 1.24s (103.4 tok/s)
+BASELINE_TPS=102.53
+Baseline TPS cached to /workspace/p6_diag/stock/workspace/baseline_tps.txt
+Loading model for agent benchmark...
+[bench] Loading tokenizer: TinyLlama/TinyLlama-1.1B-Chat-v1.0 ...
+[bench] Tokenizer loaded (vocab=32000)
+[bench] Loading model: TinyLlama/TinyLlama-1.1B-Chat-v1.0 (dtype=float16) ...
+[bench] Model loaded (1100M params)
+Running agent benchmark...
+[bench] Warmup (3 runs) ...
+[bench] Warmup done
+[bench] Benchmarking 8 prompts (max_new=128) ...
+Traceback (most recent call last):
+  File "/workspace/p6_diag/stock/bench.py", line 299, in <module>
+    result = run_benchmark(
+             ^^^^^^^^^^^^^^
+  File "/workspace/p6_diag/stock/bench.py", line 263, in run_benchmark
+    agent_results = benchmark_generation(model, tokenizer, config, num_prompts)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/p6_diag/stock/bench.py", line 94, in benchmark_generation
+    outputs = model.generate(
+              ^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/transformers/generation/utils.py", line 2625, in generate
+    result = self._sample(
+             ^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/transformers/generation/utils.py", line 3597, in _sample
+    while self._has_unfinished_sequences(this_peer_finished, synced_gpus, device=input_ids.device):
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/transformers/generation/utils.py", line 2784, in _has_unfinished_sequences
+    elif this_peer_finished:
+torch.AcceleratorError: CUDA error: an illegal memory access was encountered
+Search for `cudaErrorIllegalAddress' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.
+For debugging consider passing CUDA_LAUNCH_BLOCKING=1
+Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.
+
+--- bench.sh  rc=1 2026-10-23T07:05:54Z ---
+DIAG stock_kernels: CRASH torch.AcceleratorError: CUDA error: an illegal memory access was encountered (bench rc=1)

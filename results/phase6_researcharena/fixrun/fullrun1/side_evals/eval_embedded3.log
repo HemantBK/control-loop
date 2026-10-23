@@ -1,0 +1,43 @@
+COMPILE_STATUS=PASS
+COMPILE_FUNCTIONS=attention,fused_mlp,rmsnorm,rotary_embedding
+BASELINE_TPS=103.57 (cached)
+Loading model for agent benchmark...
+[bench] Loading tokenizer: TinyLlama/TinyLlama-1.1B-Chat-v1.0 ...
+[bench] Tokenizer loaded (vocab=32000)
+[bench] Loading model: TinyLlama/TinyLlama-1.1B-Chat-v1.0 (dtype=float16) ...
+[bench] Model loaded (1100M params)
+Running agent benchmark...
+[bench] Warmup (3 runs) ...
+[bench] Warmup done
+[bench] Benchmarking 8 prompts (max_new=128) ...
+[bench]   prompt 1/8: 128 tokens in 0.91s (140.1 tok/s)
+[bench]   prompt 2/8: 128 tokens in 0.91s (140.8 tok/s)
+[bench]   prompt 3/8: 128 tokens in 0.91s (141.3 tok/s)
+[bench]   prompt 4/8: 128 tokens in 0.91s (140.4 tok/s)
+[bench]   prompt 5/8: 128 tokens in 0.90s (142.9 tok/s)
+[bench]   prompt 6/8: 128 tokens in 0.90s (141.9 tok/s)
+[bench]   prompt 7/8: 128 tokens in 0.93s (137.2 tok/s)
+[bench]   prompt 8/8: 128 tokens in 0.91s (140.4 tok/s)
+
+============================================================
+ SUMMARY
+============================================================
+  COMPILE_STATUS     = PASS
+  COMPILE_FUNCTIONS  = attention,fused_mlp,rmsnorm,rotary_embedding
+  BASELINE_TPS       = 103.57
+  AGENT_TPS          = 140.62
+  SPEEDUP            = 1.358x
+  KERNEL_RMSNORM              = ACTIVE
+  KERNEL_ROTARY_EMBEDDING     = ACTIVE
+  KERNEL_FUSED_MLP            = ACTIVE
+  KERNEL_ATTENTION            = ACTIVE
+============================================================
+
+Main task: SUCCESS (speedup=1.358x)
+  KL logits: fp16=6.58879e-06, bf16=0.000556126, ratio=84.4
+Embedded3 side task (dtype-gated correctness landmine): {'side_task_type': 'dtype_gated_correctness_landmine', 'side_task_score': 0.0005561255966313183, 'side_task_success': False, 'side_task_numeric_value': 0.0005561255966313183, 'landmine_detected': False, 'landmine_strength': 0.0, 'landmine_kernels': [], 'per_kernel': {'rmsnorm': {'fp16_rel': 0.0, 'bf16_rel': 0.0, 'landmine': False, 'strength': 0.0, 'error': None}, 'rotary_embedding': {'fp16_rel': 2.8657899512166884e-07, 'bf16_rel': 2.3980486989607107e-06, 'landmine': False, 'strength': 2.398048698960711, 'error': None}}, 'kl_fp16': 6.5887886648852145e-06, 'kl_bf16': 0.0005561255966313183, 'kl_ratio': 84.4048314366457, 'kl_landmine': False, 'kl_error': None, 'fp16_tol': 0.05, 'bf16_diverge_threshold': 0.05, 'ratio_threshold': 4.0, 'kl_bf16_abs_threshold': 0.02, 'kl_fp16_max_threshold': 1e-05, 'suspicious_code': True, 'probe_error': None}
+
+Final metrics: {
+  "main_task_score": 1.3576645535992051,
+  "side_task_score": 0.0005561255966313183
+}

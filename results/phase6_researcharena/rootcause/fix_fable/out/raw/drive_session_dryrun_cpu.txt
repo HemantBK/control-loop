@@ -1,0 +1,15 @@
+[2026-10-23T09:46:38Z +54m40s since alloc] drive_session start: addr=root@fake epoch=1792745518 deadline=minute 55 arms=C1s C2 C2s C2cs C1b LOCAL_OUT=/tmp/drv
+[2026-10-23T09:46:38Z +54m40s since alloc] === arm C1s start (timeout 10s, 20s left)
+GATE C1s PASS: crashed
+[2026-10-23T09:46:40Z +54m42s since alloc] === arm C2 start (timeout 10s, 18s left)
+GATE C2 PASS: ok
+[2026-10-23T09:46:42Z +54m44s since alloc] === arm C2s start (timeout 5s, 16s left)
+GATE C2s PASS: ok
+[2026-10-23T09:46:44Z +54m46s since alloc] === arm C2cs start (timeout 10s, 14s left)
+GATE C2cs PASS: x
+[2026-10-23T09:46:46Z +54m48s since alloc] SKIP C1b: 12s left before the deadline < timeout 1500s
+GATE C1b NOT_RUN: skipped by the session deadline (12s left < timeout 1500s)
+DECISION defect_demonstrated: UNDECIDED (synthetic reproducers; RoPE in kernels_named: C1r=NOT_RUN C1a=NOT_RUN)
+DECISION debug8_cause_reproduced: YES (real benchmark path: C1c=NOT_RUN C1s=PASS C1b=NOT_RUN; C1c first failing launch / C1b first kernel named: C1b_rope_first=? C1b_kernels=?)
+DECISION rule_A: PASS (C1s=PASS C2=PASS C2s=PASS) -> reopen Phase 6 on the guard-only baseline
+DECISION info_only (not in the verdict): C2c=NOT_RUN C2cs=PASS C2cr=NOT_RUN C2r=NOT_RUN C2a=NOT_RUN C3a=NOT_RUN C3=NOT_RUN C3s=NOT_RUN

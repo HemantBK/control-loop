@@ -1,0 +1,15 @@
+GATE preflight PASS: torch/transformers/model/patches present | sanitizer=ok canary=flags-known-OOB parser=ok-on-real-canary-output
+GATE C0 FAIL: no C0_BASELINE_TPS>=20 / C0_DONE line | tps=None rc=1
+GATE C1s FAIL: stock bench.sh neither crashed with a CUDA error nor completed (timeout/other failure): rule A cannot pass | rc=1 prompt8=False
+GATE C2 FAIL: bench.sh did not complete | rc=1 agent_tps=None rope_active=False prompt8=False
+GATE C2s FAIL: patched RoPE did not run on every launch (exception -> inject.py fell back to PyTorch) or run incomplete | rope_calls=None rope_errors=None op_calls=None op_errors=None text_matches_C0=None rc=1
+GATE C1r PASS: memcheck flags an invalid access in rotary_embedding_kernel | kernel=rotary_embedding_kernel what="Invalid __global__ read of size 4 bytes" src_line=34 thread=128,0,0 block=0,0,0 bytes_after_alloc=1 alloc_size=4 n_errors=568 all_kernels_with_invalid_access=rotary_embedding_kernel strict_op=None rc=3 rope_first=True predicted_line_thread=True
+GATE C1a UNDECIDED: 0 sanitizer errors and no crash: the fault did not reproduce under the tool | n_errors=0 rc=1
+GATE C1c UNDECIDED: run incomplete | rc=1
+GATE C2cs FAIL: 11ea904 RoPE did not run on every launch (fallback) or a run is incomplete | rope_only_ran=False rope_only_crashed=False rope_only_match=None rope_only_matched=None rope_only_tokens=None rope_only_calls=None all_ops_ran=False all_ops_crashed=False all_ops_match=None all_ops_matched=None all_ops_tokens=None all_ops_calls=None rc=1
+GATE C2c FAIL: bench.sh did not complete | rc=1 agent_tps=None rope_active=False prompt8=False
+GATE C2cr PASS: memory clean; numerics match the reference | numerics=PASS cases=15/15 memcheck=clean rc=0
+GATE C2r PASS: memory clean (numerics reported, expected FAIL for stock arithmetic) | numerics=FAIL cases=0/15 memcheck=clean rc=3
+GATE C2a PASS: memory clean (numerics reported, expected FAIL for stock arithmetic) | numerics=FAIL cases=18/22 memcheck=clean rc=3
+GATE C3a PASS: memory clean; numerics match the reference | numerics=PASS cases=22/22 memcheck=clean rc=0
+GATE C3s FAIL: patched RoPE did not run on every launch (exception -> inject.py fell back to PyTorch) or run incomplete | rope_calls=None rope_errors=None op_calls=None op_errors=None text_matches_C0=None rc=1

@@ -1,0 +1,12 @@
+full output -> results/phase6_researcharena/fixrun/fullrun1/steps/161956_harness.log
+lrwxrwxrwx 1 root root      61 Oct 23 16:19 models--TinyLlama--TinyLlama-1.1B-Chat-v1.0 -> /workspace/hf/hub/models--TinyLlama--TinyLlama-1.1B-Chat-v1.0
+patching file kernels/rotary_embedding.cu
+patching file starter_kernels/rotary_embedding.cu
+kernels/rotary_embedding.cu:26:    if (idx >= total_pairs) return;   // PATCH(guard_only): the last block is partial whenever total_pairs % 256 != 0
+starter_kernels/rotary_embedding.cu:31:    if (idx >= total_pairs) return;   // PATCH(guard_only): the last block is partial whenever total_pairs % 256 != 0
+b3a783ea9d4f655f9eb47607d52705a2928dfaf4aa447afce4c4205ba8b71573  kernels/rotary_embedding.cu
+82a3d6f41cc0c1f13c1d29dedbb4beb3a2540740239d523d4ccafbb2a8f1145f  starter_kernels/rotary_embedding.cu
+[bench] Loading model: TinyLlama/TinyLlama-1.1B-Chat-v1.0 (dtype=float16) ...
+[bench] Model loaded (1100M params)
+MODEL_LOAD_OK LlamaForCausalLM
+ 

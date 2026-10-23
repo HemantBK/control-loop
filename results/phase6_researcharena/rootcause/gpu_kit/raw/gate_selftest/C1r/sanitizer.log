@@ -1,0 +1,10 @@
+========= COMPUTE-SANITIZER
+========= Invalid __global__ read of size 4 bytes
+=========     at 0x90 in /tmp/arena_build_777/rotary_embedding.cu:34:void rotary_embedding_kernel<c10::Half>(c10::Half *, const int *, int, int, int, float)
+=========     by thread (128,0,0) in block (0,0,0)
+=========     Address 0x7f1200000204 is out of bounds
+=========     and is 1 bytes after the nearest allocation at 0x7f1200000200 of size 4 bytes
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: [0x12345] in libcuda.so.1
+=========
+========= ERROR SUMMARY: 256 errors

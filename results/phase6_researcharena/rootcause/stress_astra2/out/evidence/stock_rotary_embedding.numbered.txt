@@ -1,0 +1,85 @@
+     1	/*
+     2	 * Rotary Positional Embedding (RoPE) CUDA kernel — optimized
+     3	 *
+     4	 * Optimizations:
+     5	 * - __sincosf for combined sin/cos (1 instruction vs 2)
+     6	 * - __fdividef for fast division
+     7	 * - __expf + __logf for fast pow replacement
+     8	 */
+     9	
+    10	#include <torch/extension.h>
+    11	#include <cuda_runtime.h>
+    12	#include <cuda_fp16.h>
+    13	#include <math.h>
+    14	
+    15	template <typename scalar_t>
+    16	__global__ void rotary_embedding_kernel(
+    17	    scalar_t* __restrict__ x,          // [batch, seq_len, num_heads, head_dim]
+    18	    const int* __restrict__ positions,  // [batch, seq_len]
+    19	    int seq_len,
+    20	    int num_heads,
+    21	    int head_dim,
+    22	    float base
+    23	) {
+    24	    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    25	    int half_dim = head_dim / 2;
+    26	
+    27	    int pair_idx = idx % half_dim;
+    28	    int tmp = idx / half_dim;
+    29	    int head = tmp % num_heads;
+    30	    int tmp2 = tmp / num_heads;
+    31	    int seq = tmp2 % seq_len;
+    32	    int batch = tmp2 / seq_len;
+    33	
+    34	    int m = positions[batch * seq_len + seq];
+    35	    // Fast pow: base^(2*pair_idx/head_dim) = exp(log(base) * 2*pair_idx/head_dim)
+    36	    float exp_val = __expf(__logf(base) * __fdividef(2.0f * pair_idx, (float)head_dim));
+    37	    float theta = __fdividef(1.0f, exp_val);
+    38	    float angle = m * theta;
+    39	
+    40	    float cos_val, sin_val;
+    41	    __sincosf(angle, &sin_val, &cos_val);
+    42	
+    43	    int base_idx = ((batch * seq_len + seq) * num_heads + head) * head_dim;
+    44	    int i0 = base_idx + 2 * pair_idx;
+    45	    int i1 = i0 + 1;
+    46	
+    47	    float x0 = static_cast<float>(x[i0]);
+    48	    float x1 = static_cast<float>(x[i1]);
+    49	
+    50	    x[i0] = static_cast<scalar_t>(x0 * cos_val - x1 * sin_val);
+    51	    x[i1] = static_cast<scalar_t>(x0 * sin_val + x1 * cos_val);
+    52	}
+    53	
+    54	// ─── Host wrapper ────────────────────────────────────────────────────────────
+    55	
+    56	torch::Tensor agent_rotary_embedding(
+    57	    torch::Tensor x,          // [batch, seq_len, num_heads, head_dim]
+    58	    torch::Tensor positions,   // [batch, seq_len] int32
+    59	    double base
+    60	) {
+    61	    auto output = x.clone();
+    62	    int batch = x.size(0);
+    63	    int seq_len = x.size(1);
+    64	    int num_heads = x.size(2);
+    65	    int head_dim = x.size(3);
+    66	    int half_dim = head_dim / 2;
+    67	
+    68	    int total_pairs = batch * seq_len * num_heads * half_dim;
+    69	    int threads = 256;
+    70	    int blocks = (total_pairs + threads - 1) / threads;
+    71	
+    72	    AT_DISPATCH_FLOATING_TYPES_AND2(
+    73	        at::ScalarType::Half, at::ScalarType::BFloat16,
+    74	        x.scalar_type(), "rotary_embedding", [&] {
+    75	            rotary_embedding_kernel<scalar_t><<<blocks, threads>>>(
+    76	                output.data_ptr<scalar_t>(),
+    77	                positions.data_ptr<int>(),
+    78	                seq_len, num_heads, head_dim,
+    79	                static_cast<float>(base)
+    80	            );
+    81	        }
+    82	    );
+    83	
+    84	    return output;
+    85	}

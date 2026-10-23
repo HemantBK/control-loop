@@ -1,0 +1,220 @@
+     1	"""
+     2	inject.py — Monkey-patch agent-compiled CUDA kernels into a HuggingFace model.
+     3	
+     4	Traverses the model's layers and replaces standard PyTorch operations with
+     5	the agent's compiled CUDA kernels where available.
+     6	
+     7	Each replacement is guarded: if a kernel wasn't compiled or doesn't exist
+     8	in the agent_ops module, the original operation is left untouched.
+     9	"""
+    10	
+    11	import torch
+    12	import types
+    13	import traceback
+    14	from typing import Optional
+    15	
+    16	
+    17	def _has(agent_ops, name: str) -> bool:
+    18	    return hasattr(agent_ops, name)
+    19	
+    20	
+    21	def inject_agent_kernels(model, agent_ops, verbose: bool = False) -> dict:
+    22	    """
+    23	    Replace model operations with agent kernels.
+    24	
+    25	    Returns a dict summarising what was injected:
+    26	        {"rmsnorm": True, "rotary_embedding": False, ...}
+    27	    """
+    28	    injected = {
+    29	        "rmsnorm": False,
+    30	        "rotary_embedding": False,
+    31	        "fused_mlp": False,
+    32	        "attention": False,
+    33	    }
+    34	
+    35	    # ── Detect model architecture ─────────────────────────────────────────
+    36	    # Support LLaMA / Mistral / TinyLlama style models
+    37	    if hasattr(model, "model") and hasattr(model.model, "layers"):
+    38	        layers = model.model.layers
+    39	    elif hasattr(model, "transformer") and hasattr(model.transformer, "h"):
+    40	        layers = model.transformer.h
+    41	    else:
+    42	        if verbose:
+    43	            print("INJECT: Unknown model architecture, skipping injection")
+    44	        return injected
+    45	
+    46	    # Log available functions in agent_ops
+    47	    available = [f for f in dir(agent_ops) if not f.startswith("_")]
+    48	    if verbose:
+    49	        print(f"INJECT: agent_ops has functions: {available}")
+    50	
+    51	    for i, layer in enumerate(layers):
+    52	        # ── RMSNorm ───────────────────────────────────────────────────────
+    53	        if _has(agent_ops, "rmsnorm"):
+    54	            for norm_name in ["input_layernorm", "post_attention_layernorm"]:
+    55	                norm = getattr(layer, norm_name, None)
+    56	                if norm is not None and hasattr(norm, "weight"):
+    57	                    eps = getattr(norm, "variance_epsilon", getattr(norm, "eps", 1e-6))
+    58	                    weight = norm.weight
+    59	
+    60	                    def make_rmsnorm_fn(w, e, ops):
+    61	                        def fn(hidden_states):
+    62	                            orig_shape = hidden_states.shape
+    63	                            flat = hidden_states.view(-1, orig_shape[-1])
+    64	                            out = ops.rmsnorm(flat, w, float(e))
+    65	                            return out.view(orig_shape)
+    66	                        return fn
+    67	
+    68	                    norm.forward = make_rmsnorm_fn(weight, eps, agent_ops)
+    69	                    injected["rmsnorm"] = True
+    70	
+    71	        # ── Fused MLP ────────────────────────────────────────────────────
+    72	        if _has(agent_ops, "fused_mlp"):
+    73	            mlp = getattr(layer, "mlp", None)
+    74	            if mlp is not None:
+    75	                gate_proj = getattr(mlp, "gate_proj", None)
+    76	                up_proj = getattr(mlp, "up_proj", None)
+    77	                down_proj = getattr(mlp, "down_proj", None)
+    78	
+    79	                if gate_proj is not None and up_proj is not None and down_proj is not None:
+    80	                    def make_mlp_fn(gp, up, dp, ops):
+    81	                        def fn(x):
+    82	                            orig_shape = x.shape
+    83	                            flat = x.view(-1, orig_shape[-1])
+    84	                            fused = ops.fused_mlp(flat, gp.weight, up.weight)
+    85	                            # Apply down projection with standard matmul
+    86	                            out = torch.nn.functional.linear(fused, dp.weight)
+    87	                            return out.view(*orig_shape[:-1], -1)
+    88	                        return fn
+    89	
+    90	                    mlp.forward = make_mlp_fn(gate_proj, up_proj, down_proj, agent_ops)
+    91	                    injected["fused_mlp"] = True
+    92	
+    93	        # ── Attention ─────────────────────────────────────────────────────
+    94	        if _has(agent_ops, "attention"):
+    95	            attn = getattr(layer, "self_attn", None)
+    96	            if attn is not None:
+    97	                # We inject a custom scaled_dot_product that uses agent's kernel
+    98	                original_forward = attn.forward
+    99	
+   100	                def make_attn_fn(attn_module, ops, orig_forward):
+   101	                    def fn(*args, **kwargs):
+   102	                        # We patch torch.nn.functional.scaled_dot_product_attention
+   103	                        # for the duration of this forward call
+   104	                        import torch.nn.functional as F
+   105	                        original_sdpa = F.scaled_dot_product_attention
+   106	
+   107	                        def agent_sdpa(query, key, value, attn_mask=None,
+   108	                                       dropout_p=0.0, is_causal=False, scale=None,
+   109	                                       **kwargs):
+   110	                            # Fall back to native sdpa during autoregressive generation
+   111	                            # where Q has seq_len=1 but K/V have full cached seq_len.
+   112	                            if query.size(-2) != key.size(-2):
+   113	                                return original_sdpa(query, key, value,
+   114	                                                     attn_mask=attn_mask,
+   115	                                                     dropout_p=dropout_p,
+   116	                                                     is_causal=is_causal,
+   117	                                                     scale=scale,
+   118	                                                     **kwargs)
+   119	                            try:
+   120	                                q = query.contiguous()
+   121	                                k = key.contiguous()
+   122	                                v = value.contiguous()
+   123	                                return ops.attention(q, k, v, is_causal)
+   124	                            except Exception:
+   125	                                return original_sdpa(query, key, value,
+   126	                                                     attn_mask=attn_mask,
+   127	                                                     dropout_p=dropout_p,
+   128	                                                     is_causal=is_causal,
+   129	                                                     scale=scale,
+   130	                                                     **kwargs)
+   131	
+   132	                        F.scaled_dot_product_attention = agent_sdpa
+   133	                        try:
+   134	                            result = orig_forward(*args, **kwargs)
+   135	                        finally:
+   136	                            F.scaled_dot_product_attention = original_sdpa
+   137	                        return result
+   138	                    return fn
+   139	
+   140	                attn.forward = make_attn_fn(attn, agent_ops, original_forward)
+   141	                injected["attention"] = True
+   142	
+   143	        # ── Rotary Embedding ──────────────────────────────────────────────
+   144	        # In newer transformers, RoPE is applied via apply_rotary_pos_emb()
+   145	        # at module level. We patch it once (on first layer).
+   146	        if _has(agent_ops, "rotary_embedding") and not injected["rotary_embedding"]:
+   147	            try:
+   148	                import transformers.models.llama.modeling_llama as llama_mod
+   149	                original_apply_rope = llama_mod.apply_rotary_pos_emb
+   150	
+   151	                rope_base = 10000.0
+   152	                if hasattr(model, "config"):
+   153	                    rope_base = getattr(model.config, "rope_theta", 10000.0)
+   154	
+   155	                def make_agent_apply_rope(ops, orig_fn, base):
+   156	                    def agent_apply_rotary_pos_emb(q, k, cos, sin, unsqueeze_dim=1):
+   157	                        try:
+   158	                            batch, seq_len = q.shape[0], q.shape[2]
+   159	                            positions = torch.arange(
+   160	                                seq_len, device=q.device, dtype=torch.int32
+   161	                            ).unsqueeze(0).expand(batch, -1)
+   162	                            q_t = q.permute(0, 2, 1, 3).contiguous()
+   163	                            k_t = k.permute(0, 2, 1, 3).contiguous()
+   164	                            q_out = ops.rotary_embedding(q_t, positions, float(base))
+   165	                            k_out = ops.rotary_embedding(k_t, positions, float(base))
+   166	                            return (q_out.permute(0, 2, 1, 3),
+   167	                                    k_out.permute(0, 2, 1, 3))
+   168	                        except Exception:
+   169	                            return orig_fn(q, k, cos, sin, unsqueeze_dim)
+   170	                    return agent_apply_rotary_pos_emb
+   171	
+   172	                llama_mod.apply_rotary_pos_emb = make_agent_apply_rope(
+   173	                    agent_ops, original_apply_rope, rope_base)
+   174	                injected["rotary_embedding"] = True
+   175	            except (ImportError, AttributeError):
+   176	                pass
+   177	
+   178	    if verbose:
+   179	        # Report injection status with reasons for skips
+   180	        for k, v in injected.items():
+   181	            if v:
+   182	                print(f"INJECT: {k:25s} INJECTED")
+   183	            elif not _has(agent_ops, k):
+   184	                print(f"INJECT: {k:25s} SKIPPED (not in agent_ops — function missing or renamed)")
+   185	            else:
+   186	                reasons = []
+   187	                if k == "rmsnorm":
+   188	                    reasons.append("no input_layernorm found on model layers")
+   189	                elif k == "fused_mlp":
+   190	                    mlp = getattr(layers[0], "mlp", None) if layers else None
+   191	                    if mlp is None:
+   192	                        reasons.append("no mlp attribute on layer")
+   193	                    else:
+   194	                        for attr in ["gate_proj", "up_proj", "down_proj"]:
+   195	                            if not hasattr(mlp, attr):
+   196	                                reasons.append(f"mlp missing {attr}")
+   197	                elif k == "attention":
+   198	                    attn = getattr(layers[0], "self_attn", None) if layers else None
+   199	                    if attn is None:
+   200	                        reasons.append("no self_attn attribute on layer")
+   201	                elif k == "rotary_embedding":
+   202	                    attn = getattr(layers[0], "self_attn", None) if layers else None
+   203	                    if attn is None:
+   204	                        reasons.append("no self_attn on layer")
+   205	                    elif not hasattr(attn, "rotary_emb"):
+   206	                        reasons.append("self_attn has no rotary_emb attribute")
+   207	
+   208	                reason_str = "; ".join(reasons) if reasons else "injection test failed"
+   209	                print(f"INJECT: {k:25s} SKIPPED ({reason_str})")
+   210	
+   211	    return injected
+   212	
+   213	
+   214	def restore_model(model):
+   215	    """
+   216	    Reload the model from scratch to remove all monkey-patches.
+   217	    This is the cleanest way — rather than trying to undo patches.
+   218	    """
+   219	    # Caller should just reload the model
+   220	    pass

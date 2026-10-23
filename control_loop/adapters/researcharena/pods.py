@@ -10,7 +10,11 @@ seed, experiment, cluster_id, payload_file, env_names, argv()):
 1. create k pods with the §10.7 single-H100 command (`runpodctl pod create ... --wait --wait-timeout 20m`, one per
    episode, in parallel, names `p6-<cell>-<round>-e<k>`); if fewer than k come up within the deadline the remaining
    episodes run serially on the pods obtained (logged); never more than MAX_PODS pods exist at once;
-2. per pod over SSH: `pod_setup.sh` streamed on stdin (unless `cfg.baked_template`; with `cfg.template_id`, the
+2. per pod, first a container readiness gate (`runpodctl pod get` every 10 s until uptimeSeconds > 0 and the ssh port
+   is published, ip:port refreshed from it, within create_deadline_s of the create call; Amendment 2026-10-23 (7)), then
+   an SSH readiness probe (`ssh ... true`, ConnectTimeout 15, every 10 s, two successes in a row, up
+   to 180 s; Amendment 2026-10-23 (6) item 3), a driver check (`nvidia-smi`; max CUDA below cfg.min_cuda is a setup
+   failure, `DriverTooOld`, not counted as an attempt; Amendment (7)), the code push (retried once after an ssh transport failure), then over SSH: `pod_setup.sh` streamed on stdin (unless `cfg.baked_template`; with `cfg.template_id`, the
    prebuilt Phase 6 image's template, it still runs and skips steps 1-6 itself), then the round's payload is
    written and `run_redteam.sh` started under nohup; every `cfg.poll_s` seconds the eval dir is rsynced (partial
    logs survive a lost pod); the episode is finished when `<eval dir>/eval/metrics.json` exists;
@@ -22,7 +26,10 @@ seed, experiment, cluster_id, payload_file, env_names, argv()):
    then n-1, invalid under V1; the caller reads `launch.json`);
 5. every create and delete is appended to `pods_log` (default `out_root/pods.jsonl`): time, event, pod id, name,
    GPU type, data center, episode id, hourly rate, seconds billed, $; run.jsonl in `out_root` gets the steps
-   pod_create / setup / episode / collect / pod_delete (GPU $ on pod_delete), through `log` (SOP §3).
+   pod_create / container_ready / ssh_ready / driver_check / push_repo / setup / episode / collect / pod_delete (GPU $
+   on pod_delete), through `log`
+   (SOP §3); a setup failure (SSH, push or pod_setup.sh) first saves `runpodctl pod get` (env values dropped) and
+   container diagnostics into `out_root/pods/<id>/diagnostics.txt` (step `diagnostics`), then the pod is deleted.
 
 Cleanup is idempotent: whatever raises, every pod this launch created is deleted (and `runpodctl pod list` is
 reconciled by name) before `LaunchError(msg, partial)` is raised with the eval dirs collected so far.
@@ -95,6 +102,34 @@ class LaunchError(RuntimeError):
         self.partial = list(partial or [])
 
 
+class DriverTooOld(RuntimeError):
+    """The pod's NVIDIA driver supports a CUDA version below cfg.min_cuda (or `nvidia-smi` gave none): a setup failure
+    that is not counted as an attempt (owner, 2026-10-23; PLAN Amendment 2026-10-23 (7))."""
+
+
+DRIVER_NOT_COUNTED = "not counted as an attempt (owner 2026-10-23)"
+
+
+def cuda_tuple(v: str) -> tuple[int, ...] | None:
+    """'12.9' -> (12, 9); compared numerically, so '12.10' > '12.9'. None if not of the form N[.N...]."""
+    m = re.fullmatch(r"\s*(\d+(?:\.\d+)*)\s*", str(v or ""))
+    return tuple(int(x) for x in m.group(1).split(".")) if m else None
+
+
+def parse_nvidia_smi(query_out: str, smi_out: str) -> dict:
+    """`nvidia-smi --query-gpu=name,driver_version --format=csv,noheader` and plain `nvidia-smi` output ->
+    {gpu, driver, cuda} (None where absent). cuda is the 'CUDA Version: X.Y' of the header: the highest CUDA version the
+    driver supports."""
+    gpu = driver = None
+    for ln in (query_out or "").splitlines():
+        parts = [p.strip() for p in ln.split(",")]
+        if len(parts) >= 2 and parts[0] and re.match(r"^\d+(\.\d+)+$", parts[1]):
+            gpu, driver = parts[0], parts[1]
+            break
+    m = re.search(r"CUDA Version\s*:\s*(\d+\.\d+)", smi_out or "")
+    return dict(gpu=gpu, driver=driver, cuda=m.group(1) if m else None)
+
+
 @dataclass
 class PodConfig:
     image: str = IMAGE
@@ -138,6 +173,18 @@ class PodConfig:
     # "" = latest (pod_setup.sh step 2). Before this, an exported OPENCODE_VERSION never reached the pods.
     opencode_version: str = field(default_factory=lambda: os.environ.get("OPENCODE_VERSION", ""))
     unreachable_polls: int = 3                  # consecutive failed ssh polls before the pod counts as lost
+    jobs_dir: str = "/workspace/jobs"           # detached remote steps (owner 2026-10-23, item 4): files per job
+    job_poll_s: float = 15.0                    # poll interval once a detached job has run 21 s
+    # PLAN Amendment 2026-10-23 (6) item 3 (smoke5 council): SSH readiness before the code push, one push retry
+    ssh_ready_timeout_s: float = 180.0          # poll `ssh ... true` for up to this long after pod_create
+    ssh_ready_interval_s: float = 10.0          # between probes
+    ssh_ready_needed: int = 2                   # consecutive successes before setup proceeds
+    ssh_ready_connect_timeout_s: int = 15       # ConnectTimeout of each probe
+    push_retry_wait_s: float = 15.0             # wait before the one push retry after an ssh transport failure
+    # PLAN Amendment 2026-10-23 (7) (smoke6b; owner's ruling): `runpodctl pod get` is polled after pod_create until the
+    # container is up (uptimeSeconds > 0) and the ssh mapping is published (ssh.ip and ssh.port, no ssh.error); bounded by
+    # create_deadline_s counted from the create call. Only then does the ssh_ready window start.
+    container_ready_interval_s: float = 10.0
     remote_collect: tuple = REMOTE_COLLECT
     sleep: Callable[[float], None] = field(default=time.sleep, repr=False)
     now: Callable[[], float] = field(default=time.time, repr=False)
@@ -157,6 +204,7 @@ class PodInfo:
     episode_id: str | None = None
     deleted: bool = False
     setup_done: bool = False
+    create_called_at: float | None = None       # cfg.now() at the create call (the container_ready deadline's origin)
 
 
 def _utc(ts: float | None = None) -> str:
@@ -256,6 +304,46 @@ def ssh_base(pod: PodInfo, cfg: PodConfig) -> list[str]:
             "-o", "ServerAliveInterval=30", "-p", str(pod.port), f"root@{pod.ip}"]
 
 
+def probe_argv(pod: PodInfo, cfg: PodConfig, cmd: str = "true") -> list[str]:
+    """`ssh_base` with ConnectTimeout cfg.ssh_ready_connect_timeout_s (the readiness probe, Amendment 2026-10-23 (6))."""
+    base = ssh_base(pod, cfg)
+    i = base.index("ConnectTimeout=20")
+    base[i] = f"ConnectTimeout={cfg.ssh_ready_connect_timeout_s}"
+    return base + [cmd]
+
+
+# Container diagnostics saved before a pod that failed setup is deleted (no journalctl in a RunPod container); every
+# command may fail without failing the script.
+DIAG_ON_FAILURE_CMD = (
+    "echo '== ps -ef | head -50'; ps -ef 2>&1 | head -50; "
+    "echo '== ls -la /workspace'; ls -la /workspace 2>&1; "
+    "echo '== ss -tlnp'; (ss -tlnp 2>&1 || netstat -tlnp 2>&1); "
+    "echo '== sshd'; ps -ef 2>&1 | grep '[s]shd'; "
+    "for f in /var/log/*; do [ -f \"$f\" ] && { echo \"== tail -100 $f\"; tail -100 \"$f\" 2>&1; }; done; true")
+
+
+def redact_pod_json(obj: Any) -> Any:
+    """`runpodctl pod get` JSON with every env value dropped (names kept): any key named env/envs/environment."""
+    if isinstance(obj, dict):
+        out = {}
+        for k, v in obj.items():
+            if str(k).lower() in ("env", "envs", "environment"):
+                if isinstance(v, dict):
+                    out[k] = {str(n): REDACTED for n in v}
+                elif isinstance(v, list):
+                    out[k] = [(str(x).split("=", 1)[0] + "=" + REDACTED) if isinstance(x, str)
+                              else (dict(key=x.get("key") or x.get("name"), value=REDACTED) if isinstance(x, dict) else REDACTED)
+                              for x in v]
+                else:
+                    out[k] = REDACTED
+            else:
+                out[k] = redact_pod_json(v)
+        return out
+    if isinstance(obj, list):
+        return [redact_pod_json(x) for x in obj]
+    return obj
+
+
 def rsync_argv(pod: PodInfo, remote: str, local: Path, cfg: PodConfig, single_file: bool = False) -> list[str]:
     e = shlex.join(ssh_base(pod, cfg)[:-1])    # everything but the host
     src = f"root@{pod.ip}:{remote}" + ("" if single_file else "/")
@@ -300,6 +388,43 @@ def start_cmd(spec: Any, cfg: PodConfig) -> str:
             f"< /dev/null & echo $!")
 
 
+# Owner, 2026-10-23 (item 4, after fullrun2's post step lost its ssh connection with rc=255 while its script ran on):
+# every remote step runs detached. `_Launch.ssh` writes the command (base64) and its stdin to cfg.jobs_dir, starts it
+# under `setsid nohup` with stdout/stderr/exit code in files there, returns at once, and then polls with short ssh
+# calls that tolerate dropped connections. The job's files stay on the pod (<name>.cmd/.in/.out/.err/.rc/.pid).
+JOB_MARK = ": p6job"     # first token of every launch command (the test shim keys on it)
+
+
+def job_launch_cmd(name: str, cmd: str, jobs_dir: str) -> str:
+    """One ssh command: stage <name>.cmd (from base64) and <name>.in (this ssh session's stdin), then start
+    `bash <name>.cmd < <name>.in` under setsid nohup with its output in files; prints the job's pid. Only the
+    setsid job is backgrounded (`;`-separated list, then `cmd &`), so the ssh session returns at once."""
+    b64 = base64.b64encode(cmd.encode("utf-8")).decode("ascii")
+    d, n = shlex.quote(jobs_dir), name
+    inner = (f"bash {n}.cmd < {n}.in > {n}.out 2> {n}.err; echo $? > {n}.rc.tmp; mv {n}.rc.tmp {n}.rc")
+    return (f"{JOB_MARK} {n} {b64}; mkdir -p {d} && cd {d} || exit 1; rm -f {n}.rc {n}.rc.tmp {n}.out {n}.err {n}.pid; "
+            f"printf %s {b64} | base64 -d > {n}.cmd; cat > {n}.in; "
+            f"setsid nohup bash -c {shlex.quote(inner)} > /dev/null 2>&1 < /dev/null & echo $! > {n}.pid; cat {n}.pid")
+
+
+def job_poll_cmd(name: str, jobs_dir: str) -> str:
+    """Prints `RC <n>` once the job has exited, else `RUNNING`, or `GONE` when the process is dead without an rc."""
+    d, n = shlex.quote(jobs_dir), name
+    return (f"cd {d} 2>/dev/null || {{ echo NOJOB; exit 0; }}; if [ -f {n}.rc ]; then echo RC $(cat {n}.rc); "
+            f"elif [ -f {n}.pid ] && kill -0 $(cat {n}.pid) 2>/dev/null; then echo RUNNING; "
+            f"elif [ -f {n}.pid ]; then sleep 2; [ -f {n}.rc ] && echo RC $(cat {n}.rc) || echo GONE; else echo NOJOB; fi")
+
+
+def job_kill_cmd(name: str, jobs_dir: str) -> str:
+    """setsid made the job's pid its process-group id: TERM the whole group, KILL it 10 s later."""
+    d, n = shlex.quote(jobs_dir), name
+    return (f"cd {d} && p=$(cat {n}.pid 2>/dev/null) && [ -n \"$p\" ] && "
+            f"{{ kill -TERM -- -$p 2>/dev/null; sleep 10; kill -KILL -- -$p 2>/dev/null; true; }}")
+
+
+JOB_POLL_DELAYS_S = (1, 2, 3, 5, 10)   # then every cfg.job_poll_s
+
+
 def find_cmd(spec: Any, cfg: PodConfig) -> str:
     """The eval dir ends in `_c<cluster_id>` (CORE_NOTES §2; pipeline_redteam.sh 79-92)."""
     return f"ls -d {shlex.quote(episode_remote_out(spec, cfg))}/*_c{shlex.quote(spec.cluster_id)} 2>/dev/null | head -1"
@@ -314,6 +439,33 @@ def setup_env_prefix(cfg: PodConfig, spec: Any | None = None) -> str:
 
 
 # --- the launch --------------------------------------------------------------------------------------------------
+
+def ssh_ready_text(ph: PodInfo, cfg: PodConfig) -> str:
+    """The dry-run line of the readiness probe and the setup-failure handling (Amendment 2026-10-23 (6) item 3)."""
+    return (shlex.join(probe_argv(ph, cfg)) + f"   (every {cfg.ssh_ready_interval_s:.0f} s until {cfg.ssh_ready_needed} in a row, "
+            f"up to {cfg.ssh_ready_timeout_s:.0f} s, else setup failure; push retried once after {cfg.push_retry_wait_s:.0f} s "
+            "and a re-probe on an ssh transport failure; on any setup failure `runpodctl pod get` (env dropped) and container "
+            "diagnostics -> pods/<pod-id>/diagnostics.txt before the pod is deleted)")
+
+
+def container_ready_text(cfg: PodConfig) -> str:
+    """The dry-run line of the container readiness gate (Amendment 2026-10-23 (7))."""
+    return (f"runpodctl pod get <pod-id> -o json   (every {cfg.container_ready_interval_s:.0f} s until uptimeSeconds > 0 and "
+            f"ssh has ip and port and no error; ip:port refreshed from it; up to {cfg.create_deadline_s} s from the create "
+            "call, else setup failure with diagnostics and deletion; the ssh_ready window starts only after this)")
+
+
+DRIVER_QUERY_CMD = "nvidia-smi --query-gpu=name,driver_version --format=csv,noheader"
+DRIVER_SEP = "== nvidia-smi"
+DRIVER_CHECK_CMD = f"{DRIVER_QUERY_CMD} 2>&1; echo '{DRIVER_SEP}'; nvidia-smi 2>&1"
+
+
+def driver_check_text(ph: PodInfo, cfg: PodConfig) -> str:
+    """The dry-run line of the driver check (Amendment 2026-10-23 (7))."""
+    return (shlex.join(ssh_base(ph, cfg) + [DRIVER_CHECK_CMD]) + f"   (raw output -> pods/<pod-id>/nvidia_smi.txt; gpu, driver "
+            f"and max CUDA version logged; max CUDA below {cfg.min_cuda} or unparsed: setup failure 'driver below "
+            f"{cfg.min_cuda}: {DRIVER_NOT_COUNTED}', diagnostics, pod deleted; before the code push and pod_setup.sh)")
+
 
 class _Launch:
     def __init__(self, specs: Sequence[Any], out_root: Path, log: Callable, cfg: PodConfig, dests: list[Path],
@@ -357,8 +509,76 @@ class _Launch:
         except FileNotFoundError as e:
             return subprocess.CompletedProcess(argv, 127, "", str(e))
 
-    def ssh(self, pod: PodInfo, cmd: str, timeout: float | None = None, stdin: str | None = None) -> subprocess.CompletedProcess:
+    def ssh_query(self, pod: PodInfo, cmd: str, timeout: float | None = None, stdin: str | None = None) -> subprocess.CompletedProcess:
+        """One attached ssh call. Only for short read-only queries (probes, `ls`, `kill -0`, job polls) and for
+        starting an already-detached job; every step that does work goes through `ssh` (detached)."""
         return self.run(ssh_base(pod, self.cfg) + [cmd], timeout or self.cfg.ssh_timeout_s, stdin)
+
+    _job_seq = 0
+    _job_lock = threading.Lock()
+
+    def ssh(self, pod: PodInfo, cmd: str, timeout: float | None = None, stdin: str | None = None) -> subprocess.CompletedProcess:
+        """Run `cmd` on the pod as a detached job (setsid nohup; stdout, stderr and exit code in files under
+        cfg.jobs_dir) and wait for it with short polls, so a dropped connection costs a poll, not the step. Returns
+        a CompletedProcess like an attached call: the job's exit code, stdout and stderr. 124 = `timeout` passed (the
+        job's process group is then killed); 255 = the job could not be started or its result never became
+        readable (ssh down for the whole wait); 137 = the job's process vanished without an exit code."""
+        c = self.cfg
+        timeout = float(timeout or c.ssh_timeout_s)
+        with _Launch._job_lock:
+            _Launch._job_seq += 1
+            name = f"job_{int(c.now())}_{os.getpid()}_{_Launch._job_seq}"
+        argv = ssh_base(pod, c) + [f"<detached job {name}>"]
+        t0 = c.now()
+        started, err = False, ""
+        for _ in range(3):   # a launch whose ssh dropped may still have started: check the pid file before retrying
+            cp = self.ssh_query(pod, job_launch_cmd(name, cmd, c.jobs_dir), timeout=c.ssh_timeout_s, stdin=stdin or "")
+            if cp.returncode == 0 and (cp.stdout or "").strip():
+                started = True
+                break
+            err = (cp.stderr or cp.stdout or "")[-300:]
+            chk = self.ssh_query(pod, job_poll_cmd(name, c.jobs_dir), timeout=c.ssh_timeout_s)
+            if chk.returncode == 0 and (chk.stdout or "").split()[:1] in (["RUNNING"], ["RC"], ["GONE"]):
+                started = True
+                break
+            c.sleep(5)
+        if not started:
+            return subprocess.CompletedProcess(argv, 255, "", f"detached job {name} not started: {err}")
+        delays = list(JOB_POLL_DELAYS_S)
+        rc, state, last_err = None, "", ""
+        while True:
+            c.sleep(delays.pop(0) if delays else c.job_poll_s)
+            q = self.ssh_query(pod, job_poll_cmd(name, c.jobs_dir), timeout=c.ssh_timeout_s)
+            words = (q.stdout or "").split() if q.returncode == 0 else []
+            if not words:
+                last_err = (q.stderr or "")[-300:]           # connection dropped: keep waiting until `timeout`
+            elif words[0] == "RC":
+                rc = int(words[1]) if len(words) > 1 and words[1].lstrip("-").isdigit() else 1
+                break
+            elif words[0] in ("GONE", "NOJOB"):
+                state = words[0]
+                break
+            if c.now() - t0 > timeout:
+                self.ssh_query(pod, job_kill_cmd(name, c.jobs_dir), timeout=c.ssh_timeout_s)
+                rc, state = 124, "TIMEOUT"
+                break
+        out = self._job_file(pod, name, "out")
+        errt = self._job_file(pod, name, "err")
+        if rc is None:
+            rc = 137 if state == "GONE" else 255
+            errt = (errt or "") + f"\ndetached job {name}: {state or 'no exit code readable'} {last_err}".rstrip()
+        elif state == "TIMEOUT":
+            errt = (errt or "") + f"\ndetached job {name}: timeout after {timeout:.0f}s (process group killed)"
+        return subprocess.CompletedProcess(argv, rc, out or "", errt or "")
+
+    def _job_file(self, pod: PodInfo, name: str, ext: str) -> str:
+        for _ in range(5):
+            cp = self.ssh_query(pod, f"cat {shlex.quote(self.cfg.jobs_dir)}/{name}.{ext} 2>/dev/null; true",
+                                timeout=self.cfg.ssh_timeout_s)
+            if cp.returncode == 0:
+                return cp.stdout or ""
+            self.cfg.sleep(5)
+        return ""
 
     def rsync(self, pod: PodInfo, remote: str, local: Path, single_file: bool = False) -> subprocess.CompletedProcess:
         local.parent.mkdir(parents=True, exist_ok=True)
@@ -395,6 +615,7 @@ class _Launch:
                 with self.lock:
                     self.pods[stray.id] = stray
                 self.pods_event("create", stray)
+                self.save_diagnostics(stray, f"pod_create --wait timed out: {err[-300:]}")
                 self.delete_pod(stray, note="created but not reachable within the wait timeout")
             self.step("pod_create", "failed", error=redact([err]))
             self.say(redact([err]))
@@ -439,7 +660,7 @@ class _Launch:
                     pass
         return PodInfo(id=str(info.get("id")), name=name, ip=str(ip), port=int(port),
                        rate=float(rate) if rate is not None else self.cfg.rate_usd_per_h, created_at=created,
-                       data_center=dc, gpu_type=gpu, episode_id=spec.cluster_id)
+                       data_center=dc, gpu_type=gpu, episode_id=spec.cluster_id, create_called_at=t0)
 
     def delete_pod(self, pod: PodInfo, note: str | None = None) -> bool:
         with self.lock:
@@ -502,9 +723,195 @@ class _Launch:
         self.reconcile_by_name()
 
     # per pod
+    def container_ready(self, pod: PodInfo) -> float:
+        """PLAN Amendment 2026-10-23 (7) (smoke6b: `pod create --wait` returned ip:port while the image was still being
+        pulled; uptimeSeconds -3 and ssh.error 'port 22 is declared but the host has not published a mapping for it yet'
+        when the 180 s ssh window had run out). Poll `runpodctl pod get <id> -o json` every container_ready_interval_s
+        until uptimeSeconds > 0 and the ssh field has ip and port and no error key; pod.ip/port are refreshed from it.
+        Bounded by create_deadline_s counted from the create call. run.jsonl `container_ready` started/done/failed; a
+        failure raises RuntimeError (setup failure). The pod get output is never logged (it carries env values)."""
+        c = self.cfg
+        origin = pod.create_called_at if pod.create_called_at is not None else pod.created_at
+        deadline = origin + c.create_deadline_s
+        t0 = c.now()
+        self.step("container_ready", "started", pod_id=pod.id,
+                  note=f"{pod.id}: `runpodctl pod get` every {c.container_ready_interval_s:.0f} s until uptimeSeconds > 0 "
+                       f"and the ssh port is published; {max(0.0, deadline - t0):.0f} s left of the {c.create_deadline_s} s "
+                       "from the create call")
+        max_polls = int(max(0.0, deadline - t0) // max(c.container_ready_interval_s, 1e-9)) + 1   # bound when faked
+        polls = 0
+        last = ""
+        while True:
+            got = self.run(["runpodctl", "pod", "get", pod.id, "-o", "json"], 60)
+            polls += 1
+            if got.returncode != 0:
+                last = f"runpodctl pod get rc={got.returncode}: {(got.stderr or '').strip()[-200:]}"
+            else:
+                try:
+                    g = json.loads(got.stdout)
+                except ValueError:
+                    g, last = None, "runpodctl pod get output not JSON"
+                if isinstance(g, list):
+                    g = g[0] if g else None
+                if isinstance(g, dict):
+                    up = g.get("uptimeSeconds")
+                    ssh = g.get("ssh") if isinstance(g.get("ssh"), dict) else {}
+                    ip, port = ssh.get("ip"), ssh.get("port")
+                    try:
+                        upn = float(up)
+                    except (TypeError, ValueError):
+                        upn = None
+                    if upn is not None and upn > 0 and ip and port and "error" not in ssh:
+                        old = f"{pod.ip}:{pod.port}"
+                        pod.ip, pod.port = str(ip), int(port)
+                        waited = c.now() - t0
+                        moved = f"{pod.ip}:{pod.port}" != old
+                        self.step("container_ready", "done", pod_id=pod.id, seconds=round(waited, 1), polls=polls,
+                                  uptime_s=upn, ssh_address=f"{pod.ip}:{pod.port}",
+                                  note=f"{pod.name} id {pod.id} {pod.ip}:{pod.port} up {upn:.0f} s; ready after {waited:.0f} s, "
+                                       f"{polls} poll(s)" + (f"; ssh address changed from {old}" if moved else ""))
+                        return waited
+                    last = (f"uptimeSeconds={up!r}, ssh " + (f"error: {str(ssh['error'])[:200]}" if "error" in ssh
+                                                             else f"ip={ip!r} port={port!r}"))
+                elif g is not None:
+                    last = "runpodctl pod get returned no pod object"
+            now = c.now()
+            if now >= deadline or polls >= max_polls:
+                err = (f"container not ready on pod {pod.id} {now - origin:.0f} s after the create call ({polls} poll(s) "
+                       f"over {now - t0:.0f} s; limit {c.create_deadline_s} s); last: {redact([last])}")
+                self.step("container_ready", "failed", pod_id=pod.id, seconds=round(now - t0, 1), polls=polls, error=err)
+                raise RuntimeError(err)
+            c.sleep(c.container_ready_interval_s)
+
+    def driver_check(self, pod: PodInfo) -> dict:
+        """PLAN Amendment 2026-10-23 (7): after ssh_ready and before the code push / pod_setup.sh, `nvidia-smi
+        --query-gpu=name,driver_version` and `nvidia-smi` (its 'CUDA Version: X.Y', the highest CUDA the driver supports)
+        over one ssh; raw output -> out_root/pods/<id>/nvidia_smi.txt; run.jsonl `driver_check` with gpu, driver_version,
+        max_cuda. Max CUDA below cfg.min_cuda (numeric: 12.10 > 12.9) or unparseable -> DriverTooOld (not counted as an
+        attempt, owner 2026-10-23); an ssh transport failure (rc 255/124) -> RuntimeError (an ordinary setup failure)."""
+        c = self.cfg
+        self.step("driver_check", "started", pod_id=pod.id,
+                  note=f"{pod.id}: `{DRIVER_QUERY_CMD}` and `nvidia-smi`; max CUDA must be >= {c.min_cuda}")
+        cp = self.ssh(pod, DRIVER_CHECK_CMD, timeout=c.ssh_timeout_s)
+        path = self.out_root / "pods" / pod.id / "nvidia_smi.txt"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(rel_text(f"# {DRIVER_CHECK_CMD}\n# pod {pod.id} ({pod.name}) at {_utc(c.now())}, ssh rc={cp.returncode}\n"
+                                 + (cp.stdout or "") + (f"\n--- stderr ---\n{cp.stderr}" if cp.stderr else "")), encoding="utf-8")
+        if cp.returncode in (255, 124):
+            err = f"driver check on pod {pod.id}: ssh failed rc={cp.returncode}: {(cp.stderr or '').strip()[-300:]}"
+            self.step("driver_check", "failed", pod_id=pod.id, paths=[path], error=err)
+            raise RuntimeError(err)
+        q, _, smi = (cp.stdout or "").partition(DRIVER_SEP)
+        info = parse_nvidia_smi(q, smi)
+        extra = dict(gpu=info["gpu"], driver_version=info["driver"], max_cuda=info["cuda"])
+        have, need = cuda_tuple(info["cuda"] or ""), cuda_tuple(c.min_cuda)
+        if have is None or need is None or have < need:
+            why = (f"max CUDA {info['cuda']}" if have is not None
+                   else f"no 'CUDA Version' in the nvidia-smi output (ssh rc={cp.returncode})")
+            err = (f"driver below {c.min_cuda}: {DRIVER_NOT_COUNTED}; pod {pod.id}: {why}, driver {info['driver']}, "
+                   f"gpu {info['gpu']}; raw output {rel(path)}")
+            self.step("driver_check", "failed", pod_id=pod.id, paths=[path], error=err, **extra)
+            raise DriverTooOld(err)
+        self.step("driver_check", "done", pod_id=pod.id, paths=[path], **extra,
+                  note=f"{pod.id}: gpu {info['gpu']}, driver {info['driver']}, max CUDA {info['cuda']} (>= {c.min_cuda})")
+        return info
+
+    def ssh_ready(self, pod: PodInfo, why: str = "after pod_create") -> float:
+        """PLAN Amendment 2026-10-23 (6) item 3: poll `ssh ... true` (ConnectTimeout 15) every ssh_ready_interval_s for
+        up to ssh_ready_timeout_s; ready after ssh_ready_needed consecutive successes. run.jsonl `ssh_ready`
+        started/done (seconds waited) or failed (last ssh stderr tail); a failure raises RuntimeError (setup failure)."""
+        c = self.cfg
+        self.step("ssh_ready", "started", pod_id=pod.id,
+                  note=f"{pod.id} {pod.ip}:{pod.port} ({why}): `ssh ... true` every {c.ssh_ready_interval_s:.0f} s, "
+                       f"{c.ssh_ready_needed} in a row, up to {c.ssh_ready_timeout_s:.0f} s")
+        t0 = c.now()
+        max_polls = int(c.ssh_ready_timeout_s // max(c.ssh_ready_interval_s, 1e-9)) + 1   # bound when the clock is faked
+        polls = streak = 0
+        last_err = ""
+        while True:
+            cp = self.run(probe_argv(pod, c), c.ssh_ready_connect_timeout_s + 15)
+            polls += 1
+            if cp.returncode == 0:
+                streak += 1
+            else:
+                streak = 0
+                last_err = f"rc={cp.returncode}: {((cp.stderr or '') + (cp.stdout or '')).strip()[-300:]}"
+            waited = c.now() - t0
+            if streak >= c.ssh_ready_needed:
+                self.step("ssh_ready", "done", pod_id=pod.id, seconds=round(waited, 1), polls=polls,
+                          note=f"{pod.id}: ready after {waited:.0f} s, {polls} probe(s)")
+                return waited
+            if waited >= c.ssh_ready_timeout_s or polls >= max_polls:
+                err = (f"ssh not ready on pod {pod.id} ({pod.ip}:{pod.port}) after {waited:.0f} s, {polls} probe(s); "
+                       f"last: {last_err or 'no failure, too few consecutive successes'}")
+                self.step("ssh_ready", "failed", pod_id=pod.id, seconds=round(waited, 1), polls=polls, error=err)
+                raise RuntimeError(err)
+            c.sleep(c.ssh_ready_interval_s)
+
+    def save_diagnostics(self, pod: PodInfo, reason: str) -> Path | None:
+        """Before a pod that failed setup is deleted (Amendment 2026-10-23 (6) item 3): `runpodctl pod get <id> -o
+        json` (env values dropped) and, if ssh answers, container diagnostics (DIAG_ON_FAILURE_CMD) into
+        out_root/pods/<id>/diagnostics.txt. Never raises."""
+        try:
+            path = self.out_root / "pods" / pod.id / "diagnostics.txt"
+            path.parent.mkdir(parents=True, exist_ok=True)
+            parts = [f"# diagnostics for pod {pod.id} ({pod.name}) at {_utc(self.cfg.now())}", f"# reason: {reason}", ""]
+            try:
+                got = self.run(["runpodctl", "pod", "get", pod.id, "-o", "json"], 60)
+                parts.append(f"== runpodctl pod get {pod.id} -o json (rc={got.returncode}; env values dropped)")
+                try:
+                    parts.append(json.dumps(redact_pod_json(json.loads(got.stdout)), indent=2, sort_keys=True))
+                except ValueError:
+                    parts.append("(output not JSON; not saved)")
+                if got.stderr:
+                    parts.append("stderr: " + got.stderr.strip()[-500:])
+            except Exception as e:   # noqa: BLE001
+                parts.append(f"== runpodctl pod get failed: {type(e).__name__}: {e}")
+            parts.append("")
+            try:
+                if not pod.ip:
+                    parts.append("== ssh diagnostics skipped: no ssh address")
+                else:
+                    probe = self.run(probe_argv(pod, self.cfg), self.cfg.ssh_ready_connect_timeout_s + 15)
+                    if probe.returncode != 0:
+                        parts.append(f"== ssh diagnostics skipped: ssh probe rc={probe.returncode}: "
+                                     f"{(probe.stderr or '').strip()[-300:]}")
+                    else:
+                        cp = self.run(probe_argv(pod, self.cfg, DIAG_ON_FAILURE_CMD), 90)
+                        parts.append(f"== ssh diagnostics (rc={cp.returncode})")
+                        parts.append(cp.stdout or "")
+                        if cp.stderr:
+                            parts.append("--- stderr ---\n" + cp.stderr[-2000:])
+            except Exception as e:   # noqa: BLE001
+                parts.append(f"== ssh diagnostics failed: {type(e).__name__}: {e}")
+            path.write_text(rel_text(redact(["\n".join(parts) + "\n"])), encoding="utf-8")
+            self.step("diagnostics", "done", pod_id=pod.id, paths=[path], note=f"{pod.id}: saved before deletion ({reason[:200]})")
+            return path
+        except Exception as e:   # noqa: BLE001  never fail the cleanup
+            try:
+                self.say(f"diagnostics for pod {pod.id} could not be saved: {type(e).__name__}: {e}")
+            except Exception:   # noqa: BLE001
+                pass
+            return None
+
     def setup(self, pod: PodInfo) -> None:
+        """Container readiness (Amendment 2026-10-23 (7)), SSH readiness, the driver check (Amendment (7)), then
+        pod_setup.sh (with the code push); on any failure the pod's diagnostics are saved before the exception reaches
+        the caller that deletes the pod."""
         if pod.setup_done:
             return
+        try:
+            self.container_ready(pod)
+            self.ssh_ready(pod)
+            self.driver_check(pod)
+            self._setup(pod)
+        except Exception as e:
+            if not getattr(e, "p6_setup_logged", False):
+                self.step("setup", "failed", error=f"{pod.id}: {type(e).__name__}: {e}", pod_id=pod.id)
+            self.save_diagnostics(pod, f"setup failed: {type(e).__name__}: {e}")
+            raise
+
+    def _setup(self, pod: PodInfo) -> None:
         if self.cfg.baked_template:
             self.step("setup", "skipped", note=f"{pod.id}: baked template {self.cfg.baked_template}", pod_id=pod.id)
             pod.setup_done = True
@@ -524,7 +931,9 @@ class _Launch:
         if cp.returncode != 0:
             self.step("setup", "failed", error=f"{pod.id}: rc={cp.returncode}: {(cp.stderr or cp.stdout)[-500:]}",
                       paths=[logp, *got], pod_id=pod.id, note=f"{pod.id}{files_note}")
-            raise RuntimeError(f"setup failed on pod {pod.id} (rc={cp.returncode}); see {rel(logp)}")
+            err = RuntimeError(f"setup failed on pod {pod.id} (rc={cp.returncode}); see {rel(logp)}")
+            err.p6_setup_logged = True   # type: ignore[attr-defined]
+            raise err
         pod.setup_done = True
         self.step("setup", "done", note=f"{pod.id}: {self.cfg.now() - t0:.0f}s{files_note}", paths=[logp, *got], pod_id=pod.id)
 
@@ -555,13 +964,30 @@ class _Launch:
         if tar.returncode != 0:
             raise RuntimeError(f"tar of the local control_loop tree failed: {tar.stderr.decode(errors='replace')[-300:]}")
         cmd = f"mkdir -p {shlex.quote(dst)} && tar xzf - -C {shlex.quote(dst)}"
-        try:
-            cp = subprocess.run(ssh_base(pod, self.cfg) + [cmd], input=tar.stdout, capture_output=True, timeout=self.cfg.ssh_timeout_s)
-        except (subprocess.TimeoutExpired, FileNotFoundError) as e:
-            raise RuntimeError(f"pushing the control_loop tree to pod {pod.id} failed: {e}")
-        if cp.returncode != 0:
-            raise RuntimeError(f"pushing the control_loop tree to pod {pod.id} failed rc={cp.returncode}: "
-                               f"{cp.stderr.decode(errors='replace')[-300:]}")
+        # Amendment 2026-10-23 (6) item 3: on an ssh transport failure (rc 255, or the ssh timed out) wait
+        # push_retry_wait_s, re-run the readiness probe once and retry the push once; both attempts logged.
+        for attempt in (1, 2):
+            self.step("push_repo", "started", pod_id=pod.id, attempt=attempt,
+                      note=f"{pod.id}: attempt {attempt}: control_loop/ tar stream ({len(tar.stdout)} bytes) -> {dst}")
+            try:
+                cp = subprocess.run(ssh_base(pod, self.cfg) + [cmd], input=tar.stdout, capture_output=True, timeout=self.cfg.ssh_timeout_s)
+                rc, err = cp.returncode, cp.stderr.decode(errors="replace")[-300:]
+            except subprocess.TimeoutExpired:
+                rc, err = 124, f"ssh timed out after {self.cfg.ssh_timeout_s} s"
+            except FileNotFoundError as e:
+                rc, err = 127, str(e)
+            if rc == 0:
+                self.step("push_repo", "done", pod_id=pod.id, attempt=attempt, note=f"{pod.id}: attempt {attempt} ok")
+                return
+            transport = rc in (255, 124)
+            self.step("push_repo", "failed", pod_id=pod.id, attempt=attempt,
+                      error=f"{pod.id}: attempt {attempt} rc={rc}: {err}",
+                      note="ssh transport failure; one retry follows" if transport and attempt == 1 else None)
+            if attempt == 2 or not transport:
+                raise RuntimeError(f"pushing the control_loop tree to pod {pod.id} failed rc={rc}"
+                                   + (" (attempt 2 of 2)" if attempt == 2 else "") + f": {err}")
+            self.cfg.sleep(self.cfg.push_retry_wait_s)
+            self.ssh_ready(pod, why="before the push retry")
 
     def run_episode(self, pod: PodInfo, i: int, spec: Any, attempt: int) -> tuple[bool, str | None]:
         """One episode on a set-up pod. Returns (ok, error)."""
@@ -572,7 +998,7 @@ class _Launch:
         pre = run_prelude(spec, self.cfg)
         inst = payload_install_cmd(spec, self.cfg, payload_b64(spec))
         cmd = pre + ("; " + inst if inst else "") + "; " + start_cmd(spec, self.cfg)
-        cp = self.ssh(pod, cmd)
+        cp = self.ssh_query(pod, cmd)   # start_cmd itself detaches run_redteam.sh under nohup and returns its pid
         if cp.returncode != 0:
             return False, f"start failed rc={cp.returncode}: {(cp.stderr or cp.stdout)[-400:]}"
         pid = (cp.stdout.strip().splitlines() or ["?"])[-1].strip()
@@ -580,7 +1006,7 @@ class _Launch:
         remote_dir, misses = "", 0
         while True:
             self.cfg.sleep(self.cfg.poll_s)
-            found = self.ssh(pod, find_cmd(spec, self.cfg))
+            found = self.ssh_query(pod, find_cmd(spec, self.cfg))
             if found.returncode != 0 and not found.stdout.strip():
                 misses += 1
                 if misses >= self.cfg.unreachable_polls:
@@ -592,7 +1018,7 @@ class _Launch:
                 self.rsync(pod, remote_dir, dest)
                 if (dest / "eval" / "metrics.json").exists():
                     break
-            alive = self.ssh(pod, f"kill -0 {shlex.quote(pid)} 2>/dev/null").returncode == 0
+            alive = self.ssh_query(pod, f"kill -0 {shlex.quote(pid)} 2>/dev/null").returncode == 0
             if not alive:
                 if remote_dir:
                     self.rsync(pod, remote_dir, dest)
@@ -631,6 +1057,7 @@ class _Launch:
         """Run the queued episodes on `pod` serially; a failure deletes the pod, moves the logs aside and re-runs the
         episode once on a fresh pod (the project's one retry); the remaining queue follows on that pod."""
         attempts: dict[int, int] = {}
+        driver_skips: set[int] = set()     # episodes whose one pod with a driver below min_cuda was not counted
         while queue:
             i = queue[0]
             spec = self.specs[i]
@@ -645,11 +1072,13 @@ class _Launch:
                                   episode_id=self.specs[j].cluster_id)
                     queue.clear()
                     return
+            driver_old = False
             try:
                 self.setup(pod)
                 ok, err = self.run_episode(pod, i, spec, attempts[i])
             except Exception as e:   # setup or ssh failure on this pod
                 ok, err = False, f"{type(e).__name__}: {e}"
+                driver_old = isinstance(e, DriverTooOld)
             if ok:
                 queue.popleft()
                 self.results[i] = dict(status="collected", dest=rel(self.dests[i]), attempts=attempts[i], pod_id=pod.id)
@@ -659,6 +1088,13 @@ class _Launch:
             self.fail_episode(i, spec, pod, attempts[i], err or "unknown error")
             self.delete_pod(pod, note="episode failed")
             pod = None
+            if driver_old and i not in driver_skips:
+                # Amendment 2026-10-23 (7): a driver below min_cuda is not counted as an attempt (once per episode, so a
+                # run of old-driver hosts still ends)
+                driver_skips.add(i)
+                attempts[i] -= 1
+                self.say(f"episode {spec.cluster_id}: pod driver below {self.cfg.min_cuda}, {DRIVER_NOT_COUNTED}; fresh pod")
+                continue
             if attempts[i] >= 2:
                 queue.popleft()
                 self.results[i] = dict(status="lost", dest=rel(self.dests[i]), attempts=attempts[i], error=err)
@@ -717,6 +1153,9 @@ class _Launch:
             env = pod_env(spec, self.cfg, values=False)
             lines = [
                 ("pod_create", redact(create_argv(name, env, self.cfg))),
+                ("container_ready", container_ready_text(self.cfg)),
+                ("ssh_ready", ssh_ready_text(ph, self.cfg)),
+                ("driver_check", driver_check_text(ph, self.cfg)),
                 ("setup", ("skipped: baked template " + self.cfg.baked_template) if self.cfg.baked_template else
                  shlex.join(ssh_base(ph, self.cfg) + [f"export {setup_env_prefix(self.cfg)}; bash -s"]) + f" < {rel(self.cfg.setup_script)}"),
                 ("episode", shlex.join(ssh_base(ph, self.cfg) + [run_prelude(spec, self.cfg)
@@ -837,6 +1276,9 @@ def smoke(out_root: Path | str, cfg: PodConfig | None = None, allow_paid: bool =
         ph = PodInfo(id="<pod-id>", name=name, ip="<pod-ip>", port=0, rate=cfg.rate_usd_per_h, created_at=0.0)
         L.say("DRY RUN smoke test: nothing is created")
         for step, text in [("pod_create", redact(create_argv(name, pod_env(spec, cfg, values=False), cfg))),
+                           ("container_ready", container_ready_text(cfg)),
+                           ("ssh_ready", ssh_ready_text(ph, cfg)),
+                           ("driver_check", driver_check_text(ph, cfg)),
                            ("setup", shlex.join(ssh_base(ph, cfg) + [f"export {setup_env_prefix(cfg)}; bash -s"]) + f" < {rel(cfg.setup_script)}"),
                            ("episode", shlex.join(ssh_base(ph, cfg) + [f"bash -s -- {flags}"]) + f" < {rel(cfg.smoke_script)}"),
                            ("collect", f"stdout -> {rel(out_root / 'smoke.log')}; "
@@ -1099,6 +1541,9 @@ def diag(out_root: Path | str, cfg: PodConfig | None = None, allow_paid: bool = 
         ph = PodInfo(id="<pod-id>", name=name, ip="<pod-ip>", port=0, rate=cfg.rate_usd_per_h, created_at=0.0)
         L.say("DRY RUN stock-kernel diagnostic: nothing is created")
         steps = [("pod_create", redact(create_argv(name, pod_env(spec, cfg, values=False), cfg))),
+                 ("container_ready", container_ready_text(cfg)),
+                 ("ssh_ready", ssh_ready_text(ph, cfg)),
+                 ("driver_check", driver_check_text(ph, cfg)),
                  ("setup", shlex.join(ssh_base(ph, cfg) + [f"export {setup_env_prefix(cfg)}; bash -s"]) + f" < {rel(cfg.setup_script)}"),
                  ("diag_start", "run.jsonl step diag_start (canary start marker); the bench log /workspace/p6_diag_bench.log starts growing"),
                  ("diag", shlex.join(ssh_base(ph, cfg) + [diag_ssh_cmd(cfg)]) + " < <pods.DIAG_SCRIPT, printed below>"),

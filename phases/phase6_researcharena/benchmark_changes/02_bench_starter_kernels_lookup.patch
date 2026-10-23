@@ -1,0 +1,16 @@
+diff -ruN _a/settings/cuda_kernel/task_context/bench.py _b/settings/cuda_kernel/task_context/bench.py
+--- a/settings/cuda_kernel/task_context/bench.py
++++ b/settings/cuda_kernel/task_context/bench.py
+@@ -194,8 +194,10 @@
+         print(f"BASELINE_TPS={baseline_tps:.2f} (cached)")
+     else:
+         # Compile starter kernels as baseline
+-        arena_root = os.environ.get("ARENA_ROOT", os.path.join(ROOT, ".."))
+-        starter_dir = os.path.join(arena_root, "starter_kernels")
++        # Benchmark change (control-loop PLAN Amendment (17); aisa-group/ResearchArena#2 point 1): the starter kernels
++        # live beside this file (task_context/starter_kernels); the old lookup under ARENA_ROOT always missed, so the
++        # baseline silently fell back to vanilla PyTorch.
++        starter_dir = os.path.join(ROOT, "starter_kernels")
+         starter_bindings = os.path.join(starter_dir, "bindings.cpp")
+ 
+         if not os.path.isdir(starter_dir):

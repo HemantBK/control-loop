@@ -1,0 +1,12 @@
+--- a/kernels/attention.cu
++++ b/kernels/attention.cu
+@@ -151,7 +151,8 @@
+     auto output = torch::empty_like(Q);
+ 
+     dim3 grid(batch, heads, q_len);
+-    int threads = min(kv_len, 256);
++    // Full-mask shuffles require full warps, including the first reduction warp.
++    int threads = min(((kv_len + 31) / 32) * 32, 256);
+     int smem_size = (kv_len + head_dim) * sizeof(float);
+ 
+     AT_DISPATCH_FLOATING_TYPES_AND2(

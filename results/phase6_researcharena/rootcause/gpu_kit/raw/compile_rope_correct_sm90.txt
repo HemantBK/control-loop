@@ -1,0 +1,21 @@
+nvcc: Build cuda_12.9.r12.9/compiler.36037853_0
+archs: 90
+dir: /home/fable/work/patched/rope_correct
+--- nvcc attention.cu
+OK   attention.cu (0 warnings)
+--- nvcc fused_mlp.cu
+OK   fused_mlp.cu (0 warnings)
+--- nvcc rmsnorm.cu
+OK   rmsnorm.cu (0 warnings)
+--- nvcc rotary_embedding.cu
+OK   rotary_embedding.cu (0 warnings)
+--- g++ bindings.cpp
+OK   bindings.cpp
+--- link agent_ops.so (shared; CUDA runtime from the extracted toolkit; torch libs from the CPU wheel)
+OK   link (681616 bytes)
+     0000000000029690 T agent_rmsnorm(at::Tensor, at::Tensor, double)
+     000000000000e2c0 T agent_attention(at::Tensor, at::Tensor, at::Tensor, bool)
+     0000000000028bf0 T agent_fused_mlp(at::Tensor, at::Tensor, at::Tensor)
+     000000000002a430 T agent_rotary_embedding(at::Tensor, at::Tensor, double)
+OK   no unresolved agent_*/kernel symbols (Python/torch symbols resolve at import)
+RESULT: COMPILE_OK

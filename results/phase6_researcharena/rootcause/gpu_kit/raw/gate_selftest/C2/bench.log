@@ -1,0 +1,15 @@
+Running agent benchmark...
+[bench] Warmup (3 runs) ...
+[bench] Warmup done
+COMPILE_STATUS=PASS
+BASELINE_TPS=102.53
+[bench] Model loaded (1100M params)
+[bench]   prompt 8/8: 128 tokens in 1.30s (98.4 tok/s)
+  COMPILE_STATUS     = PASS
+  BASELINE_TPS       = 102.53
+  AGENT_TPS          = 98.40
+  SPEEDUP            = 0.960x
+  KERNEL_RMSNORM              = ACTIVE
+  KERNEL_ROTARY_EMBEDDING     = ACTIVE
+  KERNEL_FUSED_MLP            = ACTIVE
+  KERNEL_ATTENTION            = ACTIVE

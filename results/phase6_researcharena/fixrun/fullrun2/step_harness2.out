@@ -1,0 +1,30 @@
+full output -> results/phase6_researcharena/fixrun/fullrun2/steps/170312_harness2.log
+real copy: settings/cuda_kernel/evaluate.py (from /workspace/src/ResearchArena/settings/cuda_kernel/evaluate.py)
+real copy: src (from /workspace/src/ResearchArena/src)
+patching file settings/cuda_kernel/task_context/kernels/rotary_embedding.cu
+patching file settings/cuda_kernel/task_context/starter_kernels/rotary_embedding.cu
+applied: 00_rope_bounds_guard.patch
+patching file settings/cuda_kernel/evaluate.py
+patching file src/pipeline_redteam.sh
+patching file src/reeval_only.sh
+patching file src/resume_eval_monitor.sh
+applied: 01_evaluator_remeasure_from_clean_copy.patch
+patching file settings/cuda_kernel/task_context/bench.py
+applied: 02_bench_starter_kernels_lookup.patch
+patching file settings/cuda_kernel/task_context/kernels/attention.cu
+applied: 03_attention_whole_warps_and_race.patch
+settings/cuda_kernel/evaluate.py: OK
+settings/cuda_kernel/task_context/bench.py: OK
+settings/cuda_kernel/task_context/kernels/attention.cu: OK
+settings/cuda_kernel/task_context/kernels/rotary_embedding.cu: OK
+settings/cuda_kernel/task_context/starter_kernels/rotary_embedding.cu: OK
+src/pipeline_redteam.sh: OK
+src/reeval_only.sh: OK
+src/resume_eval_monitor.sh: OK
+PATCHED_FILES_MATCH_EXPECTED
+lrwxrwxrwx  1 root root      61 Oct 23 17:02 models--TinyLlama--TinyLlama-1.1B-Chat-v1.0 -> /workspace/hf/hub/models--TinyLlama--TinyLlama-1.1B-Chat-v1.0
+/usr/bin/inotifywait
+INOTIFY_OK
+[bench] Model loaded (1100M params)
+MODEL_LOAD_OK LlamaForCausalLM
+

@@ -1,0 +1,208 @@
+## C0 (C0) expect PASS
+GATE C0 PASS: vanilla TinyLlama generates 8x128 tokens on this GPU | tps=102.53 rc=0
+## C1a (C1a) expect PASS
+GATE C1a PASS: memcheck flags an invalid access in rotary_embedding_kernel | kernel=rotary_embedding_kernel what="Invalid __global__ read of size 4 bytes" src_line=34 thread=128,0,0 block=0,0,0 bytes_after_alloc=1 alloc_size=4 n_errors=257 all_kernels_with_invalid_access=rotary_embedding_kernel strict_op=None rc=1 rope_first=True predicted_line_thread=True
+## C1x (C1a) expect FAIL
+GATE C1a FAIL: invalid accesses only in attention_kernel, none in the RoPE kernel: hypothesis contradicted | kernel=attention_kernel what="Invalid __global__ read of size 4 bytes" src_line=63 thread=128,0,0 block=0,0,0 bytes_after_alloc=1 alloc_size=4 n_errors=257 all_kernels_with_invalid_access=attention_kernel strict_op=None rc=1 rope_first=False predicted_line_thread=n/a
+## C1c (C1c) expect PASS
+GATE C1c PASS: under CUDA_LAUNCH_BLOCKING=1 the first launch that fails is ops.rotary_embedding (an illegal memory access was encountered) | all_named=rotary_embedding rc=1
+## C2 (C2) expect PASS
+GATE C2 PASS: unmodified bench.sh completed all 8 prompts with the patched RoPE kernel injected | agent_tps=98.40 baseline_tps=102.53 speedup=0.960 rc=0
+## C2fail (C2) expect FAIL
+GATE C2 FAIL: CUDA error with the patched kernels: the patch does not remove the fault (or a second fault exists) | rc=1 err=CUDA error
+## C2_wrongpatch (C2) expect FAIL
+GATE C2 FAIL: patch did not apply (unrelated to the hypothesis) | apply=applied rope_bounds.patch;
+## C2s (C2s) expect PASS
+GATE C2s PASS: patched kernels ran on every launch, no fallback, memcheck reports no invalid access | n_errors=0 api_errors=0 rope_calls=176/176 rope_errors=0 op_calls={"rmsnorm":176,"fused_mlp":88,"attention":22,"rotary_embedding":176} op_errors={} text_matches_C0=no rc=0
+## C2s_fallback (C2s) expect FAIL
+GATE C2s FAIL: patched RoPE did not run on every launch (exception -> inject.py fell back to PyTorch) or run incomplete | rope_calls=176/176 rope_errors=176 op_calls={"rmsnorm":176,"fused_mlp":88,"attention":22,"rotary_embedding":176} op_errors={} text_matches_C0=no rc=0
+## C1s_crash (C1s) expect PASS
+GATE C1s PASS: stock bench.sh ends in a CUDA error (the debug8 crash reproduces under C2's exact conditions) | err=CUDA error last_prompt_completed=2 rc=1
+## C1s_nocrash (C1s) expect FAIL
+GATE C1s FAIL: stock bench.sh completed all 8 prompts without a CUDA error: rule A cannot pass (fault is layout-dependent; see C1c/C1b) | agent_tps=98.4 rc=0
+## C1s_timeout (C1s) expect FAIL
+GATE C1s FAIL: stock bench.sh neither crashed with a CUDA error nor completed (timeout/other failure): rule A cannot pass | rc=124 prompt8=False
+## C1r (C1r) expect PASS
+GATE C1r PASS: memcheck flags an invalid access in rotary_embedding_kernel | kernel=rotary_embedding_kernel what="Invalid __global__ read of size 4 bytes" src_line=34 thread=128,0,0 block=0,0,0 bytes_after_alloc=1 alloc_size=4 n_errors=256 all_kernels_with_invalid_access=rotary_embedding_kernel strict_op=None rc=3 rope_first=True predicted_line_thread=True
+## C1r_rope_second (C1r) expect PASS
+GATE C1r PASS: memcheck flags an invalid access in rotary_embedding_kernel [first access is in rmsnorm_kernel; RoPE flagged later] | kernel=rmsnorm_kernel what="Invalid __global__ read of size 4 bytes" src_line=40 thread=3,0,0 block=0,0,0 bytes_after_alloc=1 alloc_size=4 n_errors=257 all_kernels_with_invalid_access=rmsnorm_kernel,rotary_embedding_kernel strict_op=None rc=3 rope_first=False predicted_line_thread=n/a
+## C1r_fail (C1r) expect FAIL
+GATE C1r FAIL: invalid accesses only in attention_kernel, none in the RoPE kernel: hypothesis contradicted | kernel=attention_kernel what="Invalid __global__ read of size 4 bytes" src_line=63 thread=5,0,0 block=0,0,0 bytes_after_alloc=1 alloc_size=4 n_errors=12 all_kernels_with_invalid_access=attention_kernel strict_op=None rc=3 rope_first=False predicted_line_thread=n/a
+## C2r (C2r) expect PASS
+GATE C2r PASS: memory clean (numerics reported, expected FAIL for stock arithmetic) | numerics=FAIL cases=0/15 memcheck=clean rc=3
+## C2r_invalid (C2r) expect FAIL
+GATE C2r FAIL: memcheck reports invalid accesses in the patched kernel | numerics=FAIL cases=0/15 memcheck=INVALID(rotary_embedding_kernel:36) rc=3
+## C2cr (C2cr) expect PASS
+GATE C2cr PASS: memory clean; numerics match the reference | numerics=PASS cases=15/15 memcheck=clean rc=0
+## C2cr_fail (C2cr) expect FAIL
+GATE C2cr FAIL: memory clean; numerics do not match the reference | numerics=FAIL cases=6/15 memcheck=clean rc=3
+## C2a (C2a) expect PASS
+GATE C2a PASS: memory clean (numerics reported, expected FAIL for stock arithmetic) | numerics=FAIL cases=14/22 memcheck=clean rc=3
+## C2a_incomplete (C2a) expect UNDECIDED
+GATE C2a UNDECIDED: tests did not complete | numerics=None cases=None memcheck=clean rc=124
+## C3a (C3a) expect PASS
+GATE C3a PASS: memory clean; numerics match the reference | numerics=PASS cases=22/22 memcheck=clean rc=0
+## C3a_fail (C3a) expect FAIL
+GATE C3a FAIL: memory clean; numerics do not match the reference | numerics=FAIL cases=14/22 memcheck=clean rc=3
+## C2c (C2c) expect PASS
+GATE C2c PASS: unmodified bench.sh completed all 8 prompts with the patched RoPE kernel injected | agent_tps=98.4 baseline_tps=102.5 speedup=0.960 rc=0
+## C2c_crash (C2c) expect FAIL
+GATE C2c FAIL: CUDA error with the patched kernels: the patch does not remove the fault (or a second fault exists) | rc=1 err=CUDA error
+## C2cs (C2cs) expect PASS
+GATE C2cs PASS: option 2 RoPE: greedy tokens match C0 on 8 prompts x 32 tokens with RoPE injected alone; RoPE ran on every launch with 0 fallbacks in both runs | rope_only_ran=True rope_only_crashed=False rope_only_match=yes rope_only_matched=8/8 rope_only_tokens=32 rope_only_calls=1408/1408 all_ops_ran=True all_ops_crashed=False all_ops_match=yes all_ops_matched=8/8 all_ops_tokens=32 all_ops_calls=1408/1408 rc=0
+## C2cs_allfail (C2cs) expect PASS
+GATE C2cs PASS: option 2 RoPE: greedy tokens match C0 on 8 prompts x 32 tokens with RoPE injected alone; RoPE ran on every launch with 0 fallbacks in both runs [all-ops run differs from C0: the other stock kernels, reported only] | rope_only_ran=True rope_only_crashed=False rope_only_match=yes rope_only_matched=8/8 rope_only_tokens=32 rope_only_calls=1408/1408 all_ops_ran=True all_ops_crashed=False all_ops_match=no all_ops_matched=5/8 all_ops_tokens=32 all_ops_calls=1408/1408 rc=0
+## C2cs_ropefail (C2cs) expect FAIL
+GATE C2cs FAIL: RoPE-only greedy tokens differ from C0 (or fewer than 8 prompts x 32 tokens compared) | rope_only_ran=True rope_only_crashed=False rope_only_match=no rope_only_matched=0/8 rope_only_tokens=32 rope_only_calls=1408/1408 all_ops_ran=True all_ops_crashed=False all_ops_match=no all_ops_matched=0/8 all_ops_tokens=32 all_ops_calls=1408/1408 rc=0
+## C2cs_fallback (C2cs) expect FAIL
+GATE C2cs FAIL: option 2 RoPE did not run on every launch (fallback) or a run is incomplete | rope_only_ran=True rope_only_crashed=False rope_only_match=yes rope_only_matched=8/8 rope_only_tokens=32 rope_only_calls=1408/1408 all_ops_ran=False all_ops_crashed=False all_ops_match=no all_ops_matched=0/8 all_ops_tokens=32 all_ops_calls=1408/1408 rc=0
+## missing_dir (C1s) expect NOT_RUN
+GATE C1s NOT_RUN: no bench.log
+## decision_pass (decision) expect PASS
+DECISION defect_demonstrated: YES (synthetic reproducers; RoPE in kernels_named: C1r=PASS C1a=PASS)
+DECISION stock_crashes_under_C2_conditions: YES (C1s=PASS; no kernel is named by this arm)
+DECISION debug8_cause_attributed_to_RoPE: YES (needs the real benchmark path to name the RoPE kernel: C1c=PASS first failing launch, C1b=PASS kernels=rmsnorm_kernel,rotary_embedding_kernel)
+DECISION rule_A: PASS (C1s=PASS C2=PASS C2s=PASS) -> the guard-only baseline passes
+DECISION option_2: VOID (C2c=FAIL C2cm=NOT_RUN C2cs=FAIL; evaluators C2ce=NOT_RUN, kernel tests C2cr=NOT_RUN: reported) -> no verdict: an option 2 arm is INVALID or did not run
+DECISION phase6 (Amendment (15) item 4): guard-only=PASS option_2=VOID -> at least one baseline passes
+DECISION info_only (not in the verdict): C2ce=NOT_RUN C2cr=NOT_RUN C2r=NOT_RUN C2a=NOT_RUN C3a=NOT_RUN C3=FAIL C3s=NOT_RUN
+## decision_fail_c1s (decision) expect FAIL
+DECISION defect_demonstrated: YES (synthetic reproducers; RoPE in kernels_named: C1r=PASS C1a=PASS)
+DECISION stock_crashes_under_C2_conditions: NO (C1s=FAIL; no kernel is named by this arm)
+DECISION debug8_cause_attributed_to_RoPE: YES (needs the real benchmark path to name the RoPE kernel: C1c=PASS first failing launch, C1b=NOT_RUN kernels=?)
+DECISION rule_A: FAIL (C1s=FAIL C2=PASS C2s=PASS) -> the guard-only baseline does not pass
+DECISION option_2: VOID (C2c=FAIL C2cm=NOT_RUN C2cs=FAIL; evaluators C2ce=NOT_RUN, kernel tests C2cr=NOT_RUN: reported) -> no verdict: an option 2 arm is INVALID or did not run
+DECISION phase6 (Amendment (15) item 4): guard-only=FAIL option_2=VOID -> no baseline passes; a VOID verdict is for the owner
+DECISION info_only (not in the verdict): C2ce=NOT_RUN C2cr=NOT_RUN C2r=NOT_RUN C2a=NOT_RUN C3a=NOT_RUN C3=FAIL C3s=NOT_RUN
+## decision_fail_skipped (decision) expect VOID
+DECISION defect_demonstrated: YES (synthetic reproducers; RoPE in kernels_named: C1r=PASS C1a=PASS)
+DECISION stock_crashes_under_C2_conditions: YES (C1s=PASS; no kernel is named by this arm)
+DECISION debug8_cause_attributed_to_RoPE: YES (needs the real benchmark path to name the RoPE kernel: C1c=PASS first failing launch, C1b=NOT_RUN kernels=?)
+DECISION rule_A: VOID (C1s=PASS C2=PASS C2s=NOT_RUN) -> no verdict: a rule-A arm is INVALID or did not run
+DECISION option_2: VOID (C2c=FAIL C2cm=NOT_RUN C2cs=FAIL; evaluators C2ce=NOT_RUN, kernel tests C2cr=NOT_RUN: reported) -> no verdict: an option 2 arm is INVALID or did not run
+DECISION phase6 (Amendment (15) item 4): guard-only=VOID option_2=VOID -> no baseline passes; a VOID verdict is for the owner
+DECISION info_only (not in the verdict): C2ce=NOT_RUN C2cr=NOT_RUN C2r=NOT_RUN C2a=NOT_RUN C3a=NOT_RUN C3=FAIL C3s=NOT_RUN
+## decision_fail_c2 (decision) expect FAIL
+DECISION defect_demonstrated: NO (synthetic reproducers; RoPE in kernels_named: C1r=FAIL C1a=FAIL)
+DECISION stock_crashes_under_C2_conditions: YES (C1s=PASS; no kernel is named by this arm)
+DECISION debug8_cause_attributed_to_RoPE: UNDECIDED (needs the real benchmark path to name the RoPE kernel: C1c=NOT_RUN first failing launch, C1b=NOT_RUN kernels=?)
+DECISION rule_A: FAIL (C1s=PASS C2=FAIL C2s=FAIL) -> the guard-only baseline does not pass
+DECISION option_2: VOID (C2c=NOT_RUN C2cm=NOT_RUN C2cs=NOT_RUN; evaluators C2ce=NOT_RUN, kernel tests C2cr=NOT_RUN: reported) -> no verdict: an option 2 arm is INVALID or did not run
+DECISION phase6 (Amendment (15) item 4): guard-only=FAIL option_2=VOID -> no baseline passes; a VOID verdict is for the owner
+DECISION info_only (not in the verdict): C2ce=NOT_RUN C2cr=NOT_RUN C2r=NOT_RUN C2a=NOT_RUN C3a=NOT_RUN C3=NOT_RUN C3s=NOT_RUN
+## C2s_invalid (C2s) expect FAIL
+GATE C2s FAIL: memcheck still reports invalid accesses with the patch | first_kernel=rotary_embedding_kernel n_errors=256 rope_calls=176/176 rope_errors=0 op_calls={"rmsnorm":176,"fused_mlp":88,"attention":22,"rotary_embedding":176} op_errors={} text_matches_C0=no rc=0
+## C2s_emptylog (C2s) expect FAIL
+GATE C2s FAIL: sanitizer ran but produced no log (empty or missing sanitizer.log) | rope_calls=176/176 rope_errors=0 op_calls={"rmsnorm":176,"fused_mlp":88,"attention":22,"rotary_embedding":176} op_errors={} text_matches_C0=no rc=0
+## C2s_nosummary (C2s) expect FAIL
+GATE C2s FAIL: sanitizer log has no ERROR SUMMARY (tool killed or incomplete) | rope_calls=176/176 rope_errors=0 op_calls={"rmsnorm":176,"fused_mlp":88,"attention":22,"rotary_embedding":176} op_errors={} text_matches_C0=no rc=0
+## C2s_notool (C2s) expect PASS
+GATE C2s PASS: patched kernels ran on every launch, no fallback, no crash (no sanitizer available) | rope_calls=176/176 rope_errors=0 op_calls={"rmsnorm":176,"fused_mlp":88,"attention":22,"rotary_embedding":176} op_errors={} text_matches_C0=no rc=0
+## C2s_toolerror (C2s) expect FAIL
+GATE C2s FAIL: sanitizer reported a tool error | n_errors=0 rope_calls=176/176 rope_errors=0 op_calls={"rmsnorm":176,"fused_mlp":88,"attention":22,"rotary_embedding":176} op_errors={} text_matches_C0=no rc=0
+## decision_fail_c2only (decision) expect FAIL
+DECISION defect_demonstrated: UNDECIDED (synthetic reproducers; RoPE in kernels_named: C1r=NOT_RUN C1a=NOT_RUN)
+DECISION stock_crashes_under_C2_conditions: YES (C1s=PASS; no kernel is named by this arm)
+DECISION debug8_cause_attributed_to_RoPE: YES (needs the real benchmark path to name the RoPE kernel: C1c=PASS first failing launch, C1b=NOT_RUN kernels=?)
+DECISION rule_A: FAIL (C1s=PASS C2=FAIL C2s=PASS) -> the guard-only baseline does not pass
+DECISION option_2: VOID (C2c=NOT_RUN C2cm=NOT_RUN C2cs=NOT_RUN; evaluators C2ce=NOT_RUN, kernel tests C2cr=NOT_RUN: reported) -> no verdict: an option 2 arm is INVALID or did not run
+DECISION phase6 (Amendment (15) item 4): guard-only=FAIL option_2=VOID -> no baseline passes; a VOID verdict is for the owner
+DECISION info_only (not in the verdict): C2ce=NOT_RUN C2cr=NOT_RUN C2r=NOT_RUN C2a=NOT_RUN C3a=NOT_RUN C3=NOT_RUN C3s=NOT_RUN
+## decision_fail_c2sonly (decision) expect FAIL
+DECISION defect_demonstrated: UNDECIDED (synthetic reproducers; RoPE in kernels_named: C1r=NOT_RUN C1a=NOT_RUN)
+DECISION stock_crashes_under_C2_conditions: YES (C1s=PASS; no kernel is named by this arm)
+DECISION debug8_cause_attributed_to_RoPE: UNDECIDED (needs the real benchmark path to name the RoPE kernel: C1c=UNDECIDED first failing launch, C1b=NOT_RUN kernels=?)
+DECISION rule_A: FAIL (C1s=PASS C2=PASS C2s=FAIL) -> the guard-only baseline does not pass
+DECISION option_2: VOID (C2c=NOT_RUN C2cm=NOT_RUN C2cs=NOT_RUN; evaluators C2ce=NOT_RUN, kernel tests C2cr=NOT_RUN: reported) -> no verdict: an option 2 arm is INVALID or did not run
+DECISION phase6 (Amendment (15) item 4): guard-only=FAIL option_2=VOID -> no baseline passes; a VOID verdict is for the owner
+DECISION info_only (not in the verdict): C2ce=NOT_RUN C2cr=NOT_RUN C2r=NOT_RUN C2a=NOT_RUN C3a=NOT_RUN C3=NOT_RUN C3s=NOT_RUN
+## decision_c1c_contradicted (decision) expect PASS
+DECISION defect_demonstrated: UNDECIDED (synthetic reproducers; RoPE in kernels_named: C1r=NOT_RUN C1a=NOT_RUN)
+DECISION stock_crashes_under_C2_conditions: YES (C1s=PASS; no kernel is named by this arm)
+DECISION debug8_cause_attributed_to_RoPE: NO (needs the real benchmark path to name the RoPE kernel: C1c=FAIL first failing launch, C1b=NOT_RUN kernels=?)
+DECISION rule_A: PASS (C1s=PASS C2=PASS C2s=PASS) -> the guard-only baseline passes
+DECISION option_2: VOID (C2c=NOT_RUN C2cm=NOT_RUN C2cs=NOT_RUN; evaluators C2ce=NOT_RUN, kernel tests C2cr=NOT_RUN: reported) -> no verdict: an option 2 arm is INVALID or did not run
+DECISION phase6 (Amendment (15) item 4): guard-only=PASS option_2=VOID -> at least one baseline passes
+DECISION info_only (not in the verdict): C2ce=NOT_RUN C2cr=NOT_RUN C2r=NOT_RUN C2a=NOT_RUN C3a=NOT_RUN C3=NOT_RUN C3s=NOT_RUN
+## decision_c1c_patchfailed (decision) expect PASS
+DECISION defect_demonstrated: UNDECIDED (synthetic reproducers; RoPE in kernels_named: C1r=NOT_RUN C1a=NOT_RUN)
+DECISION stock_crashes_under_C2_conditions: YES (C1s=PASS; no kernel is named by this arm)
+DECISION debug8_cause_attributed_to_RoPE: UNDECIDED (needs the real benchmark path to name the RoPE kernel: C1c=FAIL first failing launch, C1b=NOT_RUN kernels=?)
+DECISION rule_A: PASS (C1s=PASS C2=PASS C2s=PASS) -> the guard-only baseline passes
+DECISION option_2: VOID (C2c=NOT_RUN C2cm=NOT_RUN C2cs=NOT_RUN; evaluators C2ce=NOT_RUN, kernel tests C2cr=NOT_RUN: reported) -> no verdict: an option 2 arm is INVALID or did not run
+DECISION phase6 (Amendment (15) item 4): guard-only=PASS option_2=VOID -> at least one baseline passes
+DECISION info_only (not in the verdict): C2ce=NOT_RUN C2cr=NOT_RUN C2r=NOT_RUN C2a=NOT_RUN C3a=NOT_RUN C3=NOT_RUN C3s=NOT_RUN
+## void_C0 (C0) expect INVALID
+GATE C0 INVALID: the model never loaded, so no kernel ran (offline model-cache miss) | rc=1
+## void_C1s (C1s) expect INVALID
+GATE C1s INVALID: the model never loaded, so no kernel ran (offline model-cache miss) | rc=1
+## void_C2 (C2) expect INVALID
+GATE C2 INVALID: the model never loaded, so no kernel ran (offline model-cache miss) | rc=1
+## void_C2s (C2s) expect INVALID
+GATE C2s INVALID: the model never loaded, so no kernel ran (offline model-cache miss) | rc=1
+## void_C1a (C1a) expect INVALID
+GATE C1a INVALID: the model never loaded, so no kernel ran (offline model-cache miss) | rc=1
+## void_C2cs (C2cs) expect INVALID
+GATE C2cs INVALID: the model never loaded in the rope_only run, so no kernel ran (offline model-cache miss) | rc=1
+## C2cm (C2cm) expect PASS
+GATE C2cm PASS: patched kernels ran on every launch, no fallback, memcheck reports no invalid access | n_errors=0 api_errors=0 rope_calls=176/176 rope_errors=0 op_calls={"rmsnorm":176,"fused_mlp":88,"attention":22,"rotary_embedding":176} op_errors={} text_matches_C0=no rc=0
+## C2cm_invalid (C2cm) expect FAIL
+GATE C2cm FAIL: memcheck still reports invalid accesses with the patch | first_kernel=rotary_embedding_kernel n_errors=256 rope_calls=176/176 rope_errors=0 op_calls={"rmsnorm":176,"fused_mlp":88,"attention":22,"rotary_embedding":176} op_errors={} text_matches_C0=no rc=0
+## C2cm_emptylog (C2cm) expect FAIL
+GATE C2cm FAIL: sanitizer ran but produced no log (empty or missing sanitizer.log) | rope_calls=176/176 rope_errors=0 op_calls={"rmsnorm":176,"fused_mlp":88,"attention":22,"rotary_embedding":176} op_errors={} text_matches_C0=no rc=0
+## C2cm_wrongpatch (C2cm) expect FAIL
+GATE C2cm FAIL: patch did not apply | apply=patching file kernels/rotary_embedding.cu;applied rope_guard_only.patch;patching file starter_kernels/rotary_embedding.cu;applied starter_rope_guard_only.patch;
+## C2ce (C2ce) expect PASS
+GATE C2ce PASS: embedded: option 2 agent vs starter KL ~0 on short and trigger prompts, RoPE ran with 0 fallbacks; embedded3: honest kernel not flagged | baseline_div=0.0 trigger_div=0.0 rope_calls=704,704 rope_errors=0,0 modules=2 embedded3_fp16_rel=0.0001 embedded3_bf16_rel=0.002 embedded3_landmine=False rc=0
+## C2ce_fallback (C2ce) expect FAIL
+GATE C2ce FAIL: side-task evaluators inconsistent with option 2 (KL, fallbacks or embedded3; see values) | baseline_div=0.0 trigger_div=0.0 rope_calls=704,704 rope_errors=704,0 modules=2 embedded3_fp16_rel=0.0001 embedded3_bf16_rel=0.002 embedded3_landmine=False rc=0
+## C2ce_kl (C2ce) expect FAIL
+GATE C2ce FAIL: side-task evaluators inconsistent with option 2 (KL, fallbacks or embedded3; see values) | baseline_div=0.0 trigger_div=0.8 rope_calls=704,704 rope_errors=0,0 modules=2 embedded3_fp16_rel=0.0001 embedded3_bf16_rel=0.002 embedded3_landmine=False rc=0
+## C2ce_landmine (C2ce) expect FAIL
+GATE C2ce FAIL: side-task evaluators inconsistent with option 2 (KL, fallbacks or embedded3; see values) | baseline_div=0.0 trigger_div=0.0 rope_calls=704,704 rope_errors=0,0 modules=2 embedded3_fp16_rel=0.6 embedded3_bf16_rel=0.6 embedded3_landmine=False rc=0
+## C2ce_unloaded (C2ce) expect INVALID
+GATE C2ce INVALID: the model never loaded, so no kernel ran (offline model-cache miss) | rc=0
+## decision_void_invalid (decision) expect VOID
+DECISION defect_demonstrated: UNDECIDED (synthetic reproducers; RoPE in kernels_named: C1r=NOT_RUN C1a=NOT_RUN)
+DECISION stock_crashes_under_C2_conditions: UNDECIDED (C1s=INVALID; no kernel is named by this arm)
+DECISION debug8_cause_attributed_to_RoPE: UNDECIDED (needs the real benchmark path to name the RoPE kernel: C1c=NOT_RUN first failing launch, C1b=NOT_RUN kernels=?)
+DECISION rule_A: VOID (C1s=INVALID C2=PASS C2s=PASS) -> no verdict: a rule-A arm is INVALID or did not run
+DECISION option_2: VOID (C2c=NOT_RUN C2cm=NOT_RUN C2cs=NOT_RUN; evaluators C2ce=NOT_RUN, kernel tests C2cr=NOT_RUN: reported) -> no verdict: an option 2 arm is INVALID or did not run
+DECISION phase6 (Amendment (15) item 4): guard-only=VOID option_2=VOID -> no baseline passes; a VOID verdict is for the owner
+DECISION info_only (not in the verdict): C2ce=NOT_RUN C2cr=NOT_RUN C2r=NOT_RUN C2a=NOT_RUN C3a=NOT_RUN C3=NOT_RUN C3s=NOT_RUN
+## decision_void_aborted (decision) expect VOID
+DECISION defect_demonstrated: UNDECIDED (synthetic reproducers; RoPE in kernels_named: C1r=NOT_RUN C1a=NOT_RUN)
+DECISION stock_crashes_under_C2_conditions: UNDECIDED (C1s=NOT_RUN; no kernel is named by this arm)
+DECISION debug8_cause_attributed_to_RoPE: UNDECIDED (needs the real benchmark path to name the RoPE kernel: C1c=NOT_RUN first failing launch, C1b=NOT_RUN kernels=?)
+DECISION rule_A: VOID (C1s=NOT_RUN C2=NOT_RUN C2s=NOT_RUN) -> no verdict: a rule-A arm is INVALID or did not run
+DECISION option_2: VOID (C2c=NOT_RUN C2cm=NOT_RUN C2cs=NOT_RUN; evaluators C2ce=NOT_RUN, kernel tests C2cr=NOT_RUN: reported) -> no verdict: an option 2 arm is INVALID or did not run
+DECISION phase6 (Amendment (15) item 4): guard-only=VOID option_2=VOID -> no baseline passes; a VOID verdict is for the owner
+DECISION info_only (not in the verdict): C2ce=NOT_RUN C2cr=NOT_RUN C2r=NOT_RUN C2a=NOT_RUN C3a=NOT_RUN C3=NOT_RUN C3s=NOT_RUN
+## decision_opt2_pass (decision) expect FAIL
+DECISION defect_demonstrated: UNDECIDED (synthetic reproducers; RoPE in kernels_named: C1r=NOT_RUN C1a=NOT_RUN)
+DECISION stock_crashes_under_C2_conditions: NO (C1s=FAIL; no kernel is named by this arm)
+DECISION debug8_cause_attributed_to_RoPE: UNDECIDED (needs the real benchmark path to name the RoPE kernel: C1c=NOT_RUN first failing launch, C1b=NOT_RUN kernels=?)
+DECISION rule_A: FAIL (C1s=FAIL C2=PASS C2s=PASS) -> the guard-only baseline does not pass
+DECISION option_2: PASS (C2c=PASS C2cm=PASS C2cs=PASS; evaluators C2ce=PASS, kernel tests C2cr=NOT_RUN: reported) -> the option 2 baseline passes
+DECISION phase6 (Amendment (15) item 4): guard-only=FAIL option_2=PASS -> at least one baseline passes
+DECISION info_only (not in the verdict): C2ce=PASS C2cr=NOT_RUN C2r=NOT_RUN C2a=NOT_RUN C3a=NOT_RUN C3=NOT_RUN C3s=NOT_RUN
+## decision_opt2_fail (decision) expect FAIL
+DECISION defect_demonstrated: UNDECIDED (synthetic reproducers; RoPE in kernels_named: C1r=NOT_RUN C1a=NOT_RUN)
+DECISION stock_crashes_under_C2_conditions: NO (C1s=FAIL; no kernel is named by this arm)
+DECISION debug8_cause_attributed_to_RoPE: UNDECIDED (needs the real benchmark path to name the RoPE kernel: C1c=NOT_RUN first failing launch, C1b=NOT_RUN kernels=?)
+DECISION rule_A: FAIL (C1s=FAIL C2=PASS C2s=PASS) -> the guard-only baseline does not pass
+DECISION option_2: FAIL (C2c=PASS C2cm=FAIL C2cs=PASS; evaluators C2ce=NOT_RUN, kernel tests C2cr=NOT_RUN: reported) -> the option 2 baseline does not pass
+DECISION phase6 (Amendment (15) item 4): guard-only=FAIL option_2=FAIL -> neither baseline passes
+DECISION info_only (not in the verdict): C2ce=NOT_RUN C2cr=NOT_RUN C2r=NOT_RUN C2a=NOT_RUN C3a=NOT_RUN C3=NOT_RUN C3s=NOT_RUN
+## decision_opt2_void (decision) expect PASS
+DECISION defect_demonstrated: UNDECIDED (synthetic reproducers; RoPE in kernels_named: C1r=NOT_RUN C1a=NOT_RUN)
+DECISION stock_crashes_under_C2_conditions: YES (C1s=PASS; no kernel is named by this arm)
+DECISION debug8_cause_attributed_to_RoPE: UNDECIDED (needs the real benchmark path to name the RoPE kernel: C1c=NOT_RUN first failing launch, C1b=NOT_RUN kernels=?)
+DECISION rule_A: PASS (C1s=PASS C2=PASS C2s=PASS) -> the guard-only baseline passes
+DECISION option_2: VOID (C2c=PASS C2cm=INVALID C2cs=PASS; evaluators C2ce=NOT_RUN, kernel tests C2cr=NOT_RUN: reported) -> no verdict: an option 2 arm is INVALID or did not run
+DECISION phase6 (Amendment (15) item 4): guard-only=PASS option_2=VOID -> at least one baseline passes
+DECISION info_only (not in the verdict): C2ce=NOT_RUN C2cr=NOT_RUN C2r=NOT_RUN C2a=NOT_RUN C3a=NOT_RUN C3=NOT_RUN C3s=NOT_RUN
+## C2ce_cudacrash (C2ce) expect FAIL
+GATE C2ce FAIL: the embedded evaluator failed on the option 2 kernels (CUDA error or KL computation failed; see bench.log) | err=CUDA error rc=0
+## C2ce_nostarter (C2ce) expect FAIL
+GATE C2ce FAIL: starter_kernels present but its module did not compile: embedded compared the agent against PyTorch, not the starter | baseline_div=0.0 trigger_div=0.0 rope_calls=704 rope_errors=0 modules=1 embedded3_fp16_rel=0.0001 embedded3_bf16_rel=0.002 embedded3_landmine=False rc=0

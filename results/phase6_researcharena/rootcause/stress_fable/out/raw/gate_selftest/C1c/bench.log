@@ -1,0 +1,8 @@
+[bench] Benchmarking 1 prompts (max_new=128) ...
+Traceback (most recent call last):
+  File "/workspace/rootcause/C1c/inject.py", line 165, in agent_apply_rotary_pos_emb
+    k_out = ops.rotary_embedding(k_t, positions, float(base))
+RuntimeError: rotary_embedding kernel launch failed: an illegal memory access was encountered
+
+During handling of the above exception, another exception occurred:
+torch.AcceleratorError: CUDA error: an illegal memory access was encountered

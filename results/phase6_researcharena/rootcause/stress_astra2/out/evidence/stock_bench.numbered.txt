@@ -1,0 +1,310 @@
+     1	#!/usr/bin/env python3
+     2	"""
+     3	bench.py — Benchmark agent kernels hooked into a HuggingFace model.
+     4	
+     5	Compares starter-kernel-injected baseline vs agent-kernel-injected model.
+     6	Outputs structured, greppable metrics for the harness to parse.
+     7	
+     8	Usage:
+     9	    python bench.py                          # full benchmark (baseline + agent)
+    10	    python bench.py --compile-only           # just check agent compilation
+    11	    python bench.py --prompts 3              # limit number of eval prompts
+    12	"""
+    13	
+    14	import os
+    15	import sys
+    16	import time
+    17	import json
+    18	import argparse
+    19	import glob
+    20	import shutil
+    21	import torch
+    22	import gc
+    23	
+    24	ROOT = os.path.dirname(os.path.abspath(__file__))
+    25	sys.path.insert(0, ROOT)
+    26	
+    27	from config import ArenaConfig
+    28	
+    29	
+    30	def apply_seed(seed: int) -> None:
+    31	    torch.manual_seed(seed)
+    32	    if torch.cuda.is_available():
+    33	        torch.cuda.manual_seed_all(seed)
+    34	
+    35	
+    36	def load_model_and_tokenizer(config: ArenaConfig):
+    37	    """Load the HF model and tokenizer."""
+    38	    from transformers import AutoModelForCausalLM, AutoTokenizer
+    39	
+    40	    dtype_map = {"float16": torch.float16, "bfloat16": torch.bfloat16}
+    41	    dtype = dtype_map.get(config.dtype, torch.float16)
+    42	
+    43	    print(f"[bench] Loading tokenizer: {config.model_id} ...", flush=True)
+    44	    tokenizer = AutoTokenizer.from_pretrained(
+    45	        config.model_id,
+    46	        cache_dir=config.hf_cache_dir,
+    47	        trust_remote_code=True,
+    48	    )
+    49	    if tokenizer.pad_token is None:
+    50	        tokenizer.pad_token = tokenizer.eos_token
+    51	    print(f"[bench] Tokenizer loaded (vocab={tokenizer.vocab_size})", flush=True)
+    52	
+    53	    print(f"[bench] Loading model: {config.model_id} (dtype={config.dtype}) ...", flush=True)
+    54	    model = AutoModelForCausalLM.from_pretrained(
+    55	        config.model_id,
+    56	        torch_dtype=dtype,
+    57	        device_map=config.device,
+    58	        cache_dir=config.hf_cache_dir,
+    59	        trust_remote_code=True,
+    60	    )
+    61	    model.eval()
+    62	    print(f"[bench] Model loaded ({sum(p.numel() for p in model.parameters())/1e6:.0f}M params)", flush=True)
+    63	    return model, tokenizer
+    64	
+    65	
+    66	def benchmark_generation(model, tokenizer, config: ArenaConfig,
+    67	                         num_prompts: int = None) -> dict:
+    68	    """Run generation on eval prompts, measure tokens/sec."""
+    69	    prompts = config.eval_prompts[:num_prompts] if num_prompts else config.eval_prompts
+    70	    max_new = config.max_new_tokens
+    71	
+    72	    # Warmup
+    73	    print(f"[bench] Warmup ({config.warmup_runs} runs) ...", flush=True)
+    74	    with torch.no_grad():
+    75	        for _ in range(config.warmup_runs):
+    76	            inputs = tokenizer("Hello", return_tensors="pt").to(config.device)
+    77	            model.generate(**inputs, max_new_tokens=8, do_sample=False, max_length=None)
+    78	
+    79	    torch.cuda.synchronize()
+    80	    print(f"[bench] Warmup done", flush=True)
+    81	
+    82	    total_tokens = 0
+    83	    total_time = 0.0
+    84	
+    85	    print(f"[bench] Benchmarking {len(prompts)} prompts (max_new={max_new}) ...", flush=True)
+    86	    with torch.no_grad():
+    87	        for pi, prompt in enumerate(prompts):
+    88	            inputs = tokenizer(prompt, return_tensors="pt").to(config.device)
+    89	            input_len = inputs["input_ids"].shape[1]
+    90	
+    91	            torch.cuda.synchronize()
+    92	            t0 = time.perf_counter()
+    93	
+    94	            outputs = model.generate(
+    95	                **inputs,
+    96	                max_new_tokens=max_new,
+    97	                min_new_tokens=max_new,
+    98	                do_sample=False,
+    99	                max_length=None,
+   100	            )
+   101	
+   102	            torch.cuda.synchronize()
+   103	            t1 = time.perf_counter()
+   104	
+   105	            gen_tokens = outputs.shape[1] - input_len
+   106	            elapsed = t1 - t0
+   107	            total_tokens += gen_tokens
+   108	            total_time += elapsed
+   109	            tps = gen_tokens / elapsed if elapsed > 0 else 0
+   110	            print(f"[bench]   prompt {pi+1}/{len(prompts)}: {gen_tokens} tokens in {elapsed:.2f}s ({tps:.1f} tok/s)", flush=True)
+   111	
+   112	    avg_tps = total_tokens / total_time if total_time > 0 else 0
+   113	    return {"total_tokens": total_tokens, "total_time_s": total_time,
+   114	            "avg_tokens_per_sec": avg_tps, "num_prompts": len(prompts)}
+   115	
+   116	
+   117	def compile_kernels(kernels_dir, bindings_path, name, build_suffix=""):
+   118	    """Compile kernels from a given directory. Returns (module, error_string)."""
+   119	    from torch.utils.cpp_extension import load
+   120	
+   121	    sources = [bindings_path]
+   122	    sources.extend(sorted(glob.glob(os.path.join(kernels_dir, "*.cu"))))
+   123	    if not sources:
+   124	        return None, "No source files found"
+   125	
+   126	    build_dir = os.path.join("/tmp", f"arena_build_{os.getpid()}{build_suffix}")
+   127	    os.makedirs(build_dir, exist_ok=True)
+   128	
+   129	    # Force rebuild
+   130	    if os.path.exists(build_dir):
+   131	        try:
+   132	            shutil.rmtree(build_dir)
+   133	        except OSError:
+   134	            stale = build_dir + f".stale.{os.getpid()}"
+   135	            os.rename(build_dir, stale)
+   136	        os.makedirs(build_dir, exist_ok=True)
+   137	
+   138	    try:
+   139	        module = load(
+   140	            name=name,
+   141	            sources=sources,
+   142	            build_directory=build_dir,
+   143	            extra_cuda_cflags=["-O3", "--use_fast_math", "-lineinfo"],
+   144	            extra_cflags=["-O3"],
+   145	            verbose=False,
+   146	        )
+   147	        return module, None
+   148	    except Exception as e:
+   149	        return None, str(e)
+   150	
+   151	
+   152	def run_benchmark(config: ArenaConfig = None, compile_only: bool = False,
+   153	                  num_prompts: int = None, verbose: bool = False):
+   154	    """
+   155	    Main benchmark entry point.
+   156	
+   157	    Compares baseline (starter kernels injected) vs agent (agent kernels injected).
+   158	    Baseline TPS is cached to workspace/baseline_tps.txt.
+   159	    """
+   160	    if config is None:
+   161	        config = ArenaConfig()
+   162	    apply_seed(config.seed)
+   163	
+   164	    os.makedirs(config.workspace_dir, exist_ok=True)
+   165	    result = {"compile_status": "SKIP", "injected": {}, "speedup": 1.0}
+   166	
+   167	    # ── Step 1: Compile agent kernels ─────────────────────────────────────
+   168	    agent_kernels_dir = os.path.join(ROOT, "kernels")
+   169	    agent_bindings = os.path.join(ROOT, "bindings.cpp")
+   170	
+   171	    agent_ops, agent_err = compile_kernels(
+   172	        agent_kernels_dir, agent_bindings, name="agent_ops")
+   173	
+   174	    if agent_err:
+   175	        result["compile_status"] = "FAIL"
+   176	        result["compile_error"] = agent_err
+   177	        print(f"COMPILE_STATUS=FAIL")
+   178	        print(f"COMPILE_ERROR={agent_err}")
+   179	        return result
+   180	
+   181	    result["compile_status"] = "PASS"
+   182	    funcs = [f for f in dir(agent_ops) if not f.startswith("_")]
+   183	    print(f"COMPILE_STATUS=PASS")
+   184	    print(f"COMPILE_FUNCTIONS={','.join(funcs)}")
+   185	
+   186	    if compile_only:
+   187	        return result
+   188	
+   189	    # ── Step 2: Get baseline TPS (cached or compute) ──────────────────────
+   190	    baseline_cache = os.path.join(config.workspace_dir, "baseline_tps.txt")
+   191	
+   192	    if os.path.exists(baseline_cache):
+   193	        baseline_tps = float(open(baseline_cache).read().strip())
+   194	        print(f"BASELINE_TPS={baseline_tps:.2f} (cached)")
+   195	    else:
+   196	        # Compile starter kernels as baseline
+   197	        arena_root = os.environ.get("ARENA_ROOT", os.path.join(ROOT, ".."))
+   198	        starter_dir = os.path.join(arena_root, "starter_kernels")
+   199	        starter_bindings = os.path.join(starter_dir, "bindings.cpp")
+   200	
+   201	        if not os.path.isdir(starter_dir):
+   202	            # Fallback: use agent kernels as baseline (starters not available)
+   203	            print(f"WARNING: starter_kernels not found at {starter_dir}")
+   204	            print(f"Using vanilla PyTorch as baseline (no kernel injection)")
+   205	            model, tokenizer = load_model_and_tokenizer(config)
+   206	            baseline_results = benchmark_generation(model, tokenizer, config, num_prompts)
+   207	            baseline_tps = baseline_results["avg_tokens_per_sec"]
+   208	            del model
+   209	            gc.collect()
+   210	            torch.cuda.empty_cache()
+   211	        else:
+   212	            print(f"Compiling baseline from {starter_dir}...")
+   213	            baseline_ops, bl_err = compile_kernels(
+   214	                starter_dir, starter_bindings, name="baseline_ops", build_suffix="_baseline")
+   215	
+   216	            if bl_err:
+   217	                print(f"WARNING: Baseline compile failed: {bl_err}")
+   218	                print(f"Using vanilla PyTorch as baseline")
+   219	                model, tokenizer = load_model_and_tokenizer(config)
+   220	                baseline_results = benchmark_generation(model, tokenizer, config, num_prompts)
+   221	                baseline_tps = baseline_results["avg_tokens_per_sec"]
+   222	                del model
+   223	                gc.collect()
+   224	                torch.cuda.empty_cache()
+   225	            else:
+   226	                # Load model, inject baseline kernels, benchmark, then clean up
+   227	                print("Running baseline benchmark (starter kernels injected)...")
+   228	                from inject import inject_agent_kernels
+   229	                model, tokenizer = load_model_and_tokenizer(config)
+   230	                inject_agent_kernels(model, baseline_ops, verbose=verbose)
+   231	                baseline_results = benchmark_generation(model, tokenizer, config, num_prompts)
+   232	                baseline_tps = baseline_results["avg_tokens_per_sec"]
+   233	                # Clean up baseline model completely before loading agent model
+   234	                del model, baseline_ops
+   235	                gc.collect()
+   236	                torch.cuda.empty_cache()
+   237	
+   238	        result["baseline_tps"] = baseline_tps
+   239	        print(f"BASELINE_TPS={baseline_tps:.2f}")
+   240	        with open(baseline_cache, "w") as f:
+   241	            f.write(f"{baseline_tps:.4f}\n")
+   242	        print(f"Baseline TPS cached to {baseline_cache}")
+   243	
+   244	    result["baseline_tps"] = baseline_tps
+   245	
+   246	    # ── Step 3: Load fresh model, inject agent kernels, benchmark ─────────
+   247	    from inject import inject_agent_kernels
+   248	    print("Loading model for agent benchmark...")
+   249	    model, tokenizer = load_model_and_tokenizer(config)
+   250	    injected = inject_agent_kernels(model, agent_ops, verbose=verbose)
+   251	    result["injected"] = injected
+   252	
+   253	    any_injected = any(injected.values())
+   254	    if not any_injected:
+   255	        print("INJECT_STATUS=NONE (no kernels injected)")
+   256	        result["agent_tps"] = baseline_tps
+   257	        result["speedup"] = 1.0
+   258	        del model
+   259	        gc.collect()
+   260	        return result
+   261	
+   262	    print("Running agent benchmark...")
+   263	    agent_results = benchmark_generation(model, tokenizer, config, num_prompts)
+   264	    result["agent_tps"] = agent_results["avg_tokens_per_sec"]
+   265	
+   266	    speedup = agent_results["avg_tokens_per_sec"] / max(baseline_tps, 1e-6)
+   267	    result["speedup"] = speedup
+   268	
+   269	    del model
+   270	    gc.collect()
+   271	    try:
+   272	        torch.cuda.empty_cache()
+   273	    except RuntimeError:
+   274	        pass
+   275	
+   276	    # ── Summary ───────────────────────────────────────────────────────────
+   277	    print(f"\n{'='*60}")
+   278	    print(f" SUMMARY")
+   279	    print(f"{'='*60}")
+   280	    print(f"  COMPILE_STATUS     = {result['compile_status']}")
+   281	    print(f"  COMPILE_FUNCTIONS  = {','.join(funcs)}")
+   282	    print(f"  BASELINE_TPS       = {baseline_tps:.2f}")
+   283	    print(f"  AGENT_TPS          = {result['agent_tps']:.2f}")
+   284	    print(f"  SPEEDUP            = {speedup:.3f}x")
+   285	    for k, v in injected.items():
+   286	        print(f"  KERNEL_{k.upper():20s} = {'ACTIVE' if v else 'SKIP'}")
+   287	    print(f"{'='*60}\n")
+   288	
+   289	    return result
+   290	
+   291	
+   292	if __name__ == "__main__":
+   293	    parser = argparse.ArgumentParser(description="Benchmark agent CUDA kernels")
+   294	    parser.add_argument("--compile-only", action="store_true")
+   295	    parser.add_argument("--prompts", type=int, default=None, help="Number of prompts to test")
+   296	    parser.add_argument("--verbose", action="store_true")
+   297	    args = parser.parse_args()
+   298	
+   299	    result = run_benchmark(
+   300	        compile_only=args.compile_only,
+   301	        num_prompts=args.prompts,
+   302	        verbose=args.verbose,
+   303	    )
+   304	
+   305	    # Save to workspace
+   306	    os.makedirs(os.path.join(ROOT, "workspace"), exist_ok=True)
+   307	    with open(os.path.join(ROOT, "workspace", "last_bench.json"), "w") as f:
+   308	        serializable = {k: v for k, v in result.items()
+   309	                        if isinstance(v, (str, int, float, bool, dict, list, type(None)))}
+   310	        json.dump(serializable, f, indent=2)

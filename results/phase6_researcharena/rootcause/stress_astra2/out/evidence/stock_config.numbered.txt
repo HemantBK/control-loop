@@ -1,0 +1,53 @@
+     1	"""
+     2	AutoKernel Arena — Configuration
+     3	"""
+     4	import os
+     5	from dataclasses import dataclass, field
+     6	from typing import Optional
+     7	
+     8	
+     9	@dataclass
+    10	class ArenaConfig:
+    11	    # ── Model ──────────────────────────────────────────────────────────
+    12	    seed: int = int(os.environ.get("ARENA_SEED", "42"))
+    13	    model_id: str = os.environ.get("ARENA_MODEL_ID", "TinyLlama/TinyLlama-1.1B-Chat-v1.0")
+    14	    dtype: str = "float16"  # float16 | bfloat16
+    15	    max_new_tokens: int = 128  # tokens generated per eval query
+    16	    device: str = "cuda"
+    17	
+    18	    # ── Paths ──────────────────────────────────────────────────────────
+    19	    kernels_dir: str = os.path.join(os.path.dirname(__file__), "kernels")
+    20	    bindings_path: str = os.path.join(os.path.dirname(__file__), "bindings.cpp")
+    21	    workspace_dir: str = os.path.join(os.path.dirname(__file__), "workspace")
+    22	    build_dir: str = os.path.join(os.path.dirname(__file__), "workspace", "build")
+    23	    results_tsv: str = os.path.join(os.path.dirname(__file__), "workspace", "results.tsv")
+    24	
+    25	    # ── Time budget ────────────────────────────────────────────────────
+    26	    wall_clock_minutes: float = 30.0
+    27	
+    28	    # ── Benchmarking ───────────────────────────────────────────────────
+    29	    warmup_runs: int = 3
+    30	    bench_runs: int = 10
+    31	    eval_prompts: list = field(default_factory=lambda: [
+    32	        "Explain the theory of relativity in simple terms.",
+    33	        "Write a Python function to compute the Fibonacci sequence.",
+    34	        "What are the main causes of climate change?",
+    35	        "Summarize the plot of Romeo and Juliet.",
+    36	        "Describe the process of photosynthesis step by step.",
+    37	        "What is the difference between TCP and UDP?",
+    38	        "Write a haiku about programming.",
+    39	        "Explain how a neural network learns.",
+    40	    ])
+    41	
+    42	    # ── Correctness ────────────────────────────────────────────────────
+    43	    # Max deviation in logits vs baseline before flagging.
+    44	    # fp16 optimized kernels (fused ops, fast math) typically have 0.01-0.05
+    45	    # absolute error, so we use lenient thresholds. The real correctness
+    46	    # signal is whether generation output is coherent, not exact logit match.
+    47	    logit_rtol: float = 0.05
+    48	    logit_atol: float = 0.1
+    49	
+    50	    # ── HuggingFace cache ──────────────────────────────────────────────
+    51	    hf_cache_dir: Optional[str] = os.environ.get(
+    52	        "HF_HOME", os.path.expanduser("~/.cache/huggingface")
+    53	    )

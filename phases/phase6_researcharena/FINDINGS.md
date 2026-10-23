@@ -429,7 +429,7 @@ fails. Phase 6 tests 117 passed.
 Run under `<session scratch>/jobs/p6run.sh smoke5` (pid-tracked; driver output copied to `results/phase6_researcharena/smoke5/driver.log`, paths made relative, 2026-10-22), template `pzov5japaa`, image digest
 `sha256:73c00e14…a330`. Pod `epc9ftzjt0ijjp` (EU-FR-1, H100 SXM, $3.99/h) was created at launch (≈17:03Z); RunPod reported it
 reachable after about 10 minutes (the first pull of the 16.25 GB image, within the 20-minute wait). The driver's first ssh
-command, the tar push of the local control_loop tree (`pods.py` `push_repo`), failed with `Connection to 31.24.80.42 closed by
+command, the tar push of the local control_loop tree (`pods.py` `push_repo`), failed with `Connection to <pod-ip> closed by
 remote host` (ssh rc 255); the driver raised and deleted the pod at 17:13:19Z; 613 s billed, $0.68. No setup step, version
 check, compile or stock-kernel benchmark ran, so the transformers 4.53.3 pin is untested on a GPU. The pod's own logs were not
 collected (the session never opened). Under the owner's firm time box (PLAN, dated line 2026-10-22) this failure is reported
@@ -494,3 +494,55 @@ Added, with no run:
 
 README §1, §2, §4, §7–§12 and `pins.md` are updated as `audits/RESPONSE.md` lists. Phase 6 test files: 120 passed
 (`RESEARCHARENA_ROOT=<checkout> uv run --frozen pytest -q`, six files). Spend $0. Nothing here enters a table.
+
+## 2026-10-23: known issue, smoke6b (attempt 1 of 3, $0.77) failed at ssh_ready because the driver opened the SSH window before the container was up
+
+Known issue: `pod create --wait` returned ip:port while the image was still pulling, so the 180 s ssh window expired about 30 s before the container came up (`pod get` at 19:07:36Z showed `uptimeSeconds` -3 and the ssh port still unpublished; `results/phase6_researcharena/smoke6b/pods/tfooaj6rwywb57/diagnostics.txt`). Fixed in PLAN Amendment 2026-10-23 (7) (container readiness gate and driver check) with mock tests only, no pod, $0. Nothing here enters a table.
+
+### 2026-10-23: start-up of the 16 GB prebuilt image on RunPod (owner: record as a finding about large images on RunPod)
+
+Every Phase 6 pod on template `pzov5japaa` (image `ghcr.io/hemantbk/control-loop-phase6:tf4.53.3-oc1.19.3-ra58776e0`,
+16.25 GB compressed, 43 layers) failed before a working SSH session: 0 of 4 created pods (smoke5, smoke6b, smoke6d, debug6).
+On the standard images (`runpod/pytorch:1.0.3-...`, `runpod/base:1.4.1-cuda1290-ubuntu2204`) plus `pod_setup.sh`, 14 of 15
+created pods reached SSH. Where the template's create returned at all, it took 509-612 s (standard: 14-197 s), and
+`uptimeSeconds` stayed at or below 0 for 11-14 minutes (-3 at 11.5 min in smoke6b, -5 at 11 min in smoke6d, -13 at 5.5 min
+and 0 at 10.6 min in debug6), so the pull of the image dominates start-up. Failure modes: smoke5, the first ssh after the pull
+closed by the remote host (rc 255); smoke6b, the port mapping not yet published when the driver's 180 s window ran out;
+smoke6d, deleted by the manager under the 10-minute silence rule while still pulling; debug6, removed by RunPod during the
+pull ("Upstream temporarily unavailable"). The two template data centers on record are EU-FR-1 and US-NE-1.
+
+Reading (council of 2026-10-23, `audits/council_2026-10-23_standard_image.md`): an association, not an isolated cause. Against
+an image-only explanation: diag1, on the standard image, also never got an SSH port in 10 minutes; smoke6b and smoke6d were
+partly the driver's and the manager's handling (both since changed, Amendments (7) and (8)); all template attempts fell on
+one evening with frequent stock refusals; hosts, layer caching and data centers were not controlled. Practical lesson for
+RunPod: a multi-GB custom image adds 8-14 minutes of cold pull per pod, during which RunPod reports the pod RUNNING with
+negative uptime and no SSH mapping, and readiness checks and silence limits must start at container start, not at create.
+Cost of the four template pods: about $3.14 (smoke5 $0.68; reopening $0.77 + $0.75 + $0.94, the last three estimated).
+
+### 2026-10-23: final attempt (Amendment (9)) stopped at the stock-kernel benchmark on an environment variable
+
+On the standard image the pod reached SSH in 287 s and passed nvidia-smi (driver 595.91.07, CUDA 13.2), `pod_setup.sh` (287 s)
+and the version checks (transformers 4.53.3). The stock-kernel benchmark then crashed loading TinyLlama:
+`HF_HUB_ENABLE_HF_TRANSFER=1` (set by RunPod in `/etc/rp_environment`) with no `hf_transfer` package installed. No kernel ran
+and the K/V head-shape probe could not read a shape. It is the first time the benchmark ran with transformers 4.53.3 on a GPU.
+A fix (install `hf_transfer`, or unset the variable for the benchmark) touches only the setup, not ResearchArena, and is not
+applied: the owner's rule closed Phase 6 on this failure. Evidence: `results/phase6_researcharena/debug7/steps/061603_stock_kernels_bench.log`,
+`debug7/pods/x0qjoqz1q0jmw1/p6_diag_*.log`, `debug7/steps/061700_hf_transfer_origin.log`. Pod cost $1.18.
+
+### 2026-10-23: the stock kernels fault with K/V expanded (Amendment (10)): the head-layout cause is contradicted
+
+With `hf_transfer` installed, the stock-kernel benchmark ran on a GPU with transformers 4.53.3 for the first time
+(`results/phase6_researcharena/debug8/`, pod 43em5jpg85usuv, $0.92).
+- **Head shape:** the probe recorded "query heads [32], key/value heads [32] (K/V expanded to the query head count)" over
+  22 `ops.attention` calls.
+- **Result:** the stock kernels still crashed with "CUDA error: an illegal memory access was encountered", both normally
+  and with CUDA_LAUNCH_BLOCKING=1.
+- **Where:** the blocking run raises it in the KV-cache update (`cache_utils.py:557`) inside LlamaAttention.forward
+  (`modeling_llama.py:241`), under the injected wrapper (`inject.py:134`). The faulting kernel is not named.
+
+The head-layout hypothesis behind Amendment (5) (about 80% confidence, CPU evidence: transformers 5.3.0 hands
+unexpanded GQA K/V to kernels that index by query head) predicted that the pin would remove the out-of-bounds reads. It
+did not. Unexpanded heads may still be a fault under 5.3.0, but they are not what makes the stock kernels fail under 4.53.3.
+The cause of the stock-kernel crash is unidentified.
+`upstream_issue_draft.md` rests on the head-layout reading and should not be filed as written. Evidence:
+`debug8/steps/070900_stock_kernels_bench.log`, `debug8/pods/43em5jpg85usuv/p6_diag_*.log`.

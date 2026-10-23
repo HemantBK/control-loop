@@ -1,0 +1,9 @@
+FAKE_FAIL=C0: arms requested on the pod: preflight C0 | NOT_RUN aborted lines: 8
+  DECISION rule_A: VOID (C1s=NOT_RUN C2=NOT_RUN C2s=NOT_RUN) -> no verdict: a rule-A arm is INVALID or did not run
+  DECISION option_2: VOID (C2c=NOT_RUN C2cm=NOT_RUN C2cs=NOT_RUN; evaluators C2ce=NOT_RUN, kernel tests C2cr=NOT_RUN: reported) -> no verdict: an option 2 arm is INVALID or did not run
+ok   abort after C0: no later arm ran; rule_A VOID
+FAKE_FAIL=preflight: arms requested on the pod: preflight | NOT_RUN aborted lines: 9
+  DECISION rule_A: VOID (C1s=NOT_RUN C2=NOT_RUN C2s=NOT_RUN) -> no verdict: a rule-A arm is INVALID or did not run
+  DECISION option_2: VOID (C2c=NOT_RUN C2cm=NOT_RUN C2cs=NOT_RUN; evaluators C2ce=NOT_RUN, kernel tests C2cr=NOT_RUN: reported) -> no verdict: an option 2 arm is INVALID or did not run
+ok   abort after preflight: no later arm ran; rule_A VOID
+abort_selftest: ALL_PASS

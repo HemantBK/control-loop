@@ -1,0 +1,31 @@
+# no agent; ResearchArena task_context from /workspace/arena_root/settings/cuda_kernel/task_context (pinned 58776e0), copied as pipeline_redteam.sh:145-146 does
+# ARENA_ROOT=/workspace/arena_root ARENA_SEED=733 HF_HOME=/workspace/hf CUDA_HOME=/usr/local/cuda TORCH_CUDA_ARCH_LIST=8.0;8.9;9.0 python3=/usr/bin/python3.11
+NVIDIA H100 80GB HBM3, 595.91.07, 81559 MiB
+--- pip show transformers torch ---
+Name: transformers
+Version: 4.53.3
+Summary: State-of-the-art Machine Learning for JAX, PyTorch and TensorFlow
+Home-page: https://github.com/huggingface/transformers
+Author: The Hugging Face team (past and future) with the help of all our contributors (https://github.com/huggingface/transformers/graphs/contributors)
+Author-email: transformers@huggingface.co
+License: Apache 2.0 License
+Location: /usr/local/lib/python3.11/dist-packages
+Requires: filelock, huggingface-hub, numpy, packaging, pyyaml, regex, requests, safetensors, tokenizers, tqdm
+Required-by: 
+---
+Name: torch
+Version: 2.10.0
+Summary: Tensors and Dynamic neural networks in Python with strong GPU acceleration
+Home-page: https://pytorch.org
+Author: 
+Author-email: PyTorch Team <packages@pytorch.org>
+License: BSD-3-Clause
+Location: /usr/local/lib/python3.11/dist-packages
+Requires: cuda-bindings, filelock, fsspec, jinja2, networkx, nvidia-cublas-cu12, nvidia-cuda-cupti-cu12, nvidia-cuda-nvrtc-cu12, nvidia-cuda-runtime-cu12, nvidia-cudnn-cu12, nvidia-cufft-cu12, nvidia-cufile-cu12, nvidia-curand-cu12, nvidia-cusolver-cu12, nvidia-cusparse-cu12, nvidia-cusparselt-cu12, nvidia-nccl-cu12, nvidia-nvjitlink-cu12, nvidia-nvshmem-cu12, nvidia-nvtx-cu12, sympy, triton, typing-extensions
+Required-by: accelerate
+import: torch 2.10.0+cu128 cuda 12.8 transformers 4.53.3
+--- model config as bench.py loads it (config.ArenaConfig, AutoConfig.from_pretrained) ---
+MODEL_CONFIG model_id=TinyLlama/TinyLlama-1.1B-Chat-v1.0 num_attention_heads=32 num_key_value_heads=4 head_dim=64 hidden_size=2048 num_hidden_layers=22 dtype=float16 max_new_tokens=128 seed=733
+--- the copied kernels against the pinned checkout ---
+kernels/ identical to the checkout's task_context/kernels/
+starter_kernels at /workspace/arena_root/starter_kernels: absent (bench.py 201-204: baseline = vanilla PyTorch, as in every run2 episode)

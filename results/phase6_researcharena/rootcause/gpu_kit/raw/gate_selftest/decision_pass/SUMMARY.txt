@@ -1,0 +1,10 @@
+GATE C1r PASS: x | kernel=rotary_embedding_kernel
+GATE C1a PASS: x
+GATE C1c PASS: x
+GATE C2c FAIL: x
+GATE C2cs FAIL: x
+GATE C3 FAIL: x
+GATE C1s PASS: stock crashed | err=CUDA error
+GATE C2 PASS: x
+GATE C2s PASS: x
+GATE C1b PASS: x | rope_first=False all_kernels_with_invalid_access=rmsnorm_kernel,rotary_embedding_kernel

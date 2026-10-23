@@ -1,0 +1,15 @@
+W1023 08:24:10.482000 65116 torch/utils/cpp_extension.py:118] No CUDA runtime is found, using CUDA_HOME='/home/astra/work/cuda'
+Traceback (most recent call last):
+  File "/home/astra/out/compile_check.py", line 7, in <module>
+    m=load(name='review_'+arm,sources=[str(root/'bindings.cpp')]+[str(p) for p in sorted((root/'kernels').glob('*.cu'))],build_directory=str(build),extra_cuda_cflags=['-O3','--use_fast_math','-lineinfo'],extra_cflags=['-O3'],verbose=True)
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/astra/work/venv/lib/python3.11/site-packages/torch/utils/cpp_extension.py", line 1767, in load
+    return _jit_compile(
+           ^^^^^^^^^^^^^
+  File "/home/astra/work/venv/lib/python3.11/site-packages/torch/utils/cpp_extension.py", line 2207, in _jit_compile
+    _write_ninja_file_and_build_library(
+  File "/home/astra/work/venv/lib/python3.11/site-packages/torch/utils/cpp_extension.py", line 2318, in _write_ninja_file_and_build_library
+    verify_ninja_availability()
+  File "/home/astra/work/venv/lib/python3.11/site-packages/torch/utils/cpp_extension.py", line 2381, in verify_ninja_availability
+    raise RuntimeError("Ninja is required to load C++ extensions (pip install ninja to get it)")
+RuntimeError: Ninja is required to load C++ extensions (pip install ninja to get it)

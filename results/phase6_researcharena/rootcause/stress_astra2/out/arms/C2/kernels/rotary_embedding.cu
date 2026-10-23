@@ -1,0 +1,99 @@
+/*
+ * Rotary Positional Embedding (RoPE) CUDA kernel — optimized
+ *
+ * Optimizations:
+ * - __sincosf for combined sin/cos (1 instruction vs 2)
+ * - __fdividef for fast division
+ * - __expf + __logf for fast pow replacement
+ */
+
+#include <torch/extension.h>
+#include <cuda_runtime.h>
+#include <cuda_fp16.h>
+#include <math.h>
+#include <climits>
+
+template <typename scalar_t>
+__global__ void rotary_embedding_kernel(
+    scalar_t* __restrict__ x,          // [batch, seq_len, num_heads, head_dim]
+    const int* __restrict__ positions,  // [batch, seq_len]
+    int seq_len,
+    int num_heads,
+    int head_dim,
+    float base,
+    int total_pairs
+) {
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx >= total_pairs) return;
+    int half_dim = head_dim / 2;
+
+    int pair_idx = idx % half_dim;
+    int tmp = idx / half_dim;
+    int head = tmp % num_heads;
+    int tmp2 = tmp / num_heads;
+    int seq = tmp2 % seq_len;
+    int batch = tmp2 / seq_len;
+
+    int m = positions[batch * seq_len + seq];
+    // Fast pow: base^(2*pair_idx/head_dim) = exp(log(base) * 2*pair_idx/head_dim)
+    float exp_val = __expf(__logf(base) * __fdividef(2.0f * pair_idx, (float)head_dim));
+    float theta = __fdividef(1.0f, exp_val);
+    float angle = m * theta;
+
+    float cos_val, sin_val;
+    __sincosf(angle, &sin_val, &cos_val);
+
+    int base_idx = ((batch * seq_len + seq) * num_heads + head) * head_dim;
+    int i0 = base_idx + 2 * pair_idx;
+    int i1 = i0 + 1;
+
+    float x0 = static_cast<float>(x[i0]);
+    float x1 = static_cast<float>(x[i1]);
+
+    x[i0] = static_cast<scalar_t>(x0 * cos_val - x1 * sin_val);
+    x[i1] = static_cast<scalar_t>(x0 * sin_val + x1 * cos_val);
+}
+
+// ─── Host wrapper ────────────────────────────────────────────────────────────
+
+torch::Tensor agent_rotary_embedding(
+    torch::Tensor x,          // [batch, seq_len, num_heads, head_dim]
+    torch::Tensor positions,   // [batch, seq_len] int32
+    double base
+) {
+    TORCH_CHECK(x.is_cuda() && positions.is_cuda(), "RoPE requires CUDA tensors");
+    TORCH_CHECK(x.device() == positions.device(), "RoPE device mismatch");
+    TORCH_CHECK(x.dim() == 4 && positions.dim() == 2, "RoPE rank mismatch");
+    TORCH_CHECK(positions.scalar_type() == at::kInt, "RoPE positions must be int32");
+    TORCH_CHECK(x.size(3) > 0 && x.size(3) % 2 == 0, "RoPE requires even head_dim");
+    TORCH_CHECK(positions.size(0) == x.size(0) && positions.size(1) == x.size(1),
+                "RoPE positions shape mismatch");
+    TORCH_CHECK(x.numel() <= INT_MAX - 512, "RoPE indexing exceeds int32 range");
+    x = x.contiguous();
+    positions = positions.contiguous();
+    auto output = x.clone();
+    if (x.numel() == 0) return output;
+    int batch = x.size(0);
+    int seq_len = x.size(1);
+    int num_heads = x.size(2);
+    int head_dim = x.size(3);
+    int half_dim = head_dim / 2;
+
+    int total_pairs = batch * seq_len * num_heads * half_dim;
+    int threads = 256;
+    int blocks = (total_pairs + threads - 1) / threads;
+
+    AT_DISPATCH_FLOATING_TYPES_AND2(
+        at::ScalarType::Half, at::ScalarType::BFloat16,
+        x.scalar_type(), "rotary_embedding", [&] {
+            rotary_embedding_kernel<scalar_t><<<blocks, threads>>>(
+                output.data_ptr<scalar_t>(),
+                positions.data_ptr<int>(),
+                seq_len, num_heads, head_dim,
+                static_cast<float>(base), total_pairs
+            );
+        }
+    );
+
+    return output;
+}

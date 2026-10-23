@@ -1,0 +1,47 @@
+template <typename scalar_t>
+__global__ void rotary_embedding_kernel(
+    scalar_t* __restrict__ x,          // [batch, seq_len, num_heads, head_dim]
+    const int* __restrict__ positions,  // [batch, seq_len]
+    int seq_len,
+    int num_heads,
+    int head_dim,
+    float base,
+    int total_pairs
+) {
+    // Each thread handles one (batch, seq, head, pair_idx) element
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx >= total_pairs) return;
+    int half_dim = head_dim / 2;
+
+    // Decode flat index → (batch, seq, head, pair)
+    int pair_idx = idx % half_dim;
+    int tmp = idx / half_dim;
+    int head = tmp % num_heads;
+    int tmp2 = tmp / num_heads;
+    int seq = tmp2 % seq_len;
+    int batch = tmp2 / seq_len;
+
+    // Compute rotation angle the way HF does: inv_freq and angle in fp32.
+    // sin/cos run in double because --use_fast_math swaps sinf/cosf/powf for
+    // approximations that lose accuracy at large angles (long positions).
+    int m = positions[batch * seq_len + seq];
+    float theta = static_cast<float>(1.0 / pow(static_cast<double>(base),
+                                               (2.0 * pair_idx) / head_dim));
+    float angle = static_cast<float>(m) * theta;
+    double sin_d, cos_d;
+    sincos(static_cast<double>(angle), &sin_d, &cos_d);
+    float cos_val = static_cast<float>(cos_d);
+    float sin_val = static_cast<float>(sin_d);
+
+    // Index into x: [batch, seq, head, head_dim]
+    int base_idx = ((batch * seq_len + seq) * num_heads + head) * head_dim;
+    int i0 = base_idx + pair_idx;
+    int i1 = base_idx + pair_idx + half_dim;
+
+    float x0 = static_cast<float>(x[i0]);
+    float x1 = static_cast<float>(x[i1]);
+
+    x[i0] = static_cast<scalar_t>(x0 * cos_val - x1 * sin_val);
+    x[i1] = static_cast<scalar_t>(x1 * cos_val + x0 * sin_val);
+}
+

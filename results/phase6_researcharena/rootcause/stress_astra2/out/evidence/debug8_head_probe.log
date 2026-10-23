@@ -1,0 +1,10 @@
+[bench] Loading tokenizer: TinyLlama/TinyLlama-1.1B-Chat-v1.0 ...
+[bench] Tokenizer loaded (vocab=32000)
+[bench] Loading model: TinyLlama/TinyLlama-1.1B-Chat-v1.0 (dtype=float16) ...
+[bench] Model loaded (1100M params)
+attn_implementation sdpa
+injected {'rmsnorm': False, 'rotary_embedding': False, 'fused_mlp': False, 'attention': True}
+SDPA_CALL q=(1, 32, 2, 64) k=(1, 32, 2, 64) v=(1, 32, 2, 64) causal=True
+SDPA_CALL q=(1, 32, 2, 64) k=(1, 32, 2, 64) v=(1, 32, 2, 64) causal=True
+SDPA_CALL q=(1, 32, 2, 64) k=(1, 32, 2, 64) v=(1, 32, 2, 64) causal=True
+SDPA_SUMMARY calls=22 q_heads=[32] kv_heads=[32]
