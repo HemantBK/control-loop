@@ -1,0 +1,9 @@
+torch 2.10.0+cpu, transformers 4.53.3; patches ['00_rope_bounds_guard.patch', '01_evaluator_remeasure_from_clean_copy.patch', '02_bench_starter_kernels_lookup.patch', '03_attention_whole_warps_and_race.patch', '04_baseline_is_initial_kernels.patch', '05_correctness_gate.patch', '06_baseline_b_rope.patch', '07_kernel_instrumentation.patch']
+ok   07 adds the counters; 00-06 has none
+ok   same ops injected before and after 07: {'rmsnorm': True, 'rotary_embedding': True, 'fused_mlp': True, 'attention': True}
+ok   1 outputs bitwise identical before/after 07 (tokens [72, 78, 5, 72, 34, 106, 51, 85]); KL unchanged
+ok   2 counts {'rmsnorm': {'custom': 32, 'fallback': 0}, 'fused_mlp': {'custom': 16, 'fallback': 0}, 'rotary_embedding': {'custom': 16, 'fallback': 0}, 'attention': {'custom': 2, 'fallback': 0, 'decode_pytorch': 14}}
+ok   3 attention fallbacks counted {'custom': 0, 'fallback': 2, 'decode_pytorch': 14}, first RuntimeError('stand-in attention failure')
+ok   4 rope fallbacks counted {'custom': 0, 'fallback': 16}, outputs identical
+ok   5 evaluate.py unchanged by 07; one increment 54 ns, 112640 per bench pass = 6.1 ms of about 7.3 s (0.084%)
+INSTRUMENTATION_07_TEST PASS

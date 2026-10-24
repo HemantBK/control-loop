@@ -1,3 +1,13 @@
+# Benchmark change 03: attention kernel, whole warps and the reduction race (kernels/attention.cu).
+# Reason: the stock launcher ran min(kv_len, 256) threads, a partial warp for kv_len < 32, while the reductions use
+# full-mask __shfl_down_sync, which is undefined for a partial warp. Lane 0 of warp 0 also overwrote warp_reduce[0] (the
+# global max) before every thread had read it. On an H100 the stock kernel failed 4 of 22 numerics cases (N = 255 and
+# 256); with this change it passes 22/22, memcheck-clean.
+# Change: whole warps; a __syncthreads() before the overwrite; GQA-aware K/V indexing (the identity when K/V arrive
+# expanded); argument checks and a launch-error check.
+# Note: inject.py catches exceptions and falls back to PyTorch, so a failed TORCH_CHECK here shows only in change 07's
+# fallback counts. Approved: PLAN Amendment (17), continued.
+#
 diff -ruN _a/settings/cuda_kernel/task_context/kernels/attention.cu _b/settings/cuda_kernel/task_context/kernels/attention.cu
 --- a/settings/cuda_kernel/task_context/kernels/attention.cu
 +++ b/settings/cuda_kernel/task_context/kernels/attention.cu

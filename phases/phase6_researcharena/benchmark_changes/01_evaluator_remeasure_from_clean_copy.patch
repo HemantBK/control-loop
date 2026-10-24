@@ -1,3 +1,12 @@
+# Benchmark change 01: the evaluator re-measures from a clean copy.
+# Reason: the stock evaluate.py took the speed-up from workspace/final_results.json, final_results.json or
+# workspace/last_bench.json in the agent's snapshot, all agent-writable, and re-measured only when none existed, so an
+# agent could write its own score (issue #2 point 3).
+# Change: upstream 11ea904's re-measure piece alone. The pristine harness plus only the agent's kernels/ and bindings.cpp
+# are staged, bench.py runs in a subprocess, and that run's own result is read. The pipeline hunks put the pristine
+# task_context beside evaluate.py.
+# Approved: PLAN Amendment (17) item 1. Test: test_evaluator_trust.py.
+#
 diff -ruN _a/settings/cuda_kernel/evaluate.py _b/settings/cuda_kernel/evaluate.py
 --- a/settings/cuda_kernel/evaluate.py
 +++ b/settings/cuda_kernel/evaluate.py

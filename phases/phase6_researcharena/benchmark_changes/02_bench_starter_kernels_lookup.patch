@@ -1,3 +1,9 @@
+# Benchmark change 02: the starter_kernels lookup.
+# Reason: bench.py looked for starter_kernels/ under ARENA_ROOT, one level too high, so the baseline silently fell back to
+# vanilla PyTorch on every run (issue #2 point 1).
+# Change: look beside bench.py. Superseded for the score by change 04, which compiles the baseline from
+# baseline_kernels/; kept as the record of the bug. Approved: PLAN Amendment (17) item 2.
+#
 diff -ruN _a/settings/cuda_kernel/task_context/bench.py _b/settings/cuda_kernel/task_context/bench.py
 --- a/settings/cuda_kernel/task_context/bench.py
 +++ b/settings/cuda_kernel/task_context/bench.py

@@ -135,3 +135,32 @@ def test_bad_pattern_or_signal_exits_2():
     assert subprocess.run([PY, str(PROCS_PY), "list", "("], capture_output=True, text=True).returncode == 2
     assert subprocess.run([PY, str(PROCS_PY), "kill", marker(), "--signal", "NOPE"], capture_output=True,
                           text=True).returncode == 2
+
+
+def test_kill_tree_stops_the_match_and_its_descendants_and_spares_the_caller(tmp_path):
+    """2026-10-24 (Amendment (19)): stopping an agent at the model cap must also stop the tools it started; the caller,
+    a bash -c whose command line holds the pattern, survives."""
+    agent = tmp_path / "solve.sh"
+    agent.write_text("#!/bin/bash\n( sleep 305 ) &\nsleep 306 &\nwait\n")
+    agent.chmod(0o755)
+    other = subprocess.Popen(["sleep", "307"])
+    p = subprocess.Popen(["bash", str(agent)], start_new_session=True)
+    try:
+        for _ in range(50):
+            if procs.find("sleep 306", fixed=True) and procs.find("sleep 305", fixed=True):
+                break
+            time.sleep(0.1)
+        cmd = f"{sys.executable} {procs.__file__} kill-tree solve.sh --fixed; echo CALLER_ALIVE"
+        r = subprocess.run(["bash", "-c", cmd], capture_output=True, text=True, timeout=30)
+        assert "CALLER_ALIVE" in r.stdout and r.stdout.count("killed ") >= 3, r.stdout + r.stderr
+        p.wait(timeout=10)
+        for _ in range(50):
+            if not procs.find("sleep 305", fixed=True) and not procs.find("sleep 306", fixed=True):
+                break
+            time.sleep(0.1)
+        assert not procs.find("sleep 305", fixed=True) and not procs.find("sleep 306", fixed=True)
+        assert other.poll() is None                     # an unrelated process is untouched
+    finally:
+        other.kill()
+        for pid, _ in procs.find("sleep 30[56]"):
+            os.kill(pid, 9)

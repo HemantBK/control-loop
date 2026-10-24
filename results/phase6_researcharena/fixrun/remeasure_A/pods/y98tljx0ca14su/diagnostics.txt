@@ -1,0 +1,389 @@
+'# diagnostics for pod y98tljx0ca14su (p6-fixrmA) at 2026-10-24T07:09:27Z
+# reason: pod_create --wait timed out:  waiting for ssh on pod y98tljx0ca14su; last known state: ssh port not allocated yet; pod y98tljx0ca14su was created: '"'"'runpodctl pod get y98tljx0ca14su'"'"' to inspect it, '"'"'runpodctl pod delete y98tljx0ca14su'"'"' if it is still running (pods bill by the second)","code":"wait_timeout","id":"y98tljx0ca14su"}
+
+== runpodctl pod get y98tljx0ca14su -o json (rc=0; env values dropped)
+{
+  "containerDiskInGb": 40,
+  "costPerHr": 3.99,
+  "createdAt": "2026-10-24 06:59:24.425 +0000 UTC",
+  "desiredStatus": "RUNNING",
+  "env": {
+    "ARENA_RESULTS_DIR": "<from env>",
+    "ARENA_ROOT": "<from env>",
+    "HF_HOME": "<from env>",
+    "OPENROUTER_API_KEY": "<from env>",
+    "P6_EPISODE": "<from env>",
+    "P6_SIDE_TASK": "<from env>",
+    "PUBLIC_KEY": "<from env>",
+    "TOKENIZERS_PARALLELISM": "<from env>"
+  },
+  "gpuCount": 1,
+  "gpuId": "NVIDIA H100 80GB HBM3",
+  "id": "y98tljx0ca14su",
+  "imageName": "runpod/base:1.4.1-cuda1290-ubuntu2204",
+  "memoryInGb": 188,
+  "name": "p6-fixrmA",
+  "ports": [
+    "22/tcp"
+  ],
+  "runtimeStatus": "running",
+  "ssh": {
+    "id": "y98tljx0ca14su",
+    "ip": "<pod-ip>",
+    "name": "p6-fixrmA",
+    "port": "<pod-port>",
+    "ssh_command": "ssh -i /root/.runpod/ssh/runpodctl-ssh-key root@<pod-ip> -p <pod-port>",
+    "ssh_key": {
+      "exists": true,
+      "fingerprint": "SHA256:ds4WgTSbU3/y1cRRN/0nXTNRhZTM+6ffkaBTU2sIvs8",
+      "in_account": true,
+      "path": "/root/.runpod/ssh/runpodctl-ssh-key",
+      "source": "runpodctl doctor"
+    }
+  },
+  "uptimeSeconds": 447,
+  "vcpuCount": 28,
+  "volumeInGb": 30,
+  "volumeMountPath": "/workspace"
+}
+
+== ssh diagnostics (rc=0)
+== ps -ef | head -50
+UID          PID    PPID  C STIME TTY          TIME CMD
+root           1       0  0 07:01 ?        00:00:00 /sbin/docker-init -- /opt/nvidia/nvidia_entrypoint.sh /start.sh
+root         437       1  0 07:01 ?        00:00:00 /bin/bash /start.sh
+root         468       1  0 07:01 ?        00:00:00 nginx: master process /usr/sbin/nginx
+nobody       469     468  0 07:01 ?        00:00:00 nginx: worker process
+root         490       1  0 07:01 ?        00:00:00 sshd: /usr/sbin/sshd [listener] 0 of 10-100 startups
+root         500     437  0 07:01 ?        00:00:00 sleep infinity
+root         513     490  0 07:09 ?        00:00:00 sshd: root@notty
+root         524     513  0 07:09 ?        00:00:00 bash -c echo '"'"'== ps -ef | head -50'"'"'; ps -ef 2>&1 | head -50; echo '"'"'== ls -la /workspace'"'"'; ls -la /workspace 2>&1; echo '"'"'== ss -tlnp'"'"'; (ss -tlnp 2>&1 || netstat -tlnp 2>&1); echo '"'"'== sshd'"'"'; ps -ef 2>&1 | grep '"'"'[s]shd'"'"'; for f in /var/log/*; do [ -f "$f" ] && { echo "== tail -100 $f"; tail -100 "$f" 2>&1; }; done; true
+root         525     524  0 07:09 ?        00:00:00 ps -ef
+root         526     524  0 07:09 ?        00:00:00 head -50
+== ls -la /workspace
+total 0
+drwxrwxrwx 2 root root 4096 Oct 24 06:59 .
+drwxr-xr-x 1 root root   86 Oct 24 07:01 ..
+== ss -tlnp
+State  Recv-Q Send-Q Local Address:Port  Peer Address:PortProcess                         
+LISTEN 0      4096      127.0.0.11:42839      0.0.0.0:*                                   
+LISTEN 0      511          0.0.0.0:9091       0.0.0.0:*    users:(("nginx",pid=468,fd=6)) 
+LISTEN 0      511          0.0.0.0:7861       0.0.0.0:*    users:(("nginx",pid=468,fd=8)) 
+LISTEN 0      511          0.0.0.0:8081       0.0.0.0:*    users:(("nginx",pid=468,fd=9)) 
+LISTEN 0      511          0.0.0.0:8001       0.0.0.0:*    users:(("nginx",pid=468,fd=10))
+LISTEN 0      511          0.0.0.0:7270       0.0.0.0:*    users:(("nginx",pid=468,fd=11))
+LISTEN 0      128          0.0.0.0:22         0.0.0.0:*    users:(("sshd",pid=490,fd=3))  
+LISTEN 0      511          0.0.0.0:3001       0.0.0.0:*    users:(("nginx",pid=468,fd=7)) 
+LISTEN 0      128             [::]:22            [::]:*    users:(("sshd",pid=490,fd=4))  
+== sshd
+root         490       1  0 07:01 ?        00:00:00 sshd: /usr/sbin/sshd [listener] 0 of 10-100 startups
+root         513     490  0 07:09 ?        00:00:00 sshd: root@notty
+root         524     513  0 07:09 ?        00:00:00 bash -c echo '"'"'== ps -ef | head -50'"'"'; ps -ef 2>&1 | head -50; echo '"'"'== ls -la /workspace'"'"'; ls -la /workspace 2>&1; echo '"'"'== ss -tlnp'"'"'; (ss -tlnp 2>&1 || netstat -tlnp 2>&1); echo '"'"'== sshd'"'"'; ps -ef 2>&1 | grep '"'"'[s]shd'"'"'; for f in /var/log/*; do [ -f "$f" ] && { echo "== tail -100 $f"; tail -100 "$f" 2>&1; }; done; true
+== tail -100 /var/log/alternatives.log
+update-alternatives 2025-04-15 14:04:40: run with --install /usr/bin/which which /usr/bin/which.debianutils 0 --slave /usr/share/man/man1/which.1.gz which.1.gz /usr/share/man/man1/which.debianutils.1.gz --slave /usr/share/man/de/man1/which.1.gz which.de1.gz /usr/share/man/de/man1/which.debianutils.1.gz --slave /usr/share/man/es/man1/which.1.gz which.es1.gz /usr/share/man/es/man1/which.debianutils.1.gz --slave /usr/share/man/fr/man1/which.1.gz which.fr1.gz /usr/share/man/fr/man1/which.debianutils.1.gz --slave /usr/share/man/it/man1/which.1.gz which.it1.gz /usr/share/man/it/man1/which.debianutils.1.gz --slave /usr/share/man/ja/man1/which.1.gz which.ja1.gz /usr/share/man/ja/man1/which.debianutils.1.gz --slave /usr/share/man/pl/man1/which.1.gz which.pl1.gz /usr/share/man/pl/man1/which.debianutils.1.gz --slave /usr/share/man/sl/man1/which.1.gz which.sl1.gz /usr/share/man/sl/man1/which.debianutils.1.gz
+update-alternatives 2025-04-15 14:04:40: auto-repair link group which
+update-alternatives 2025-04-15 14:09:34: run with --install /usr/bin/awk awk /usr/bin/mawk 5 --slave /usr/share/man/man1/awk.1.gz awk.1.gz /usr/share/man/man1/mawk.1.gz --slave /usr/bin/nawk nawk /usr/bin/mawk --slave /usr/share/man/man1/nawk.1.gz nawk.1.gz /usr/share/man/man1/mawk.1.gz
+update-alternatives 2025-04-15 14:09:34: auto-repair link group awk
+update-alternatives 2025-04-15 14:10:11: run with --install /usr/sbin/rmt rmt /usr/sbin/rmt-tar 50 --slave /usr/share/man/man8/rmt.8.gz rmt.8.gz /usr/share/man/man8/rmt-tar.8.gz
+update-alternatives 2025-04-15 14:10:11: auto-repair link group rmt
+update-alternatives 2025-04-15 14:10:22: run with --install /usr/bin/pager pager /bin/more 50 --slave /usr/share/man/man1/pager.1.gz pager.1.gz /usr/share/man/man1/more.1.gz
+update-alternatives 2025-04-15 14:10:22: auto-repair link group pager
+update-alternatives 2025-04-15 14:10:44: run with --install /usr/sbin/rmt rmt /usr/sbin/rmt-tar 50 --slave /usr/share/man/man8/rmt.8.gz rmt.8.gz /usr/share/man/man8/rmt-tar.8.gz
+update-alternatives 2025-04-15 14:10:45: run with --install /usr/bin/pager pager /bin/more 50 --slave /usr/share/man/man1/pager.1.gz pager.1.gz /usr/share/man/man1/more.1.gz
+update-alternatives 2025-05-05 21:38:16: run with --quiet --install /usr/bin/pinentry pinentry /usr/bin/pinentry-curses 50 --slave /usr/share/man/man1/pinentry.1.gz pinentry.1.gz /usr/share/man/man1/pinentry-curses.1.gz
+update-alternatives 2025-05-05 21:38:16: link group pinentry updated to point to /usr/bin/pinentry-curses
+update-alternatives 2025-05-05 21:38:38: run with --install /usr/local/cuda cuda /usr/local/cuda-12.9 129
+update-alternatives 2025-05-05 21:38:38: link group cuda updated to point to /usr/local/cuda-12.9
+update-alternatives 2025-05-05 21:38:38: run with --install /usr/local/cuda-12 cuda-12 /usr/local/cuda-12.9 129
+update-alternatives 2025-05-05 21:38:38: link group cuda-12 updated to point to /usr/local/cuda-12.9
+update-alternatives 2025-05-05 21:44:16: run with --install /etc/cufile.json cufile.json /usr/local/cuda-12.9/gds/cufile.json 129
+update-alternatives 2025-05-05 21:44:16: link group cufile.json updated to point to /usr/local/cuda-12.9/gds/cufile.json
+update-alternatives 2025-05-05 21:59:43: run with --install /usr/bin/lzma lzma /usr/bin/xz 20 --slave /usr/share/man/man1/lzma.1.gz lzma.1.gz /usr/share/man/man1/xz.1.gz --slave /usr/bin/unlzma unlzma /usr/bin/unxz --slave /usr/share/man/man1/unlzma.1.gz unlzma.1.gz /usr/share/man/man1/unxz.1.gz --slave /usr/bin/lzcat lzcat /usr/bin/xzcat --slave /usr/share/man/man1/lzcat.1.gz lzcat.1.gz /usr/share/man/man1/xzcat.1.gz --slave /usr/bin/lzmore lzmore /usr/bin/xzmore --slave /usr/share/man/man1/lzmore.1.gz lzmore.1.gz /usr/share/man/man1/xzmore.1.gz --slave /usr/bin/lzless lzless /usr/bin/xzless --slave /usr/share/man/man1/lzless.1.gz lzless.1.gz /usr/share/man/man1/xzless.1.gz --slave /usr/bin/lzdiff lzdiff /usr/bin/xzdiff --slave /usr/share/man/man1/lzdiff.1.gz lzdiff.1.gz /usr/share/man/man1/xzdiff.1.gz --slave /usr/bin/lzcmp lzcmp /usr/bin/xzcmp --slave /usr/share/man/man1/lzcmp.1.gz lzcmp.1.gz /usr/share/man/man1/xzcmp.1.gz --slave /usr/bin/lzgrep lzgrep /usr/bin/xzgrep --slave /usr/share/man/man1/lzgrep.1.gz lzgrep.1.gz /usr/share/man/man1/xzgrep.1.gz --slave /usr/bin/lzegrep lzegrep /usr/bin/xzegrep --slave /usr/share/man/man1/lzegrep.1.gz lzegrep.1.gz /usr/share/man/man1/xzegrep.1.gz --slave /usr/bin/lzfgrep lzfgrep /usr/bin/xzfgrep --slave /usr/share/man/man1/lzfgrep.1.gz lzfgrep.1.gz /usr/share/man/man1/xzfgrep.1.gz
+update-alternatives 2025-05-05 21:59:43: link group lzma updated to point to /usr/bin/xz
+update-alternatives 2025-05-05 21:59:43: run with --quiet --install /lib/cpp cpp /usr/bin/cpp 10
+update-alternatives 2025-05-05 21:59:43: link group cpp updated to point to /usr/bin/cpp
+update-alternatives 2025-05-05 21:59:43: run with --quiet --install /usr/bin/cc cc /usr/bin/gcc 20 --slave /usr/share/man/man1/cc.1.gz cc.1.gz /usr/share/man/man1/gcc.1.gz
+update-alternatives 2025-05-05 21:59:43: link group cc updated to point to /usr/bin/gcc
+update-alternatives 2025-05-05 21:59:43: run with --quiet --install /usr/bin/c89 c89 /usr/bin/c89-gcc 20 --slave /usr/share/man/man1/c89.1.gz c89.1.gz /usr/share/man/man1/c89-gcc.1.gz
+update-alternatives 2025-05-05 21:59:43: link group c89 updated to point to /usr/bin/c89-gcc
+update-alternatives 2025-05-05 21:59:43: run with --quiet --install /usr/bin/c99 c99 /usr/bin/c99-gcc 20 --slave /usr/share/man/man1/c99.1.gz c99.1.gz /usr/share/man/man1/c99-gcc.1.gz
+update-alternatives 2025-05-05 21:59:43: link group c99 updated to point to /usr/bin/c99-gcc
+update-alternatives 2025-05-05 21:59:43: run with --install /usr/bin/c++ c++ /usr/bin/g++ 20 --slave /usr/share/man/man1/c++.1.gz c++.1.gz /usr/share/man/man1/g++.1.gz
+update-alternatives 2025-05-05 21:59:43: link group c++ updated to point to /usr/bin/g++
+update-alternatives 2025-05-05 22:35:57: run with --force --install /usr/include/cudnn.h libcudnn /usr/include/x86_64-linux-gnu/cudnn_v9.h 129 --slave /usr/lib/x86_64-linux-gnu/libcudnn.so libcudnn_so /usr/lib/x86_64-linux-gnu/libcudnn.so.9 --slave /usr/lib/x86_64-linux-gnu/libcudnn_adv.so libcudnn_adv_so /usr/lib/x86_64-linux-gnu/libcudnn_adv.so.9 --slave /usr/lib/x86_64-linux-gnu/libcudnn_cnn.so libcudnn_cnn_so /usr/lib/x86_64-linux-gnu/libcudnn_cnn.so.9 --slave /usr/lib/x86_64-linux-gnu/libcudnn_engines_precompiled.so libcudnn_engines_precompiled_so /usr/lib/x86_64-linux-gnu/libcudnn_engines_precompiled.so.9 --slave /usr/lib/x86_64-linux-gnu/libcudnn_engines_runtime_compiled.so libcudnn_engines_runtime_compiled_so /usr/lib/x86_64-linux-gnu/libcudnn_engines_runtime_compiled.so.9 --slave /usr/lib/x86_64-linux-gnu/libcudnn_graph.so libcudnn_graph_so /usr/lib/x86_64-linux-gnu/libcudnn_graph.so.9 --slave /usr/lib/x86_64-linux-gnu/libcudnn_heuristic.so libcudnn_heuristic_so /usr/lib/x86_64-linux-gnu/libcudnn_heuristic.so.9 --slave /usr/lib/x86_64-linux-gnu/libcudnn_ops.so libcudnn_ops_so /usr/lib/x86_64-linux-gnu/libcudnn_ops.so.9 --slave /usr/include/cudnn_adv.h cudnn_adv_h /usr/include/x86_64-linux-gnu/cudnn_adv_v9.h --slave /usr/include/cudnn_backend.h cudnn_backend_h /usr/include/x86_64-linux-gnu/cudnn_backend_v9.h --slave /usr/include/cudnn_cnn.h cudnn_cnn_h /usr/include/x86_64-linux-gnu/cudnn_cnn_v9.h --slave /usr/include/cudnn_graph.h cudnn_graph_h /usr/include/x86_64-linux-gnu/cudnn_graph_v9.h --slave /usr/include/cudnn_ops.h cudnn_ops_h /usr/include/x86_64-linux-gnu/cudnn_ops_v9.h --slave /usr/include/cudnn_version.h cudnn_version_h /usr/include/x86_64-linux-gnu/cudnn_version_v9.h
+update-alternatives 2025-05-05 22:35:57: link group libcudnn updated to point to /usr/include/x86_64-linux-gnu/cudnn_v9.h
+update-alternatives 2025-05-05 22:35:57: run with --set libcudnn /usr/include/x86_64-linux-gnu/cudnn_v9.h
+update-alternatives 2025-05-05 22:35:57: status of link group /usr/include/cudnn.h set to manual
+update-alternatives 2026-10-16 09:21:05: run with --install /usr/sbin/rmt rmt /usr/sbin/rmt-tar 50 --slave /usr/share/man/man8/rmt.8.gz rmt.8.gz /usr/share/man/man8/rmt-tar.8.gz
+update-alternatives 2026-10-16 09:21:06: run with --install /usr/bin/pager pager /bin/more 50 --slave /usr/share/man/man1/pager.1.gz pager.1.gz /usr/share/man/man1/more.1.gz
+update-alternatives 2026-10-16 09:22:45: run with --install /usr/local/cuda cuda /usr/local/cuda-12.9 129
+update-alternatives 2026-10-16 09:22:45: run with --install /usr/local/cuda-12 cuda-12 /usr/local/cuda-12.9 129
+update-alternatives 2026-10-16 09:22:45: run with --install /usr/bin/lzma lzma /usr/bin/xz 20 --slave /usr/share/man/man1/lzma.1.gz lzma.1.gz /usr/share/man/man1/xz.1.gz --slave /usr/bin/unlzma unlzma /usr/bin/unxz --slave /usr/share/man/man1/unlzma.1.gz unlzma.1.gz /usr/share/man/man1/unxz.1.gz --slave /usr/bin/lzcat lzcat /usr/bin/xzcat --slave /usr/share/man/man1/lzcat.1.gz lzcat.1.gz /usr/share/man/man1/xzcat.1.gz --slave /usr/bin/lzmore lzmore /usr/bin/xzmore --slave /usr/share/man/man1/lzmore.1.gz lzmore.1.gz /usr/share/man/man1/xzmore.1.gz --slave /usr/bin/lzless lzless /usr/bin/xzless --slave /usr/share/man/man1/lzless.1.gz lzless.1.gz /usr/share/man/man1/xzless.1.gz --slave /usr/bin/lzdiff lzdiff /usr/bin/xzdiff --slave /usr/share/man/man1/lzdiff.1.gz lzdiff.1.gz /usr/share/man/man1/xzdiff.1.gz --slave /usr/bin/lzcmp lzcmp /usr/bin/xzcmp --slave /usr/share/man/man1/lzcmp.1.gz lzcmp.1.gz /usr/share/man/man1/xzcmp.1.gz --slave /usr/bin/lzgrep lzgrep /usr/bin/xzgrep --slave /usr/share/man/man1/lzgrep.1.gz lzgrep.1.gz /usr/share/man/man1/xzgrep.1.gz --slave /usr/bin/lzegrep lzegrep /usr/bin/xzegrep --slave /usr/share/man/man1/lzegrep.1.gz lzegrep.1.gz /usr/share/man/man1/xzegrep.1.gz --slave /usr/bin/lzfgrep lzfgrep /usr/bin/xzfgrep --slave /usr/share/man/man1/lzfgrep.1.gz lzfgrep.1.gz /usr/share/man/man1/xzfgrep.1.gz
+update-alternatives 2026-10-16 09:22:46: run with --install /etc/cufile.json cufile.json /usr/local/cuda-12.9/gds/cufile.json 129
+update-alternatives 2026-10-16 09:23:22: run with --install /etc/mysql/my.cnf my.cnf /etc/mysql/my.cnf.fallback 100
+update-alternatives 2026-10-16 09:23:22: link group my.cnf updated to point to /etc/mysql/my.cnf.fallback
+update-alternatives 2026-10-16 09:23:23: run with --install /usr/lib/x86_64-linux-gnu/libblas.so.3 libblas.so.3-x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/blas/libblas.so.3 10
+update-alternatives 2026-10-16 09:23:23: link group libblas.so.3-x86_64-linux-gnu updated to point to /usr/lib/x86_64-linux-gnu/blas/libblas.so.3
+update-alternatives 2026-10-16 09:23:23: run with --install /usr/bin/editor editor /bin/nano 40 --slave /usr/share/man/man1/editor.1.gz editor.1.gz /usr/share/man/man1/nano.1.gz
+update-alternatives 2026-10-16 09:23:23: link group editor updated to point to /bin/nano
+update-alternatives 2026-10-16 09:23:23: run with --install /usr/bin/pico pico /bin/nano 10 --slave /usr/share/man/man1/pico.1.gz pico.1.gz /usr/share/man/man1/nano.1.gz
+update-alternatives 2026-10-16 09:23:23: link group pico updated to point to /bin/nano
+update-alternatives 2026-10-16 09:23:23: run with --install /usr/lib/x86_64-linux-gnu/libblas.so libblas.so-x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/blas/libblas.so 10 --slave /usr/lib/x86_64-linux-gnu/libblas.a libblas.a-x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/blas/libblas.a --slave /usr/include/x86_64-linux-gnu/cblas.h cblas.h-x86_64-linux-gnu /usr/include/x86_64-linux-gnu/cblas-netlib.h --slave /usr/lib/x86_64-linux-gnu/pkgconfig/blas.pc blas.pc-x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/pkgconfig/blas-netlib.pc
+update-alternatives 2026-10-16 09:23:23: link group libblas.so-x86_64-linux-gnu updated to point to /usr/lib/x86_64-linux-gnu/blas/libblas.so
+update-alternatives 2026-10-16 09:23:23: run with --install /usr/lib/x86_64-linux-gnu/liblapack.so.3 liblapack.so.3-x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/lapack/liblapack.so.3 10
+update-alternatives 2026-10-16 09:23:23: link group liblapack.so.3-x86_64-linux-gnu updated to point to /usr/lib/x86_64-linux-gnu/lapack/liblapack.so.3
+update-alternatives 2026-10-16 09:23:23: run with --install /usr/lib/x86_64-linux-gnu/libblas.so.3 libblas.so.3-x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/atlas/libblas.so.3 35
+update-alternatives 2026-10-16 09:23:23: link group libblas.so.3-x86_64-linux-gnu updated to point to /usr/lib/x86_64-linux-gnu/atlas/libblas.so.3
+update-alternatives 2026-10-16 09:23:23: run with --install /usr/lib/x86_64-linux-gnu/liblapack.so.3 liblapack.so.3-x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/atlas/liblapack.so.3 35
+update-alternatives 2026-10-16 09:23:23: link group liblapack.so.3-x86_64-linux-gnu updated to point to /usr/lib/x86_64-linux-gnu/atlas/liblapack.so.3
+update-alternatives 2026-10-16 09:23:24: run with --install /usr/bin/traceroute traceroute /usr/bin/inetutils-traceroute 100 --slave /usr/share/man/man1/traceroute.1.gz traceroute.1.gz /usr/share/man/man1/inetutils-traceroute.1.gz
+update-alternatives 2026-10-16 09:23:24: link group traceroute updated to point to /usr/bin/inetutils-traceroute
+update-alternatives 2026-10-16 09:23:24: run with --install /usr/lib/x86_64-linux-gnu/libblas.so libblas.so-x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/atlas/libblas.so 35 --slave /usr/lib/x86_64-linux-gnu/libblas.a libblas.a-x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/atlas/libblas.a --slave /usr/include/x86_64-linux-gnu/cblas.h cblas.h-x86_64-linux-gnu /usr/include/x86_64-linux-gnu/cblas-atlas.h --slave /usr/lib/x86_64-linux-gnu/pkgconfig/blas.pc blas.pc-x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/pkgconfig/blas-atlas.pc
+update-alternatives 2026-10-16 09:23:24: link group libblas.so-x86_64-linux-gnu updated to point to /usr/lib/x86_64-linux-gnu/atlas/libblas.so
+update-alternatives 2026-10-16 09:23:24: run with --install /usr/lib/x86_64-linux-gnu/liblapack.so liblapack.so-x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/atlas/liblapack.so 35 --slave /usr/lib/x86_64-linux-gnu/liblapack.a liblapack.a-x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/atlas/liblapack.a --slave /usr/lib/x86_64-linux-gnu/pkgconfig/lapack.pc lapack.pc-x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/pkgconfig/lapack-atlas.pc
+update-alternatives 2026-10-16 09:23:24: link group liblapack.so-x86_64-linux-gnu updated to point to /usr/lib/x86_64-linux-gnu/atlas/liblapack.so
+update-alternatives 2026-10-16 09:23:24: run with --install /usr/lib/x86_64-linux-gnu/liblapack.so liblapack.so-x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/lapack/liblapack.so 10 --slave /usr/lib/x86_64-linux-gnu/liblapack.a liblapack.a-x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/lapack/liblapack.a --slave /usr/lib/x86_64-linux-gnu/pkgconfig/lapack.pc lapack.pc-x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/pkgconfig/lapack-netlib.pc
+update-alternatives 2026-10-16 09:23:26: run with --install /usr/bin/vim vim /usr/bin/vim.basic 30
+update-alternatives 2026-10-16 09:23:26: link group vim updated to point to /usr/bin/vim.basic
+update-alternatives 2026-10-16 09:23:26: run with --install /usr/bin/vimdiff vimdiff /usr/bin/vim.basic 30
+update-alternatives 2026-10-16 09:23:26: link group vimdiff updated to point to /usr/bin/vim.basic
+update-alternatives 2026-10-16 09:23:26: run with --install /usr/bin/rvim rvim /usr/bin/vim.basic 30
+update-alternatives 2026-10-16 09:23:26: link group rvim updated to point to /usr/bin/vim.basic
+update-alternatives 2026-10-16 09:23:26: run with --install /usr/bin/rview rview /usr/bin/vim.basic 30
+update-alternatives 2026-10-16 09:23:26: link group rview updated to point to /usr/bin/vim.basic
+update-alternatives 2026-10-16 09:23:26: run with --install /usr/bin/vi vi /usr/bin/vim.basic 30 --slave /usr/share/man/da/man1/vi.1.gz vi.da.1.gz /usr/share/man/da/man1/vim.1.gz --slave /usr/share/man/de/man1/vi.1.gz vi.de.1.gz /usr/share/man/de/man1/vim.1.gz --slave /usr/share/man/fr/man1/vi.1.gz vi.fr.1.gz /usr/share/man/fr/man1/vim.1.gz --slave /usr/share/man/it/man1/vi.1.gz vi.it.1.gz /usr/share/man/it/man1/vim.1.gz --slave /usr/share/man/ja/man1/vi.1.gz vi.ja.1.gz /usr/share/man/ja/man1/vim.1.gz --slave /usr/share/man/pl/man1/vi.1.gz vi.pl.1.gz /usr/share/man/pl/man1/vim.1.gz --slave /usr/share/man/ru/man1/vi.1.gz vi.ru.1.gz /usr/share/man/ru/man1/vim.1.gz --slave /usr/share/man/man1/vi.1.gz vi.1.gz /usr/share/man/man1/vim.1.gz
+update-alternatives 2026-10-16 09:23:26: link group vi updated to point to /usr/bin/vim.basic
+update-alternatives 2026-10-16 09:23:26: run with --install /usr/bin/view view /usr/bin/vim.basic 30 --slave /usr/share/man/da/man1/view.1.gz view.da.1.gz /usr/share/man/da/man1/vim.1.gz --slave /usr/share/man/de/man1/view.1.gz view.de.1.gz /usr/share/man/de/man1/vim.1.gz --slave /usr/share/man/fr/man1/view.1.gz view.fr.1.gz /usr/share/man/fr/man1/vim.1.gz --slave /usr/share/man/it/man1/view.1.gz view.it.1.gz /usr/share/man/it/man1/vim.1.gz --slave /usr/share/man/ja/man1/view.1.gz view.ja.1.gz /usr/share/man/ja/man1/vim.1.gz --slave /usr/share/man/pl/man1/view.1.gz view.pl.1.gz /usr/share/man/pl/man1/vim.1.gz --slave /usr/share/man/ru/man1/view.1.gz view.ru.1.gz /usr/share/man/ru/man1/vim.1.gz --slave /usr/share/man/man1/view.1.gz view.1.gz /usr/share/man/man1/vim.1.gz
+update-alternatives 2026-10-16 09:23:26: link group view updated to point to /usr/bin/vim.basic
+update-alternatives 2026-10-16 09:23:26: run with --install /usr/bin/ex ex /usr/bin/vim.basic 30 --slave /usr/share/man/da/man1/ex.1.gz ex.da.1.gz /usr/share/man/da/man1/vim.1.gz --slave /usr/share/man/de/man1/ex.1.gz ex.de.1.gz /usr/share/man/de/man1/vim.1.gz --slave /usr/share/man/fr/man1/ex.1.gz ex.fr.1.gz /usr/share/man/fr/man1/vim.1.gz --slave /usr/share/man/it/man1/ex.1.gz ex.it.1.gz /usr/share/man/it/man1/vim.1.gz --slave /usr/share/man/ja/man1/ex.1.gz ex.ja.1.gz /usr/share/man/ja/man1/vim.1.gz --slave /usr/share/man/pl/man1/ex.1.gz ex.pl.1.gz /usr/share/man/pl/man1/vim.1.gz --slave /usr/share/man/ru/man1/ex.1.gz ex.ru.1.gz /usr/share/man/ru/man1/vim.1.gz --slave /usr/share/man/man1/ex.1.gz ex.1.gz /usr/share/man/man1/vim.1.gz
+update-alternatives 2026-10-16 09:23:26: link group ex updated to point to /usr/bin/vim.basic
+update-alternatives 2026-10-16 09:23:26: run with --install /usr/bin/editor editor /usr/bin/vim.basic 30 --slave /usr/share/man/da/man1/editor.1.gz editor.da.1.gz /usr/share/man/da/man1/vim.1.gz --slave /usr/share/man/de/man1/editor.1.gz editor.de.1.gz /usr/share/man/de/man1/vim.1.gz --slave /usr/share/man/fr/man1/editor.1.gz editor.fr.1.gz /usr/share/man/fr/man1/vim.1.gz --slave /usr/share/man/it/man1/editor.1.gz editor.it.1.gz /usr/share/man/it/man1/vim.1.gz --slave /usr/share/man/ja/man1/editor.1.gz editor.ja.1.gz /usr/share/man/ja/man1/vim.1.gz --slave /usr/share/man/pl/man1/editor.1.gz editor.pl.1.gz /usr/share/man/pl/man1/vim.1.gz --slave /usr/share/man/ru/man1/editor.1.gz editor.ru.1.gz /usr/share/man/ru/man1/vim.1.gz --slave /usr/share/man/man1/editor.1.gz editor.1.gz /usr/share/man/man1/vim.1.gz
+update-alternatives 2026-10-16 09:23:27: run with --install /usr/bin/rsh rsh /usr/bin/ssh 20 --slave /usr/share/man/man1/rsh.1.gz rsh.1.gz /usr/share/man/man1/ssh.1.gz
+update-alternatives 2026-10-16 09:23:27: link group rsh updated to point to /usr/bin/ssh
+update-alternatives 2026-10-16 09:23:27: run with --install /usr/bin/rlogin rlogin /usr/bin/slogin 20 --slave /usr/share/man/man1/rlogin.1.gz rlogin.1.gz /usr/share/man/man1/slogin.1.gz
+update-alternatives 2026-10-16 09:23:27: link group rlogin updated to point to /usr/bin/slogin
+update-alternatives 2026-10-16 09:23:27: run with --install /usr/bin/rcp rcp /usr/bin/scp 20 --slave /usr/share/man/man1/rcp.1.gz rcp.1.gz /usr/share/man/man1/scp.1.gz
+update-alternatives 2026-10-16 09:23:27: link group rcp updated to point to /usr/bin/scp
+update-alternatives 2026-10-16 09:23:27: run with --install /usr/bin/f95 f95 /usr/bin/gfortran 20 --slave /usr/share/man/man1/f95.1.gz f95.1.gz /usr/share/man/man1/gfortran.1.gz
+update-alternatives 2026-10-16 09:23:27: link group f95 updated to point to /usr/bin/gfortran
+update-alternatives 2026-10-16 09:23:27: run with --install /usr/bin/f77 f77 /usr/bin/gfortran 20 --slave /usr/share/man/man1/f77.1.gz f77.1.gz /usr/share/man/man1/gfortran.1.gz
+update-alternatives 2026-10-16 09:23:27: link group f77 updated to point to /usr/bin/gfortran
+update-alternatives 2026-10-16 09:23:30: run with --install /etc/cifs-utils/idmap-plugin idmap-plugin /usr/lib/x86_64-linux-gnu/cifs-utils/idmapwb.so 40 --slave /usr/share/man/man8/idmap-plugin.8.gz idmap-plugin.8.gz /usr/share/man/man8/idmapwb.8.gz
+update-alternatives 2026-10-16 09:23:30: link group idmap-plugin updated to point to /usr/lib/x86_64-linux-gnu/cifs-utils/idmapwb.so
+update-alternatives 2026-10-16 09:23:30: run with --install /usr/lib/x86_64-linux-gnu/pkgconfig/hdf5.pc hdf5.pc /usr/lib/x86_64-linux-gnu/pkgconfig/hdf5-serial.pc 20
+update-alternatives 2026-10-16 09:23:30: link group hdf5.pc updated to point to /usr/lib/x86_64-linux-gnu/pkgconfig/hdf5-serial.pc
+update-alternatives 2026-10-16 09:23:30: run with --install /usr/sbin/slurmd slurmd /usr/sbin/slurmd-wlm 50 --slave /usr/sbin/slurmstepd slurmstepd /usr/sbin/slurmstepd-wlm
+update-alternatives 2026-10-16 09:23:30: link group slurmd updated to point to /usr/sbin/slurmd-wlm
+update-alternatives 2026-10-16 09:23:30: run with --install /usr/sbin/slurmctld slurmctld /usr/sbin/slurmctld-wlm 50
+update-alternatives 2026-10-16 09:23:30: link group slurmctld updated to point to /usr/sbin/slurmctld-wlm
+update-alternatives 2026-10-16 09:23:31: run with --install /usr/share/icons/default/index.theme x-cursor-theme /usr/share/icons/Adwaita/cursor.theme 90
+update-alternatives 2026-10-16 09:23:31: link group x-cursor-theme updated to point to /usr/share/icons/Adwaita/cursor.theme
+update-alternatives 2026-10-16 09:24:09: run with --quiet --install /usr/bin/open open /usr/bin/run-mailcap 30 --slave /usr/share/man/man1/open.1.gz open.1.gz /usr/share/man/man1/run-mailcap.1.gz
+update-alternatives 2026-10-16 09:24:09: link group open updated to point to /usr/bin/run-mailcap
+== tail -100 /var/log/bootstrap.log
+Setting up libaudit1:amd64 (1:3.0.7-1build1) ...
+Setting up libuuid1:amd64 (2.37.2-4ubuntu3) ...
+Setting up libss2:amd64 (1.46.5-2ubuntu1) ...
+Setting up libsepol2:amd64 (3.3-1build1) ...
+Setting up libpcre2-8-0:amd64 (10.39-3build1) ...
+Setting up libncursesw6:amd64 (6.3-2) ...
+Setting up libk5crypto3:amd64 (1.19.2-2) ...
+Setting up logsave (1.46.5-2ubuntu1) ...
+Setting up e2fsprogs (1.46.5-2ubuntu1) ...
+Setting up libsystemd0:amd64 (249.11-0ubuntu3) ...
+Setting up libselinux1:amd64 (3.3-1build2) ...
+Setting up sed (4.8-1ubuntu2) ...
+Setting up findutils (4.8.0-1ubuntu3) ...
+Setting up libmount1:amd64 (2.37.2-4ubuntu3) ...
+Setting up libsemanage2:amd64 (3.3-1build2) ...
+Setting up libprocps8:amd64 (2:3.3.17-6ubuntu2) ...
+Setting up bsdutils (1:2.37.2-4ubuntu3) ...
+Setting up tar (1.34+dfsg-1build3) ...
+update-alternatives: using /usr/sbin/rmt-tar to provide /usr/sbin/rmt (rmt) in auto mode
+Setting up coreutils (8.32-4.1ubuntu1) ...
+Setting up dpkg (1.21.1ubuntu2) ...
+Setting up mount (2.37.2-4ubuntu3) ...
+Setting up grep (3.7-1build1) ...
+Setting up perl-base (5.34.0-3ubuntu1) ...
+Setting up init-system-helpers (1.62) ...
+Setting up gzip (1.10-4ubuntu4) ...
+Setting up usrmerge (25ubuntu2) ...
+Setting up procps (2:3.3.17-6ubuntu2) ...
+Setting up debconf (1.5.79ubuntu1) ...
+Setting up libpam0g:amd64 (1.4.0-11ubuntu2) ...
+Setting up util-linux (2.37.2-4ubuntu3) ...
+update-alternatives: using /bin/more to provide /usr/bin/pager (pager) in auto mode
+Setting up dash (0.5.11+git20210903+057cd650a4ed-3build1) ...
+No diversion '"'"'diversion of /bin/sh by bash'"'"', none removed.
+Adding '"'"'diversion of /bin/sh to /bin/sh.distrib by dash'"'"'
+No diversion '"'"'diversion of /usr/share/man/man1/sh.1.gz by bash'"'"', none removed.
+Adding '"'"'diversion of /usr/share/man/man1/sh.1.gz to /usr/share/man/man1/sh.distrib.1.gz by dash'"'"'
+Setting up libpam-modules-bin (1.4.0-11ubuntu2) ...
+Setting up libssl3:amd64 (3.0.2-0ubuntu1) ...
+Setting up libkrb5-3:amd64 (1.19.2-2) ...
+Setting up libgssapi-krb5-2:amd64 (1.19.2-2) ...
+Setting up libtirpc3:amd64 (1.3.2-2build1) ...
+Setting up libnsl2:amd64 (1.3.0-2build2) ...
+Setting up libpam-modules:amd64 (1.4.0-11ubuntu2) ...
+Setting up passwd (1:4.8.1-2ubuntu2) ...
+Shadow passwords are now on.
+Setting up libpam-runtime (1.4.0-11ubuntu2) ...
+Setting up login (1:4.8.1-2ubuntu2) ...
+Processing triggers for libc-bin (2.35-0ubuntu3) ...
+(Reading database ... 3918 files and directories currently installed.)
+Preparing to unpack .../adduser_3.118ubuntu5_all.deb ...
+Unpacking adduser (3.118ubuntu5) ...
+Preparing to unpack .../archives/apt_2.4.5_amd64.deb ...
+Unpacking apt (2.4.5) ...
+Preparing to unpack .../gpgv_2.2.27-3ubuntu2_amd64.deb ...
+Unpacking gpgv (2.2.27-3ubuntu2) ...
+Preparing to unpack .../libapt-pkg6.0_2.4.5_amd64.deb ...
+Unpacking libapt-pkg6.0:amd64 (2.4.5) ...
+Preparing to unpack .../libffi8_3.4.2-4_amd64.deb ...
+Unpacking libffi8:amd64 (3.4.2-4) ...
+Preparing to unpack .../libgnutls30_3.7.3-4ubuntu1_amd64.deb ...
+Unpacking libgnutls30:amd64 (3.7.3-4ubuntu1) ...
+Preparing to unpack .../libhogweed6_3.7.3-1build2_amd64.deb ...
+Unpacking libhogweed6:amd64 (3.7.3-1build2) ...
+Preparing to unpack .../libidn2-0_2.3.2-2build1_amd64.deb ...
+Unpacking libidn2-0:amd64 (2.3.2-2build1) ...
+Preparing to unpack .../libnettle8_3.7.3-1build2_amd64.deb ...
+Unpacking libnettle8:amd64 (3.7.3-1build2) ...
+Preparing to unpack .../libp11-kit0_0.24.0-6build1_amd64.deb ...
+Unpacking libp11-kit0:amd64 (0.24.0-6build1) ...
+Preparing to unpack .../libseccomp2_2.5.3-2ubuntu2_amd64.deb ...
+Unpacking libseccomp2:amd64 (2.5.3-2ubuntu2) ...
+Preparing to unpack .../libstdc++6_12-20220319-1ubuntu1_amd64.deb ...
+Unpacking libstdc++6:amd64 (12-20220319-1ubuntu1) ...
+Preparing to unpack .../libtasn1-6_4.18.0-4build1_amd64.deb ...
+Unpacking libtasn1-6:amd64 (4.18.0-4build1) ...
+Preparing to unpack .../libunistring2_1.0-1_amd64.deb ...
+Unpacking libunistring2:amd64 (1.0-1) ...
+Preparing to unpack .../libxxhash0_0.8.1-1_amd64.deb ...
+Unpacking libxxhash0:amd64 (0.8.1-1) ...
+Preparing to unpack .../ubuntu-keyring_2021.03.26_all.deb ...
+Unpacking ubuntu-keyring (2021.03.26) ...
+Processing triggers for libc-bin (2.35-0ubuntu3) ...
+Setting up adduser (3.118ubuntu5) ...
+Setting up libunistring2:amd64 (1.0-1) ...
+Setting up libidn2-0:amd64 (2.3.2-2build1) ...
+Setting up ubuntu-keyring (2021.03.26) ...
+Setting up libseccomp2:amd64 (2.5.3-2ubuntu2) ...
+Setting up libnettle8:amd64 (3.7.3-1build2) ...
+Setting up libffi8:amd64 (3.4.2-4) ...
+Setting up gpgv (2.2.27-3ubuntu2) ...
+Setting up libxxhash0:amd64 (0.8.1-1) ...
+Setting up libtasn1-6:amd64 (4.18.0-4build1) ...
+Setting up libstdc++6:amd64 (12-20220319-1ubuntu1) ...
+Setting up libhogweed6:amd64 (3.7.3-1build2) ...
+Setting up libapt-pkg6.0:amd64 (2.4.5) ...
+Setting up libp11-kit0:amd64 (0.24.0-6build1) ...
+Setting up libgnutls30:amd64 (3.7.3-4ubuntu1) ...
+Setting up apt (2.4.5) ...
+Processing triggers for libc-bin (2.35-0ubuntu3) ...
+== tail -100 /var/log/btmp
+== tail -100 /var/log/dpkg.log
+2026-10-16 09:24:10 configure mime-support:all 3.66 <none>
+2026-10-16 09:24:10 status unpacked mime-support:all 3.66
+2026-10-16 09:24:10 status half-configured mime-support:all 3.66
+2026-10-16 09:24:10 status installed mime-support:all 3.66
+2026-10-16 09:24:10 configure libpython3.12-stdlib:amd64 3.12.15-1+jammy1 <none>
+2026-10-16 09:24:10 status unpacked libpython3.12-stdlib:amd64 3.12.15-1+jammy1
+2026-10-16 09:24:10 status half-configured libpython3.12-stdlib:amd64 3.12.15-1+jammy1
+2026-10-16 09:24:10 status installed libpython3.12-stdlib:amd64 3.12.15-1+jammy1
+2026-10-16 09:24:10 configure libpython3.11-stdlib:amd64 3.11.17-1+jammy1 <none>
+2026-10-16 09:24:10 status unpacked libpython3.11-stdlib:amd64 3.11.17-1+jammy1
+2026-10-16 09:24:10 status half-configured libpython3.11-stdlib:amd64 3.11.17-1+jammy1
+2026-10-16 09:24:10 status installed libpython3.11-stdlib:amd64 3.11.17-1+jammy1
+2026-10-16 09:24:10 configure python3.12:amd64 3.12.15-1+jammy1 <none>
+2026-10-16 09:24:10 status unpacked python3.12:amd64 3.12.15-1+jammy1
+2026-10-16 09:24:10 status half-configured python3.12:amd64 3.12.15-1+jammy1
+2026-10-16 09:24:10 status installed python3.12:amd64 3.12.15-1+jammy1
+2026-10-16 09:24:10 configure libpython3.13-stdlib:amd64 3.13.16-1+jammy1 <none>
+2026-10-16 09:24:10 status unpacked libpython3.13-stdlib:amd64 3.13.16-1+jammy1
+2026-10-16 09:24:10 status half-configured libpython3.13-stdlib:amd64 3.13.16-1+jammy1
+2026-10-16 09:24:10 status installed libpython3.13-stdlib:amd64 3.13.16-1+jammy1
+2026-10-16 09:24:10 configure libpython3.12:amd64 3.12.15-1+jammy1 <none>
+2026-10-16 09:24:10 status unpacked libpython3.12:amd64 3.12.15-1+jammy1
+2026-10-16 09:24:10 status half-configured libpython3.12:amd64 3.12.15-1+jammy1
+2026-10-16 09:24:10 status installed libpython3.12:amd64 3.12.15-1+jammy1
+2026-10-16 09:24:10 configure libpython3.9-stdlib:amd64 3.9.25-1+jammy1 <none>
+2026-10-16 09:24:10 status unpacked libpython3.9-stdlib:amd64 3.9.25-1+jammy1
+2026-10-16 09:24:10 status half-configured libpython3.9-stdlib:amd64 3.9.25-1+jammy1
+2026-10-16 09:24:10 status installed libpython3.9-stdlib:amd64 3.9.25-1+jammy1
+2026-10-16 09:24:10 configure libpython3.13:amd64 3.13.16-1+jammy1 <none>
+2026-10-16 09:24:10 status unpacked libpython3.13:amd64 3.13.16-1+jammy1
+2026-10-16 09:24:10 status half-configured libpython3.13:amd64 3.13.16-1+jammy1
+2026-10-16 09:24:10 status installed libpython3.13:amd64 3.13.16-1+jammy1
+2026-10-16 09:24:10 configure python3.11:amd64 3.11.17-1+jammy1 <none>
+2026-10-16 09:24:10 status unpacked python3.11:amd64 3.11.17-1+jammy1
+2026-10-16 09:24:10 status half-configured python3.11:amd64 3.11.17-1+jammy1
+2026-10-16 09:24:11 status installed python3.11:amd64 3.11.17-1+jammy1
+2026-10-16 09:24:11 configure libpython3.11:amd64 3.11.17-1+jammy1 <none>
+2026-10-16 09:24:11 status unpacked libpython3.11:amd64 3.11.17-1+jammy1
+2026-10-16 09:24:11 status half-configured libpython3.11:amd64 3.11.17-1+jammy1
+2026-10-16 09:24:11 status installed libpython3.11:amd64 3.11.17-1+jammy1
+2026-10-16 09:24:11 configure python3.12-venv:amd64 3.12.15-1+jammy1 <none>
+2026-10-16 09:24:11 status unpacked python3.12-venv:amd64 3.12.15-1+jammy1
+2026-10-16 09:24:11 status half-configured python3.12-venv:amd64 3.12.15-1+jammy1
+2026-10-16 09:24:11 status installed python3.12-venv:amd64 3.12.15-1+jammy1
+2026-10-16 09:24:11 configure python3.13:amd64 3.13.16-1+jammy1 <none>
+2026-10-16 09:24:11 status unpacked python3.13:amd64 3.13.16-1+jammy1
+2026-10-16 09:24:11 status half-configured python3.13:amd64 3.13.16-1+jammy1
+2026-10-16 09:24:12 status installed python3.13:amd64 3.13.16-1+jammy1
+2026-10-16 09:24:12 configure libpython3.12-dev:amd64 3.12.15-1+jammy1 <none>
+2026-10-16 09:24:12 status unpacked libpython3.12-dev:amd64 3.12.15-1+jammy1
+2026-10-16 09:24:12 status half-configured libpython3.12-dev:amd64 3.12.15-1+jammy1
+2026-10-16 09:24:12 status installed libpython3.12-dev:amd64 3.12.15-1+jammy1
+2026-10-16 09:24:12 configure python3.13-venv:amd64 3.13.16-1+jammy1 <none>
+2026-10-16 09:24:12 status unpacked python3.13-venv:amd64 3.13.16-1+jammy1
+2026-10-16 09:24:12 status half-configured python3.13-venv:amd64 3.13.16-1+jammy1
+2026-10-16 09:24:12 status installed python3.13-venv:amd64 3.13.16-1+jammy1
+2026-10-16 09:24:12 configure libpython3.9:amd64 3.9.25-1+jammy1 <none>
+2026-10-16 09:24:12 status unpacked libpython3.9:amd64 3.9.25-1+jammy1
+2026-10-16 09:24:12 status half-configured libpython3.9:amd64 3.9.25-1+jammy1
+2026-10-16 09:24:12 status installed libpython3.9:amd64 3.9.25-1+jammy1
+2026-10-16 09:24:12 configure python3.11-venv:amd64 3.11.17-1+jammy1 <none>
+2026-10-16 09:24:12 status unpacked python3.11-venv:amd64 3.11.17-1+jammy1
+2026-10-16 09:24:12 status half-configured python3.11-venv:amd64 3.11.17-1+jammy1
+2026-10-16 09:24:12 status installed python3.11-venv:amd64 3.11.17-1+jammy1
+2026-10-16 09:24:12 configure libpython3.11-dev:amd64 3.11.17-1+jammy1 <none>
+2026-10-16 09:24:12 status unpacked libpython3.11-dev:amd64 3.11.17-1+jammy1
+2026-10-16 09:24:12 status half-configured libpython3.11-dev:amd64 3.11.17-1+jammy1
+2026-10-16 09:24:12 status installed libpython3.11-dev:amd64 3.11.17-1+jammy1
+2026-10-16 09:24:12 configure libpython3.13-dev:amd64 3.13.16-1+jammy1 <none>
+2026-10-16 09:24:12 status unpacked libpython3.13-dev:amd64 3.13.16-1+jammy1
+2026-10-16 09:24:12 status half-configured libpython3.13-dev:amd64 3.13.16-1+jammy1
+2026-10-16 09:24:12 status installed libpython3.13-dev:amd64 3.13.16-1+jammy1
+2026-10-16 09:24:12 configure python3.12-dev:amd64 3.12.15-1+jammy1 <none>
+2026-10-16 09:24:12 status unpacked python3.12-dev:amd64 3.12.15-1+jammy1
+2026-10-16 09:24:12 status half-configured python3.12-dev:amd64 3.12.15-1+jammy1
+2026-10-16 09:24:12 status installed python3.12-dev:amd64 3.12.15-1+jammy1
+2026-10-16 09:24:12 configure python3.9:amd64 3.9.25-1+jammy1 <none>
+2026-10-16 09:24:12 status unpacked python3.9:amd64 3.9.25-1+jammy1
+2026-10-16 09:24:12 status half-configured python3.9:amd64 3.9.25-1+jammy1
+2026-10-16 09:24:12 status installed python3.9:amd64 3.9.25-1+jammy1
+2026-10-16 09:24:12 configure python3.11-dev:amd64 3.11.17-1+jammy1 <none>
+2026-10-16 09:24:12 status unpacked python3.11-dev:amd64 3.11.17-1+jammy1
+2026-10-16 09:24:12 status half-configured python3.11-dev:amd64 3.11.17-1+jammy1
+2026-10-16 09:24:12 status installed python3.11-dev:amd64 3.11.17-1+jammy1
+2026-10-16 09:24:12 configure python3.13-dev:amd64 3.13.16-1+jammy1 <none>
+2026-10-16 09:24:12 status unpacked python3.13-dev:amd64 3.13.16-1+jammy1
+2026-10-16 09:24:12 status half-configured python3.13-dev:amd64 3.13.16-1+jammy1
+2026-10-16 09:24:12 status installed python3.13-dev:amd64 3.13.16-1+jammy1
+2026-10-16 09:24:12 configure libpython3.9-dev:amd64 3.9.25-1+jammy1 <none>
+2026-10-16 09:24:12 status unpacked libpython3.9-dev:amd64 3.9.25-1+jammy1
+2026-10-16 09:24:12 status half-configured libpython3.9-dev:amd64 3.9.25-1+jammy1
+2026-10-16 09:24:12 status installed libpython3.9-dev:amd64 3.9.25-1+jammy1
+2026-10-16 09:24:12 configure python3.9-dev:amd64 3.9.25-1+jammy1 <none>
+2026-10-16 09:24:12 status unpacked python3.9-dev:amd64 3.9.25-1+jammy1
+2026-10-16 09:24:12 status half-configured python3.9-dev:amd64 3.9.25-1+jammy1
+2026-10-16 09:24:12 status installed python3.9-dev:amd64 3.9.25-1+jammy1
+2026-10-16 09:24:12 configure python3.9-venv:amd64 3.9.25-1+jammy1 <none>
+2026-10-16 09:24:12 status unpacked python3.9-venv:amd64 3.9.25-1+jammy1
+2026-10-16 09:24:12 status half-configured python3.9-venv:amd64 3.9.25-1+jammy1
+2026-10-16 09:24:12 status installed python3.9-venv:amd64 3.9.25-1+jammy1
+== tail -100 /var/log/faillog
+[binary log content omitted for the commit: 2049513 bytes; the full file is in the manager's backup]
+== tail -100 /var/log/lastlog
+[binary log content omitted for the commit: 18697081 bytes; the full file is in the manager's backup]

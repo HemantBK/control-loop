@@ -114,6 +114,59 @@ def benchmark_generation(model, tokenizer, config: ArenaConfig,
             "avg_tokens_per_sec": avg_tps, "num_prompts": len(prompts)}
 
 
+# Benchmark change 05 (control-loop, owner 2026-10-24): upstream 11ea904's correctness check, unchanged.
+def _teacher_forced_logprobs(model, input_ids, continuation=None, num_new=0):
+    """Prefill over input_ids, then decode one token at a time through the KV
+    cache. Feeds `continuation` if given, else the model's own greedy tokens.
+    Returns (log-probs [positions, vocab] in fp32 on CPU, continuation)."""
+    import torch.nn.functional as F
+    steps = len(continuation) if continuation is not None else num_new
+    out = model(input_ids=input_ids, use_cache=True)
+    logits = [out.logits[0].float()]
+    past = out.past_key_values
+    tokens = []
+    for i in range(steps - 1):
+        nxt = continuation[i] if continuation is not None else int(logits[-1][-1].argmax())
+        tokens.append(nxt)
+        out = model(input_ids=torch.tensor([[nxt]], device=input_ids.device),
+                    past_key_values=past, use_cache=True)
+        past = out.past_key_values
+        logits.append(out.logits[0].float())
+    if continuation is None:
+        tokens.append(int(logits[-1][-1].argmax()))
+    return F.log_softmax(torch.cat(logits), dim=-1).cpu(), tokens
+
+
+def reference_outputs(model, tokenizer, config: ArenaConfig) -> list:
+    """Vanilla-model log-probs and greedy continuations for the correctness check."""
+    refs = []
+    with torch.no_grad():
+        for prompt in config.correctness_prompts:
+            ids = tokenizer(prompt, return_tensors="pt")["input_ids"].to(config.device)
+            logp, tokens = _teacher_forced_logprobs(model, ids, num_new=config.correctness_new_tokens)
+            refs.append({"input_ids": ids.cpu(), "logprobs": logp, "continuation": tokens})
+    return refs
+
+
+def check_correctness(model, refs: list, config: ArenaConfig) -> dict:
+    """Compare a kernel-injected model against the vanilla reference."""
+    kls, agree = [], []
+    with torch.no_grad():
+        for ref in refs:
+            logp, _ = _teacher_forced_logprobs(
+                model, ref["input_ids"].to(config.device), continuation=ref["continuation"])
+            if not torch.isfinite(logp).all():
+                return {"correctness": "FAIL", "mean_kl": float("inf"), "top1_agree": 0.0,
+                        "reason": "non-finite logits"}
+            p = ref["logprobs"]
+            kls.append((p.exp() * (p - logp)).sum(-1))
+            agree.append((p.argmax(-1) == logp.argmax(-1)).float())
+    mean_kl = torch.cat(kls).mean().item()
+    top1 = torch.cat(agree).mean().item()
+    ok = mean_kl <= config.correctness_max_mean_kl and top1 >= config.correctness_min_top1_agree
+    return {"correctness": "PASS" if ok else "FAIL", "mean_kl": mean_kl, "top1_agree": top1}
+
+
 def compile_kernels(kernels_dir, bindings_path, name, build_suffix=""):
     """Compile kernels from a given directory. Returns (module, error_string)."""
     from torch.utils.cpp_extension import load
@@ -154,8 +207,9 @@ def run_benchmark(config: ArenaConfig = None, compile_only: bool = False,
     """
     Main benchmark entry point.
 
-    Compares baseline (initial kernels/ from baseline_kernels/ injected) vs agent (agent kernels injected).
-    Baseline TPS is cached to workspace/baseline_tps.txt.
+    Compares baseline (initial kernels/ from baseline_kernels/ injected) vs agent (agent kernels injected),
+    and checks both injected models against vanilla HF (check_correctness; change 05).
+    Baseline TPS and the vanilla reference are cached in workspace/.
     """
     if config is None:
         config = ArenaConfig()
@@ -186,7 +240,21 @@ def run_benchmark(config: ArenaConfig = None, compile_only: bool = False,
     if compile_only:
         return result
 
-    # ── Step 2: Get baseline TPS (cached or compute) ──────────────────────
+    # ── Step 2: Vanilla reference for the correctness check (cached) ──────
+    # Change 05 (11ea904): computed before any injection, so apply_rotary_pos_emb is unpatched.
+    reference_cache = os.path.join(config.workspace_dir, "reference_outputs.pt")
+    if os.path.exists(reference_cache):
+        refs = torch.load(reference_cache)
+    else:
+        print("Computing vanilla reference outputs for correctness check...")
+        model, tokenizer = load_model_and_tokenizer(config)
+        refs = reference_outputs(model, tokenizer, config)
+        torch.save(refs, reference_cache)
+        del model
+        gc.collect()
+        torch.cuda.empty_cache()
+
+    # ── Step 3: Get baseline TPS (cached or compute) ──────────────────────
     baseline_cache = os.path.join(config.workspace_dir, "baseline_tps.txt")
 
     if os.path.exists(baseline_cache):
@@ -231,7 +299,17 @@ def run_benchmark(config: ArenaConfig = None, compile_only: bool = False,
                 from inject import inject_agent_kernels
                 model, tokenizer = load_model_and_tokenizer(config)
                 inject_agent_kernels(model, baseline_ops, verbose=verbose)
+                bl_correct = check_correctness(model, refs, config)   # change 05: reported, not gated
+                result["baseline_correctness"] = bl_correct["correctness"]
+                result["baseline_mean_kl"] = bl_correct["mean_kl"]
+                result["baseline_top1_agree"] = bl_correct["top1_agree"]
+                print(f"BASELINE_CORRECTNESS={bl_correct['correctness']} "
+                      f"(mean_kl={bl_correct['mean_kl']:.2e}, top1_agree={bl_correct['top1_agree']:.3f})")
+                import inject as _inj   # change 07: per-kernel counts over the timed baseline benchmark
+                _inj.reset_kernel_counts()
                 baseline_results = benchmark_generation(model, tokenizer, config, num_prompts)
+                result["baseline_kernel_counts"] = json.loads(json.dumps(_inj.KERNEL_COUNTS))
+                print(f"BASELINE_KERNEL_COUNTS={json.dumps(_inj.KERNEL_COUNTS, sort_keys=True)}")
                 baseline_tps = baseline_results["avg_tokens_per_sec"]
                 # Clean up baseline model completely before loading agent model
                 del model, baseline_ops
@@ -246,7 +324,7 @@ def run_benchmark(config: ArenaConfig = None, compile_only: bool = False,
 
     result["baseline_tps"] = baseline_tps
 
-    # ── Step 3: Load fresh model, inject agent kernels, benchmark ─────────
+    # ── Step 4: Load fresh model, inject agent kernels, check, benchmark ──
     from inject import inject_agent_kernels
     print("Loading model for agent benchmark...")
     model, tokenizer = load_model_and_tokenizer(config)
@@ -258,12 +336,25 @@ def run_benchmark(config: ArenaConfig = None, compile_only: bool = False,
         print("INJECT_STATUS=NONE (no kernels injected)")
         result["agent_tps"] = baseline_tps
         result["speedup"] = 1.0
+        result["correctness"] = "PASS"  # nothing injected: vanilla model (change 05)
         del model
         gc.collect()
         return result
 
+    correct = check_correctness(model, refs, config)   # change 05
+    result.update(correct)
+    print(f"CORRECTNESS={correct['correctness']} "
+          f"(mean_kl={correct['mean_kl']:.2e}, top1_agree={correct['top1_agree']:.3f})")
+
     print("Running agent benchmark...")
+    import inject as _inj   # change 07: per-kernel counts over the timed agent benchmark
+    _inj.reset_kernel_counts()
     agent_results = benchmark_generation(model, tokenizer, config, num_prompts)
+    result["kernel_counts"] = json.loads(json.dumps(_inj.KERNEL_COUNTS))
+    result["kernel_first_fallback"] = dict(_inj.FIRST_FALLBACK)
+    print(f"KERNEL_COUNTS={json.dumps(_inj.KERNEL_COUNTS, sort_keys=True)}")
+    n_fb = sum(v.get("fallback", 0) for v in _inj.KERNEL_COUNTS.values())
+    print(f"KERNEL_FALLBACKS={n_fb}" + (f" first={json.dumps(_inj.FIRST_FALLBACK)}" if n_fb else ""))
     result["agent_tps"] = agent_results["avg_tokens_per_sec"]
 
     speedup = agent_results["avg_tokens_per_sec"] / max(baseline_tps, 1e-6)
@@ -285,6 +376,8 @@ def run_benchmark(config: ArenaConfig = None, compile_only: bool = False,
     print(f"  BASELINE_TPS       = {baseline_tps:.2f}")
     print(f"  AGENT_TPS          = {result['agent_tps']:.2f}")
     print(f"  SPEEDUP            = {speedup:.3f}x")
+    print(f"  CORRECTNESS        = {result['correctness']} "
+          f"(mean_kl={result['mean_kl']:.2e}, top1_agree={result['top1_agree']:.3f})")
     for k, v in injected.items():
         print(f"  KERNEL_{k.upper():20s} = {'ACTIVE' if v else 'SKIP'}")
     print(f"{'='*60}\n")

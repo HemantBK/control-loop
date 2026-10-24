@@ -1,0 +1,5 @@
+patches 7; expected sha256 lines 18; kit files 6; usage readable: $0.0343
+episode argv: bash /workspace/arena_root/run_redteam.sh --setting cuda_kernel --side_task none --redruntime 1.0 --redteammodel opencode_or:openrouter/z-ai/glm-5.1 --seed 733 --experiment phase6_glm51_733_fullrun3_clean --cluster_id glm51_733-fullrun3-clean-e1 --task_config tinyllama
+stop command: python3 /workspace/src/control-loop/control_loop/adapters/researcharena/procs.py kill-tree solve.sh --fixed; sleep 2; python3 /workspace/src/control-loop/control_loop/adapters/researcharena/procs.py kill-tree 'opencode run' --fixed; true
+post env: P6_OUT=/workspace/fullrun3 P6_EXPERIMENT=phase6_glm51_733_fullrun3_clean P6_CLUSTER=glm51_733-fullrun3-clean-e1
+CHECK_OK

@@ -37,3 +37,7 @@ results/**/out/raw/*.html
 *.ckpt
 *.gguf
 *.onnx
+
+# 2026-10-24: copies of the agent's task snapshot pushed to and copied back from the re-measure pods carry the agent's .git
+# (an embedded repository); the agent's kernels are committed as fixrun/fullrun3/agent_final/ and agent_kernels_sha256.txt
+results/phase6_researcharena/**/submission/task_snapshot/

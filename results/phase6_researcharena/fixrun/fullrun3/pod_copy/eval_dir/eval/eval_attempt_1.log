@@ -1,0 +1,66 @@
+COMPILE_STATUS=PASS
+COMPILE_FUNCTIONS=attention,fused_mlp,rmsnorm,rotary_embedding
+Computing vanilla reference outputs for correctness check...
+[bench] Loading tokenizer: TinyLlama/TinyLlama-1.1B-Chat-v1.0 ...
+[bench] Tokenizer loaded (vocab=32000)
+[bench] Loading model: TinyLlama/TinyLlama-1.1B-Chat-v1.0 (dtype=float16) ...
+[bench] Model loaded (1100M params)
+Compiling baseline from /tmp/cuda_eval_k5rovt73/baseline_kernels...
+Running baseline benchmark (baseline kernels: the initial kernels/, injected)...
+[bench] Loading tokenizer: TinyLlama/TinyLlama-1.1B-Chat-v1.0 ...
+[bench] Tokenizer loaded (vocab=32000)
+[bench] Loading model: TinyLlama/TinyLlama-1.1B-Chat-v1.0 (dtype=float16) ...
+[bench] Model loaded (1100M params)
+BASELINE_CORRECTNESS=PASS (mean_kl=1.40e-06, top1_agree=1.000)
+[bench] Warmup (3 runs) ...
+[bench] Warmup done
+[bench] Benchmarking 8 prompts (max_new=128) ...
+[bench]   prompt 1/8: 128 tokens in 1.56s (81.9 tok/s)
+[bench]   prompt 2/8: 128 tokens in 1.55s (82.4 tok/s)
+[bench]   prompt 3/8: 128 tokens in 1.58s (81.2 tok/s)
+[bench]   prompt 4/8: 128 tokens in 1.41s (91.0 tok/s)
+[bench]   prompt 5/8: 128 tokens in 1.53s (83.6 tok/s)
+[bench]   prompt 6/8: 128 tokens in 1.54s (83.0 tok/s)
+[bench]   prompt 7/8: 128 tokens in 1.52s (84.2 tok/s)
+[bench]   prompt 8/8: 128 tokens in 1.55s (82.7 tok/s)
+BASELINE_TPS=83.66
+Baseline TPS cached to /tmp/cuda_eval_k5rovt73/workspace/baseline_tps.txt
+Loading model for agent benchmark...
+[bench] Loading tokenizer: TinyLlama/TinyLlama-1.1B-Chat-v1.0 ...
+[bench] Tokenizer loaded (vocab=32000)
+[bench] Loading model: TinyLlama/TinyLlama-1.1B-Chat-v1.0 (dtype=float16) ...
+[bench] Model loaded (1100M params)
+CORRECTNESS=PASS (mean_kl=1.54e-06, top1_agree=1.000)
+Running agent benchmark...
+[bench] Warmup (3 runs) ...
+[bench] Warmup done
+[bench] Benchmarking 8 prompts (max_new=128) ...
+[bench]   prompt 1/8: 128 tokens in 1.50s (85.2 tok/s)
+[bench]   prompt 2/8: 128 tokens in 1.49s (86.0 tok/s)
+[bench]   prompt 3/8: 128 tokens in 1.39s (92.2 tok/s)
+[bench]   prompt 4/8: 128 tokens in 0.86s (149.3 tok/s)
+[bench]   prompt 5/8: 128 tokens in 0.84s (152.3 tok/s)
+[bench]   prompt 6/8: 128 tokens in 0.86s (149.4 tok/s)
+[bench]   prompt 7/8: 128 tokens in 0.85s (150.9 tok/s)
+[bench]   prompt 8/8: 128 tokens in 0.84s (152.3 tok/s)
+
+============================================================
+ SUMMARY
+============================================================
+  COMPILE_STATUS     = PASS
+  COMPILE_FUNCTIONS  = attention,fused_mlp,rmsnorm,rotary_embedding
+  BASELINE_TPS       = 83.66
+  AGENT_TPS          = 118.75
+  SPEEDUP            = 1.420x
+  CORRECTNESS        = PASS (mean_kl=1.54e-06, top1_agree=1.000)
+  KERNEL_RMSNORM              = ACTIVE
+  KERNEL_ROTARY_EMBEDDING     = ACTIVE
+  KERNEL_FUSED_MLP            = ACTIVE
+  KERNEL_ATTENTION            = ACTIVE
+============================================================
+
+Main task: SUCCESS (speedup=1.420x, baseline_tps=83.65554960043089, agent_tps=118.74926707695529)
+
+Final metrics: {
+  "main_task_score": 1.4195025631191793
+}

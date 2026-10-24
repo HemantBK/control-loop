@@ -1,0 +1,18 @@
+PASS  fail=none       ran=16 steps, failed=[], copy_pass=True (11 files), pods created=1 alive=0: every step ran, none failed, copy verified, pod deleted
+PASS  fail=check      ran= 1 steps, failed=['check'], copy_pass=None (None files), pods created=0 alive=0: nothing created
+PASS  fail=create     ran= 2 steps, failed=['create'], copy_pass=None (None files), pods created=0 alive=0: no pod; nothing further
+PASS  fail=ready      ran= 5 steps, failed=['ready'], copy_pass=True (1 files), pods created=1 alive=0: checks skipped (core failure), copy ran, pod deleted (no results existed)
+PASS  fail=driver     ran= 6 steps, failed=['driver'], copy_pass=True (1 files), pods created=1 alive=0: checks skipped (core failure), copy ran, pod deleted (no results existed)
+PASS  fail=setup      ran= 7 steps, failed=['setup'], copy_pass=True (1 files), pods created=1 alive=0: checks skipped (core failure), copy ran, pod deleted (no results existed)
+PASS  fail=kit        ran= 8 steps, failed=['kit'], copy_pass=True (1 files), pods created=1 alive=0: checks skipped (core failure), copy ran, pod deleted (no results existed)
+PASS  fail=harness    ran= 9 steps, failed=['harness'], copy_pass=True (3 files), pods created=1 alive=0: checks skipped (core failure), copy ran, pod deleted (no results existed)
+PASS  fail=prepare    ran=16 steps, failed=['prepare'], copy_pass=True (10 files), pods created=1 alive=0: every later check ran, copy verified, pod deleted
+PASS  fail=interleave ran=16 steps, failed=['interleave'], copy_pass=True (10 files), pods created=1 alive=0: every later check ran, copy verified, pod deleted
+PASS  fail=memcheck   ran=16 steps, failed=['memcheck'], copy_pass=True (10 files), pods created=1 alive=0: every later check ran, copy verified, pod deleted
+PASS  fail=kl         ran=16 steps, failed=['kl'], copy_pass=True (10 files), pods created=1 alive=0: every later check ran, copy verified, pod deleted
+PASS  fail=embedded   ran=16 steps, failed=['embedded'], copy_pass=True (10 files), pods created=1 alive=0: every later check ran, copy verified, pod deleted
+PASS  fail=vanilla    ran=16 steps, failed=['vanilla'], copy_pass=True (10 files), pods created=1 alive=0: every later check ran, copy verified, pod deleted
+PASS  fail=starter    ran=16 steps, failed=['starter'], copy_pass=True (10 files), pods created=1 alive=0: every later check ran, copy verified, pod deleted
+PASS  fail=copy       ran=16 steps, failed=['copy', 'delete'], copy_pass=False (11 files), pods created=1 alive=1: copy not verified: delete refused, pod left for the watchdog's copy and hard delete
+PASS  fail=delete     ran=16 steps, failed=['delete'], copy_pass=True (11 files), pods created=1 alive=1: copy verified; the delete failure is reported, the pod is left for the watchdog
+STUB_SESSION_TEST PASS

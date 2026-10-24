@@ -1,0 +1,255 @@
+{
+  "label": "interleave",
+  "A": "initial",
+  "B": "agent",
+  "pairs": [
+    {
+      "pair": 1,
+      "initial": 129.32,
+      "agent": 131.46,
+      "ratio": 1.0166,
+      "initial_window": {
+        "sm_mhz_mean": 1980.0,
+        "sm_mhz_min": 1980.0,
+        "util_mean": 39.5,
+        "load1_max": 60.51,
+        "other_gpu_pids": [],
+        "samples": 4
+      },
+      "agent_window": {
+        "sm_mhz_mean": 1980.0,
+        "sm_mhz_min": 1980.0,
+        "util_mean": 35.0,
+        "load1_max": 52.57,
+        "other_gpu_pids": [],
+        "samples": 4
+      },
+      "initial_per_prompt": [
+        130.4,
+        136.8,
+        129.8,
+        121.8,
+        131.3,
+        123.1,
+        127.1,
+        135.8
+      ],
+      "agent_per_prompt": [
+        135.9,
+        141.0,
+        131.8,
+        134.9,
+        136.8,
+        116.9,
+        125.4,
+        132.1
+      ],
+      "initial_kernel_counts": {
+        "rmsnorm": {
+          "custom": 46112,
+          "fallback": 0
+        },
+        "fused_mlp": {
+          "custom": 23056,
+          "fallback": 0
+        },
+        "rotary_embedding": {
+          "custom": 23056,
+          "fallback": 0
+        },
+        "attention": {
+          "custom": 242,
+          "fallback": 0,
+          "decode_pytorch": 22814
+        }
+      },
+      "agent_kernel_counts": {
+        "rmsnorm": {
+          "custom": 46112,
+          "fallback": 0
+        },
+        "fused_mlp": {
+          "custom": 23056,
+          "fallback": 0
+        },
+        "rotary_embedding": {
+          "custom": 23056,
+          "fallback": 0
+        },
+        "attention": {
+          "custom": 242,
+          "fallback": 0,
+          "decode_pytorch": 22814
+        }
+      },
+      "initial_first_fallback": {},
+      "agent_first_fallback": {}
+    },
+    {
+      "pair": 2,
+      "initial": 126.5,
+      "agent": 130.97,
+      "ratio": 1.0354,
+      "initial_window": {
+        "sm_mhz_mean": 1980.0,
+        "sm_mhz_min": 1980.0,
+        "util_mean": 38.0,
+        "load1_max": 47.63,
+        "other_gpu_pids": [],
+        "samples": 4
+      },
+      "agent_window": {
+        "sm_mhz_mean": 1980.0,
+        "sm_mhz_min": 1980.0,
+        "util_mean": 47.2,
+        "load1_max": 52.13,
+        "other_gpu_pids": [],
+        "samples": 4
+      },
+      "initial_per_prompt": [
+        124.8,
+        122.4,
+        130.2,
+        128.9,
+        124.6,
+        127.1,
+        125.5,
+        128.9
+      ],
+      "agent_per_prompt": [
+        131.7,
+        135.4,
+        120.3,
+        131.8,
+        131.5,
+        120.3,
+        137.0,
+        143.2
+      ],
+      "initial_kernel_counts": {
+        "rmsnorm": {
+          "custom": 46112,
+          "fallback": 0
+        },
+        "fused_mlp": {
+          "custom": 23056,
+          "fallback": 0
+        },
+        "rotary_embedding": {
+          "custom": 23056,
+          "fallback": 0
+        },
+        "attention": {
+          "custom": 242,
+          "fallback": 0,
+          "decode_pytorch": 22814
+        }
+      },
+      "agent_kernel_counts": {
+        "rmsnorm": {
+          "custom": 46112,
+          "fallback": 0
+        },
+        "fused_mlp": {
+          "custom": 23056,
+          "fallback": 0
+        },
+        "rotary_embedding": {
+          "custom": 23056,
+          "fallback": 0
+        },
+        "attention": {
+          "custom": 242,
+          "fallback": 0,
+          "decode_pytorch": 22814
+        }
+      },
+      "initial_first_fallback": {},
+      "agent_first_fallback": {}
+    },
+    {
+      "pair": 3,
+      "initial": 123.8,
+      "agent": 137.95,
+      "ratio": 1.1143,
+      "initial_window": {
+        "sm_mhz_mean": 1980.0,
+        "sm_mhz_min": 1980.0,
+        "util_mean": 30.8,
+        "load1_max": 52.9,
+        "other_gpu_pids": [],
+        "samples": 5
+      },
+      "agent_window": {
+        "sm_mhz_mean": 1980.0,
+        "sm_mhz_min": 1980.0,
+        "util_mean": 36.0,
+        "load1_max": 50.13,
+        "other_gpu_pids": [],
+        "samples": 4
+      },
+      "initial_per_prompt": [
+        124.1,
+        126.3,
+        125.9,
+        120.2,
+        118.0,
+        130.0,
+        121.9,
+        124.8
+      ],
+      "agent_per_prompt": [
+        121.6,
+        143.6,
+        147.4,
+        138.9,
+        137.3,
+        137.8,
+        144.2,
+        136.2
+      ],
+      "initial_kernel_counts": {
+        "rmsnorm": {
+          "custom": 46112,
+          "fallback": 0
+        },
+        "fused_mlp": {
+          "custom": 23056,
+          "fallback": 0
+        },
+        "rotary_embedding": {
+          "custom": 23056,
+          "fallback": 0
+        },
+        "attention": {
+          "custom": 242,
+          "fallback": 0,
+          "decode_pytorch": 22814
+        }
+      },
+      "agent_kernel_counts": {
+        "rmsnorm": {
+          "custom": 46112,
+          "fallback": 0
+        },
+        "fused_mlp": {
+          "custom": 23056,
+          "fallback": 0
+        },
+        "rotary_embedding": {
+          "custom": 23056,
+          "fallback": 0
+        },
+        "attention": {
+          "custom": 242,
+          "fallback": 0,
+          "decode_pytorch": 22814
+        }
+      },
+      "initial_first_fallback": {},
+      "agent_first_fallback": {}
+    }
+  ],
+  "median_ratio": 1.0354,
+  "n_pairs": 3
+}

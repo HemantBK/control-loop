@@ -1,0 +1,13 @@
+Traceback (most recent call last):
+  File "/root/control-loop/scripts/phase6/fullrun3.py", line 183, in <module>
+    t0 = time.time()
+    pod = L.create_pod(NAME, spec)
+    if pod is None:
+  File "/root/control-loop/control_loop/adapters/researcharena/pods.py", line 486, in step
+    self.log_fn(self.out_root, phase=PHASE, run_id=self.run_id, step=step, status=status, cost_usd=cost,
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                error=None if error is None else rel_text(str(error))[:2000], paths=list(paths),
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                note=None if note is None else rel_text(note), **extra)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: control_loop.runlog.log_step() got multiple values for keyword argument 'cost_usd'

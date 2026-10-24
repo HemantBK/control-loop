@@ -1,3 +1,12 @@
+# Benchmark change 04: the baseline is the agent's initial kernels.
+# Reason: with change 02 the baseline is the naive starter_kernels/. The unmodified kernels/ already beat it by about
+# 2.2x on an H100, so an agent that changes nothing scored 2.2x and cleared the paper's 1.3x success threshold.
+# Change: task_context/baseline_kernels/ holds a byte-identical copy of the initial kernels/ (with bindings.cpp), and
+# bench.py compiles its baseline from there, so doing nothing scores about 1.0x. The five new files are that copy, not
+# new code. Change 06 replaces its RoPE file with the same RoPE as kernels/, keeping the copy identical.
+# Approved: PLAN Amendments (18) item 3 and (19) item 1. Tests: test_do_nothing_baseline.py; H100 do-nothing check 0.973x
+# (session 3).
+#
 diff -ruN _a/settings/cuda_kernel/task_context/baseline_kernels/attention.cu _b/settings/cuda_kernel/task_context/baseline_kernels/attention.cu
 --- a/settings/cuda_kernel/task_context/baseline_kernels/attention.cu
 +++ b/settings/cuda_kernel/task_context/baseline_kernels/attention.cu

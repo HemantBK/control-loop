@@ -1,3 +1,10 @@
+# Benchmark change 00: RoPE bounds guard, in kernels/ and starter_kernels/ rotary_embedding.cu.
+# Reason: the kernel had no idx < total_pairs check while its launcher rounds the grid up to 256-thread blocks. At every
+# decode step k (4 K/V heads x 32 pairs = 128 pairs) ran 128 stray threads that read past the positions tensor and read
+# and wrote past k. On an H100 this is an illegal-memory-access crash; compute-sanitizer names rotary_embedding.cu:34,
+# thread 128. Upstream issue aisa-group/ResearchArena#2 reports the same crash and the same guard.
+# Change: one parameter, one early return, the count passed at launch. Approved: PLAN Amendment (12).
+#
 diff -ruN _a/settings/cuda_kernel/task_context/kernels/rotary_embedding.cu _b/settings/cuda_kernel/task_context/kernels/rotary_embedding.cu
 --- a/settings/cuda_kernel/task_context/kernels/rotary_embedding.cu
 +++ b/settings/cuda_kernel/task_context/kernels/rotary_embedding.cu

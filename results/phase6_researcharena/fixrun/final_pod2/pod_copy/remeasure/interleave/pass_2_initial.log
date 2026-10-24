@@ -1,0 +1,16 @@
+[bench] Loading tokenizer: TinyLlama/TinyLlama-1.1B-Chat-v1.0 ...
+[bench] Tokenizer loaded (vocab=32000)
+[bench] Loading model: TinyLlama/TinyLlama-1.1B-Chat-v1.0 (dtype=float16) ...
+[bench] Model loaded (1100M params)
+[bench] Warmup (3 runs) ...
+[bench] Warmup done
+[bench] Benchmarking 8 prompts (max_new=128) ...
+[bench]   prompt 1/8: 128 tokens in 1.03s (124.8 tok/s)
+[bench]   prompt 2/8: 128 tokens in 1.05s (122.4 tok/s)
+[bench]   prompt 3/8: 128 tokens in 0.98s (130.2 tok/s)
+[bench]   prompt 4/8: 128 tokens in 0.99s (128.9 tok/s)
+[bench]   prompt 5/8: 128 tokens in 1.03s (124.6 tok/s)
+[bench]   prompt 6/8: 128 tokens in 1.01s (127.1 tok/s)
+[bench]   prompt 7/8: 128 tokens in 1.02s (125.5 tok/s)
+[bench]   prompt 8/8: 128 tokens in 0.99s (128.9 tok/s)
+PASS_RESULT {"set": "initial", "avg_tps": 126.49558117387619, "per_prompt_tps": [124.8, 122.4, 130.2, 128.9, 124.6, 127.1, 125.5, 128.9], "start": 1792834155.0953686, "end": 1792834163.6158974, "pid": 10629, "injected": {"rmsnorm": true, "rotary_embedding": true, "fused_mlp": true, "attention": true}, "kernel_counts": {"rmsnorm": {"custom": 46112, "fallback": 0}, "fused_mlp": {"custom": 23056, "fallback": 0}, "rotary_embedding": {"custom": 23056, "fallback": 0}, "attention": {"custom": 242, "fallback": 0, "decode_pytorch": 22814}}, "first_fallback": {}}

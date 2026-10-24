@@ -1,0 +1,7 @@
+PASS  A fails=none     B fails=none   -> RETRY_SESSION_END measured; attempts ['A']; pods ['p6-fixrmA'], alive 0
+PASS  A fails=create   B fails=none   -> RETRY_SESSION_END measured; attempts ['A', 'B']; pods ['p6-fixrmB'], alive 0
+PASS  A fails=ready    B fails=none   -> RETRY_SESSION_END measured; attempts ['A', 'B']; pods ['p6-fixrmA', 'p6-fixrmB'], alive 0
+PASS  A fails=ready    B fails=ready  -> RETRY_SESSION_END two_pods_failed; attempts ['A', 'B']; pods ['p6-fixrmA', 'p6-fixrmB'], alive 0
+PASS  A fails=harness  B fails=none   -> RETRY_SESSION_END stopped_on_failure (rc=1); attempts ['A']; pods ['p6-fixrmA'], alive 0
+STUB_RETRY_TEST PASS
+ALL_B_DONE

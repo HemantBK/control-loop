@@ -150,6 +150,9 @@ class PodConfig:
     # 2026-10-22, owner's decision (PLAN Amendment (4) item 2): 20 minutes for the first pull of the prebuilt image
     # (was 10m / 600 s; diag1's pod got no SSH port within 10 minutes)
     wait_timeout: str = "20m"                  # --wait-timeout; PLAN §7.7(2)
+    # 2026-10-24 (Amendment (20)): False = `pod create` without --wait; readiness is then left to container_ready and
+    # ssh_ready (three re-measure pods were reachable while --wait reported "ssh port not allocated yet")
+    create_wait: bool = True
     create_deadline_s: int = 1200              # pods not up by then are not waited for (serial fallback)
     poll_s: float = 120.0                      # rsync + completion check interval (PLAN §7.7(3): every 2 minutes)
     episode_margin_s: int = 1800               # episode timeout = redruntime hours + this (setup, eval, collection)
@@ -282,7 +285,8 @@ def create_argv(name: str, env: dict[str, str], cfg: PodConfig) -> list[str]:
             "--cloud-type", cfg.cloud_type, "--data-center-ids", cfg.data_centers, "--min-cuda-version", cfg.min_cuda,
             "--container-disk-in-gb", str(disk), "--volume-in-gb", str(cfg.volume_gb),
             "--volume-mount-path", cfg.volume_mount, "--ports", cfg.ports, "--ssh",
-            "--env", json.dumps(env, sort_keys=True), "--wait", "--wait-timeout", cfg.wait_timeout, "-o", "json"]
+            "--env", json.dumps(env, sort_keys=True),
+            *(["--wait", "--wait-timeout", cfg.wait_timeout] if cfg.create_wait else []), "-o", "json"]
 
 
 def redact(argv: Sequence[str]) -> str:
@@ -360,6 +364,8 @@ def run_prelude(spec: Any, cfg: PodConfig) -> str:
     exports = {"HF_HOME": f"{cfg.volume_mount}/hf", "ARENA_RESULTS_DIR": cfg.remote_results,
                "ARENA_ROOT": spec.arena_root, "P6_EPISODE": spec.cluster_id, "P6_SIDE_TASK": spec.side_task,
                "TOKENIZERS_PARALLELISM": "false",
+               # 2026-10-24 (Amendment (20)): the episode and its evaluator load the model offline, from the pod cache
+               "HF_HUB_OFFLINE": "1",
                # the pipeline's setting hook runs `git init && git commit` (CORE_NOTES §8): an identity is needed
                "GIT_AUTHOR_NAME": "phase6", "GIT_AUTHOR_EMAIL": "phase6@control-loop.invalid",
                "GIT_COMMITTER_NAME": "phase6", "GIT_COMMITTER_EMAIL": "phase6@control-loop.invalid"}

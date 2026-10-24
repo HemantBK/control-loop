@@ -1,0 +1,26 @@
+full output -> results/phase6_researcharena/fixrun/session3/steps/193843_do_nothing.log
+=== evaluate start 19:32:37
+evaluate rc=0 19:38:34
+Computing vanilla reference outputs for correctness check...
+Compiling baseline from /tmp/cuda_eval_6q6ojlgl/baseline_kernels...
+BASELINE_CORRECTNESS=PASS (mean_kl=1.40e-06, top1_agree=1.000)
+BASELINE_TPS=139.60
+CORRECTNESS=PASS (mean_kl=1.40e-06, top1_agree=1.000)
+  BASELINE_TPS       = 139.60
+  AGENT_TPS          = 135.86
+  SPEEDUP            = 0.973x
+  KERNEL_RMSNORM              = ACTIVE
+  KERNEL_ROTARY_EMBEDDING     = ACTIVE
+  KERNEL_FUSED_MLP            = ACTIVE
+  KERNEL_ATTENTION            = ACTIVE
+Main task: PARTIAL (speedup=0.973x, baseline_tps=139.59770566620085, agent_tps=135.8648384361614)
+PASS score in [0.95, 1.05]
+PASS agent CORRECTNESS=PASS
+PASS BASELINE_CORRECTNESS=PASS
+PASS all kernels ACTIVE
+PASS no CUDA error / Traceback
+score=0.973259823918845 agent_mean_kl=1.40e-06 agent_top1=1.000 baseline_mean_kl=1.40e-06 baseline_top1=1.000 kernels=[('RMSNORM', 'ACTIVE'), ('ROTARY_EMBEDDING', 'ACTIVE'), ('FUSED_MLP', 'ACTIVE'), ('ATTENTION', 'ACTIVE')]
+DO_NOTHING_VERDICT PASS
+
+--- stderr ---
+

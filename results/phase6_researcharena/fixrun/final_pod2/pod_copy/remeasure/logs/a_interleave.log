@@ -1,0 +1,11 @@
+pair  initial tok/s    agent tok/s   ratio   window (initial | agent): SM MHz mean/min, util %, load1 max, other GPU pids
+   1         129.32         131.46  1.0166   1980.0/1980.0, 39.5, 60.51, [] | 1980.0/1980.0, 35.0, 52.57, []
+   2          126.5         130.97  1.0354   1980.0/1980.0, 38.0, 47.63, [] | 1980.0/1980.0, 47.2, 52.13, []
+   3          123.8         137.95  1.1143   1980.0/1980.0, 30.8, 52.9, [] | 1980.0/1980.0, 36.0, 50.13, []
+COUNTS pair 1 initial: attention 242/0 (+22814 decode PyTorch), fused_mlp 23056/0, rmsnorm 46112/0, rotary_embedding 23056/0; fallbacks 0
+COUNTS pair 1 agent: attention 242/0 (+22814 decode PyTorch), fused_mlp 23056/0, rmsnorm 46112/0, rotary_embedding 23056/0; fallbacks 0
+COUNTS pair 2 initial: attention 242/0 (+22814 decode PyTorch), fused_mlp 23056/0, rmsnorm 46112/0, rotary_embedding 23056/0; fallbacks 0
+COUNTS pair 2 agent: attention 242/0 (+22814 decode PyTorch), fused_mlp 23056/0, rmsnorm 46112/0, rotary_embedding 23056/0; fallbacks 0
+COUNTS pair 3 initial: attention 242/0 (+22814 decode PyTorch), fused_mlp 23056/0, rmsnorm 46112/0, rotary_embedding 23056/0; fallbacks 0
+COUNTS pair 3 agent: attention 242/0 (+22814 decode PyTorch), fused_mlp 23056/0, rmsnorm 46112/0, rotary_embedding 23056/0; fallbacks 0
+MEDIAN_RATIO interleave agent/initial = 1.0354

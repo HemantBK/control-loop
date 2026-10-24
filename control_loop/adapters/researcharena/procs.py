@@ -13,10 +13,12 @@ does with an ERE; `--fixed` matches it as a plain substring.
 
     python -m control_loop.adapters.researcharena.procs list PATTERN [--fixed] [-l]
     python -m control_loop.adapters.researcharena.procs kill PATTERN [--fixed] [--signal TERM]
+    python -m control_loop.adapters.researcharena.procs kill-tree PATTERN [--fixed] [--signal TERM]
     python control_loop/adapters/researcharena/procs.py ...      (same; stdlib only, no package import)
 
 `list` prints one pid per line (`-l`: pid and command line); `kill` sends the signal and prints `killed <pid> <cmdline>`
-per process. Exit status as pgrep/pkill: 0 if at least one process matched, 1 if none, 2 on a usage or /proc error.
+per process; `kill-tree` does the same for every matched process and all its descendants, descendants first
+(2026-10-24: stopping an agent must also stop the tools it started). Exit status as pgrep/pkill: 0 if at least one process matched, 1 if none, 2 on a usage or /proc error.
 scripts/jobs/pkill_safe.sh wraps `kill`.
 """
 from __future__ import annotations
@@ -101,6 +103,35 @@ def kill(pattern: str, sig: int = signal.SIGTERM, *, fixed: bool = False,
     return done
 
 
+def descendants(roots: set[int], me: int | None = None) -> list[int]:
+    """Every live process that has one of `roots` among its ancestors, deepest first; never `me` or its ancestors."""
+    me = os.getpid() if me is None else me
+    excluded = set(ancestors(me))
+    out = []
+    for pid in all_pids():
+        if pid in roots or pid in excluded:
+            continue
+        chain = ancestors(pid)
+        for depth, a in enumerate(chain[1:], 1):
+            if a in roots:
+                out.append((depth, pid))
+                break
+    return [pid for _, pid in sorted(out, reverse=True)]
+
+
+def kill_tree(pattern: str, sig: int = signal.SIGTERM, *, fixed: bool = False) -> list[tuple[int, str]]:
+    """Signal every process `find` returns and all their descendants (deepest first, then the matched processes)."""
+    roots = dict(find(pattern, fixed=fixed))
+    done = []
+    for pid in descendants(set(roots)) + list(roots):
+        try:
+            os.kill(pid, sig)
+        except ProcessLookupError:
+            continue
+        done.append((pid, roots.get(pid) or cmdline(pid)))
+    return done
+
+
 def _signal(name: str) -> int:
     n = name.upper()
     if n.isdigit():
@@ -111,7 +142,7 @@ def _signal(name: str) -> int:
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="procs", description="pgrep/pkill -f that never match the caller or its ancestors")
     sub = ap.add_subparsers(dest="cmd", required=True)
-    for name in ("list", "kill"):
+    for name in ("list", "kill", "kill-tree"):
         p = sub.add_parser(name)
         p.add_argument("pattern")
         p.add_argument("--fixed", action="store_true", help="match PATTERN as a plain substring, not a regex")
@@ -126,7 +157,8 @@ def main(argv: list[str] | None = None) -> int:
             for pid, cl in got:
                 print(f"{pid} {cl}" if a.long else pid)
         else:
-            got = kill(a.pattern, _signal(a.signal), fixed=a.fixed)
+            fn = kill_tree if a.cmd == "kill-tree" else kill
+            got = fn(a.pattern, _signal(a.signal), fixed=a.fixed)
             for pid, cl in got:
                 print(f"killed {pid} {cl[:200]}")
     except (OSError, re.error, AttributeError, ValueError) as e:

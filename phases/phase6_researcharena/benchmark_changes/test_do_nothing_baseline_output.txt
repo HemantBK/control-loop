@@ -1,5 +1,9 @@
-ok   1 do-nothing, 00-04: speedup 1.0, baseline compiled from baseline_kernels, baseline_kernels == initial kernels: True
-ok   2 changed kernel, 00-04: speedup 1.5
+ok   1 do-nothing, 00-06: speedup 1.0, baseline compiled from baseline_kernels, baseline_kernels == initial kernels: True
+ok   2 changed kernel, 00-06: speedup 1.5
 ok   3 do-nothing + tampered baseline_kernels + planted baseline_tps.txt: speedup 1.0, baseline sources pristine
 ok   4 contrast, do-nothing with 00-03 only: speedup 2.222 (stub units), baseline compiled from starter_kernels
+ok   7 change 07: the counts are recorded for the agent and baseline passes: counts recorded True
+ok   5a do-nothing correctness, 00-06: agent PASS, baseline PASS
+ok   5b deviating kernel, 00-06: correctness FAIL
+ok   6 baseline_kernels == kernels after 06 (Baseline B RoPE + inject hook present): identical True, inject hook True
 DO_NOTHING_TEST PASS

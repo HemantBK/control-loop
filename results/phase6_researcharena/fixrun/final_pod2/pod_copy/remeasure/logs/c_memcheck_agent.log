@@ -1,0 +1,13 @@
+rc=0
+MIN_OPS_MODE=all
+MIN_COMPILE PASS in 1s 
+MIN_STRICT=0
+MIN_INJECTED {"rmsnorm": true, "rotary_embedding": true, "fused_mlp": true, "attention": true}
+MIN_PROMPT 1/1 T=12 (k RoPE pairs at prefill = 1536, tail threads = 0; at decode 128 pairs, tail 128)
+MIN_GENERATED 1 ids=[1128, 947, 372, 5649, 278, 6030, 310, 3618] text='How does it explain the behavior of objects'
+MIN_OP_CALLS {"rmsnorm": 352, "rotary_embedding": 352, "attention": 22, "fused_mlp": 176}
+MIN_OP_ERRORS {} {}
+MIN_ROPE_CALLS expected=352 got=352 errors=0
+MIN_DONE rc=0
+========= ERROR SUMMARY: 0 errors
+MEMCHECK_DONE
