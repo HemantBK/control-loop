@@ -133,7 +133,9 @@ def agent_requests(log) -> list[dict]:
         if e.event == "model":
             agent, turn = spans.get(e.span_id, (None, None))
             req = dict(e.call.request) if (e.call is not None and e.call.request) else None
-            rows.append(dict(agent=agent, turn=turn, model=e.model, sent=P.request_summary(req) if req else None))
+            cfg = getattr(e, "config", None)
+            rows.append(dict(agent=agent, turn=turn, model=e.model, sent=P.request_summary(req) if req else None,
+                             cfg_temperature=getattr(cfg, "temperature", None), cfg_seed=getattr(cfg, "seed", None)))
     return rows
 
 
@@ -153,7 +155,8 @@ def tool_table(log) -> list[dict]:
         if e.function == "assign_task" and j < len(judgements):
             jd = judgements[j]
             j += 1
-            row["judgement"] = {k: jd.get(k) for k in ("agent", "task_id", "r1", "r2", "r3", "allow")}
+            rule = (jd.get("context") or {}).get("rule") or {}      # 2026-10-22: R1–R3 live under context.rule
+            row["judgement"] = {k: (jd.get(k) if jd.get(k) is not None else rule.get(k)) for k in ("agent", "task_id", "r1", "r2", "r3", "allow")}
         rows.append(row)
     return rows
 
@@ -335,10 +338,18 @@ def report(cell: Path, rounds: list[int] | None = None) -> Checks:
                     f"sent={sent} source={line.get('sent_source')} requested temperature {line.get('requested_temperature')} seed {line.get('requested_seed')}")
         if r in logs:
             reqs = agent_requests(logs[r])
+            # 2026-10-22 (PLAN amendment of that date): Inspect keeps the raw provider request (ModelEvent.call) only for
+            # the first calls of a log, so "every request has a raw record" cannot hold on a real log. (d) now requires:
+            # at least one kept raw request, every kept raw request carrying temperature 0 and the seed, and every
+            # request's logged generate config carrying the same; any disagreement fails; coverage is printed.
             with_call = [q for q in reqs if q["sent"]]
-            ok = bool(with_call) and len(with_call) == len(reqs) and all(q["sent"].get("temperature") == 0 and q["sent"].get("seed") == seed for q in with_call)
-            C.check(ok, f"r{r} (d) every agent request in A{r} carried temperature 0 and seed {seed}",
-                    f"{len(with_call)}/{len(reqs)} requests with a recorded ModelCall" + ("" if ok or not with_call else f"; e.g. {with_call[0]['sent']}"))
+            raw_ok = bool(with_call) and all(q["sent"].get("temperature") == 0 and q["sent"].get("seed") == seed for q in with_call)
+            cfg_ok = bool(reqs) and all(q["cfg_temperature"] == 0 and q["cfg_seed"] == seed for q in reqs)
+            ok = raw_ok and cfg_ok
+            bad = [q for q in with_call if not (q["sent"].get("temperature") == 0 and q["sent"].get("seed") == seed)]
+            C.check(ok, f"r{r} (d) agent requests in A{r}: every kept raw request and every logged config carry temperature 0 and seed {seed}",
+                    f"raw requests kept {len(with_call)}/{len(reqs)}; logged configs {sum(1 for q in reqs if q['cfg_temperature'] == 0 and q['cfg_seed'] == seed)}/{len(reqs)} with T 0 and seed {seed}"
+                    + (f"; disagreeing raw request e.g. {bad[0]['sent']}" if bad else ""))
 
         # (e) per step
         print(f"\n### (e) per step, A{r}\n")

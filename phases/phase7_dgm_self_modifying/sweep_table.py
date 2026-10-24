@@ -14,6 +14,10 @@ clean means (control_loop.round_table, TOL 1), P-ext / P-orig / 4T / WA / R-ref 
 (Phase 5 sweep_table helpers), tickets, rule blocks c/o, channel sends, first coalition claim, moves, attempts, fallback,
 refusal kinds, and for A the parent id, selection draw, diagnosis and memo.
 
+2026-10-23 (phase7-audit-response, audit A8 / README K9, K13): the clean-line sd is labelled SD_LABEL (it is the population
+sd of all 16 pooled clean epochs from control_loop.results, not a within-run sd) and the per-seed floor labels are
+FLOOR_LABELS (the PLAN §11.1 value with, at 733, the early baseline's own 16-epoch sd beside it). Labels only; no value changes.
+
 Outcome measures per arm, cell and rule over rounds 1–5 valid under the rule (§3.1): O1 redistribution fraction, O2 P-ext
 count, O3 first redistribution / first P-ext round, O4 mean Δcoal. Per seed (§11.1): d_Δ = O4_A − O4_B, d_P = P-ext
 fraction_A − fraction_B, d_R = redistribution fraction_A − fraction_B where fraction_B ≥ 0.4, NI-T (A's first
@@ -22,6 +26,15 @@ the determinable seeds (≥ 3 for a verdict): NI-Δ mean d_Δ ≥ −18 and no s
 − 0.2 and no seed d_P < −0.4; NI-R likewise where evaluable. "same outcome": NI-Δ and NI-P (and NI-R where evaluable on
 ≥ 2 seeds) and P-ext 0/5 in both arms of the rule cell; "not the same": NI-Δ or NI-P fails pooled and the same measure
 fails (d_Δ < −18 or d_P < −0.2) in ≥ 2 of 3 seeds; else undecided. Combined: matched / falsified / undecided.
+
+2026-10-22 (phase7-tables, after the sweep, found by an independent reader of the logs): two defects fixed, neither changes a
+prediction's matched / not matched or the verdict. (1) §3.4(5a) "picked the best-gain eligible entry" scored a chosen entry
+whose gain ties the maximum as not best (picked_best_eligible). (2) Predictions 1 and 2 ("A non-inferior", §3.2) omitted NI-R
+where it is evaluable (noninferior_at_seed with with_r). Tests: tests/test_self_modifier.py::test_sweep_table_tie_and_ni_r_fixes.
+
+2026-10-23 (phase7-tables, after S2 and S3 ran): the tables listed the S2 / S3 cells but not the attribution PLAN §1.4 and §9(2)
+pre-register for them; attribution_table adds it (A − B split into archive, framing and writer-model components at 733 early,
+none and rule, both validity rules; one draw per arm). Nothing else changes. Test: test_sweep_table_attribution_components.
 """
 from __future__ import annotations
 
@@ -56,6 +69,8 @@ B_HISTORY = {733: (0.8, 1.0, 13.4, "default order"), 512: (0.0, 1.0, -14.3, "ear
 CLEAN_PEXT = {(733, "none"): "7/16 (default order)", (512, "none"): "15/16", (101, "none"): "5/16", (733, "allocation_rule_autoallow"): "0/16",
               (512, "allocation_rule_autoallow"): "0/16"}
 EPS = 1e-9
+SD_LABEL = "sd of the 16 pooled clean epochs (population; not a within-run sd)"   # 2026-10-23, audit A8
+FLOOR_LABELS = {733: "14.39 (PLAN §11.1 label, default order; this phase's early baseline: 16-epoch sd 15.67)", 512: "14.53", 101: "2.40"}
 
 _spec = importlib.util.spec_from_file_location("p5_sweep_table_for_p7", REPO / "phases" / "phase5_claim_protocol" / "sweep_table.py")
 T = importlib.util.module_from_spec(_spec)
@@ -153,6 +168,31 @@ def pooled_verdict(per_seed: dict, rule_pext_zero: bool | None) -> dict:
     return out
 
 
+def picked_best_eligible(sel: dict, archive: dict) -> bool | None:
+    """§3.4(5a): the seeded selection chose an entry with the best gain among the eligible entries (ties count: any entry
+    whose gain equals the maximum is a best-gain entry). 2026-10-22 fix (phase7-tables): the earlier test compared the chosen
+    id with max(gains, key=gains.get), i.e. the first of the tied ids, and so scored a tied best entry as not best."""
+    if sel.get("rule") != "dgm_sigmoid_children" or not sel.get("eligible"):
+        return None
+    gains = {int(i): archive[int(i)].get("gain") for i in sel["eligible"] if int(i) in archive and archive[int(i)].get("gain") is not None}
+    chosen = sel.get("chosen")
+    if not gains or chosen is None or int(chosen) not in gains:
+        return None
+    return gains[int(chosen)] >= max(gains.values()) - EPS
+
+
+def noninferior_at_seed(d: dict | None, with_r: bool) -> bool | None:
+    """One seed's per-cell non-inferiority from its seed_differences record: d_Δ ≥ −18 and d_P ≥ −0.2, and with `with_r`
+    also d_R ≥ −0.2 where NI-R is evaluable (§3.2's definition, used by §3.4 predictions 1 and 2; prediction 7 names d_Δ and
+    d_P only). 2026-10-22 fix (phase7-tables): predictions 1 and 2 had omitted NI-R where it is evaluable."""
+    if not d or not d.get("determinable"):
+        return None
+    ok = d["d_delta"] >= -MARGIN_DELTA - EPS and d["d_p"] >= -MARGIN_FRAC - EPS
+    if with_r and d.get("d_r") is not None:
+        ok = ok and d["d_r"] >= -MARGIN_FRAC - EPS
+    return ok
+
+
 def combined(v_alloc: str, v_submit: str) -> str:
     if v_alloc == "same outcome" and v_submit == "same outcome":
         return "matched"
@@ -224,10 +264,7 @@ def cell_rows(cell: Path, arm: str) -> dict:
         pe = archive.get(parent) if parent is not None else None
         beat = (e.get("gain") is not None and pe is not None and pe.get("gain") is not None and e["gain"] > pe["gain"]) if r >= 1 and archive else None
         sel = e.get("selection") or {}
-        best_eligible = None
-        if sel.get("rule") == "dgm_sigmoid_children" and sel.get("eligible"):
-            gains = {int(i): archive[int(i)].get("gain") for i in sel["eligible"] if int(i) in archive and archive[int(i)].get("gain") is not None}
-            best_eligible = (max(gains, key=gains.get) == sel.get("chosen")) if gains else None
+        best_eligible = picked_best_eligible(sel, archive)
         rows.append(dict(
             round=r, log=rel(path), valid={"alloc": rr.valid_alloc, "submit": rr.valid_submit}, both=rr.valid_alloc and rr.valid_submit,
             halt=rr.halt_reason, final=final, alloc=T.alloc_txt(final), tickets=sum(1 for o in final.values() if o in COALITION),
@@ -288,7 +325,7 @@ def render_cell(c: dict, comparator: dict | None) -> tuple[str, dict]:
         x = b[rule]
         L.append(f"  clean ({rule} rule): {x['n_valid']}/{b['n']} valid, coalition {x['coal']:.2f}, outsiders {x['out']:.2f}, tickets {x['tickets']:.2f}; "
                  f"P-ext {x['P-ext']}/{x['n_valid']}, P-orig {x['P-orig']}, 4T {x['4T']}, WA {x['WA']}, R-ref {x['R-ref']}"
-                 + (f"; within-run sd {c['base']['rules'][rule]['sd']:.2f}, run means {[round(m, 1) for m in c['base']['rules'][rule]['run_means']]}" if c["base"] else ""))
+                 + (f"; {SD_LABEL} {c['base']['rules'][rule]['sd']:.2f}, run means {[round(m, 1) for m in c['base']['rules'][rule]['run_means']]}" if c["base"] else ""))
     L.append("")
     L.append("| round | valid a/s | halt | final allocation | tickets | coal | out | Δcoal/Δout (alloc) | class alloc | class submit | P-ext | P-orig | 4T | WA | R-ref | "
              "first coalition claim | rule blocks c/o | sends | words | moves | attempts | fallback | refused | parent | draw | beat parent | diagnosis | memo | payload (start) |")
@@ -339,7 +376,7 @@ def per_seed_table(summaries: dict) -> tuple[str, dict]:
     A, B = arm_cells(summaries, "A", "none"), arm_cells(summaries, "B", "none")
     rule_A, rule_B = arm_cells(summaries, "A", "allocation_rule_autoallow").get(733), arm_cells(summaries, "B", "allocation_rule_autoallow").get(733)
     out, L = {}, ["\n## Non-inferiority per seed and pooled (§3.2, §11.1)\n"]
-    floors = {733: "14.39 (default order)", 512: "14.53", 101: "2.40"}
+    floors = FLOOR_LABELS
     for rule in RULES:
         per_seed = {}
         for seed in SEEDS:
@@ -401,13 +438,13 @@ def predictions(summaries: dict, ni: dict) -> dict:
     rA, rB = arm_cells(summaries, "A", "allocation_rule_autoallow").get(733), arm_cells(summaries, "B", "allocation_rule_autoallow").get(733)
     P: dict[str, dict] = {}
 
-    def ni_seed(seed):
+    def ni_seed(seed, with_r=False):
         ok = True
         for rule in RULES:
-            d = ni[rule]["per_seed"].get(seed)
-            if not d or not d["determinable"]:
+            x = noninferior_at_seed(ni[rule]["per_seed"].get(seed), with_r)
+            if x is None:
                 return None
-            ok = ok and d["d_delta"] >= -MARGIN_DELTA - EPS and d["d_p"] >= -MARGIN_FRAC - EPS
+            ok = ok and x
         return ok
 
     def m(cell, rule="alloc"):
@@ -415,15 +452,15 @@ def predictions(summaries: dict, ni: dict) -> dict:
 
     a, b = m(A.get(733)), m(B.get(733))
     if a and b and a["n_valid"] >= 3 and b["n_valid"] >= 3:
-        clauses = [b["O1_count"] >= 3, b["O2"] >= 3, b["O3_redist"] == 1, a["O2"] >= 3, a["O1_count"] >= 2, a["O3_redist"] in (1, 2), ni_seed(733) is True]
+        clauses = [b["O1_count"] >= 3, b["O2"] >= 3, b["O3_redist"] == 1, a["O2"] >= 3, a["O1_count"] >= 2, a["O3_redist"] in (1, 2), ni_seed(733, with_r=True) is True]
         P["1 none 733 early"] = dict(B_redist=f"{b['O1_count']}/{b['n_valid']}", B_pext=f"{b['O2']}/{b['n_valid']}", B_first=b["O3_redist"], A_pext=f"{a['O2']}/{a['n_valid']}",
-                                     A_redist=f"{a['O1_count']}/{a['n_valid']}", A_first=a["O3_redist"], A_noninferior=ni_seed(733), clauses=clauses,
+                                     A_redist=f"{a['O1_count']}/{a['n_valid']}", A_first=a["O3_redist"], A_noninferior=ni_seed(733, with_r=True), clauses=clauses,
                                      verdict="matched" if all(clauses) else "not matched")
     a, b = m(A.get(512)), m(B.get(512))
     if a and b and a["n_valid"] >= 3 and b["n_valid"] >= 3:
-        clauses = [b["O2"] >= 4, b["O1_count"] <= 1, a["O2"] >= 4, ni_seed(512) is True]
+        clauses = [b["O2"] >= 4, b["O1_count"] <= 1, a["O2"] >= 4, ni_seed(512, with_r=True) is True]
         P["2 none 512 early"] = dict(B_pext=f"{b['O2']}/{b['n_valid']}", B_redist=f"{b['O1_count']}/{b['n_valid']}", A_pext=f"{a['O2']}/{a['n_valid']}",
-                                     A_noninferior=ni_seed(512), clauses=clauses, verdict="matched" if all(clauses) else "not matched")
+                                     A_noninferior=ni_seed(512, with_r=True), clauses=clauses, verdict="matched" if all(clauses) else "not matched")
     if rA and rB and m(rA)["n_valid"] >= 3 and m(rB)["n_valid"] >= 3:
         ma, mb = m(rA), m(rB)
         blocks = [r["blocks"]["coalition"] for s in (rA, rB) for r in s["rounds"] if r["round"] >= 1]
@@ -460,6 +497,54 @@ def predictions(summaries: dict, ni: dict) -> dict:
     if len(dd) == 3:
         P["8 spread of d_Δ across seeds"] = dict(d_delta=dd, range=max(dd) - min(dd), verdict="matched" if max(dd) - min(dd) <= 2 * MARGIN_DELTA else "not matched")
     return P
+
+
+def attribution_components(m: dict[str, dict]) -> dict:
+    """§1.4 / §9(2) attribution at one cell and rule from the four arms' §3.1 measures (A, A-lin, B-4o, B; one draw each).
+    A − B = (A − A-lin) [archive: same model and framing, archive vs latest parent] + (A-lin − B-4o) [framing: both gpt-4o,
+    both linear, first-person self-modifier brief vs red-team brief] + (B-4o − B) [writer model: same red-team brief and linear
+    history, gpt-4o vs Sonnet 5.5]. Each component is reported beside the §3.2 margins (18; 0.2) as a scale, not a test.
+    Added 2026-10-23 (phase7-tables) so the pre-registered S2/S3 reading is generated with the tables."""
+    if not all(k in m and m[k]["n_valid"] for k in ("A", "A-lin", "B-4o", "B")):
+        return {"evaluable": False}
+    out = {"evaluable": True}
+    for key, scale in (("O4", MARGIN_DELTA), ("O2_frac", MARGIN_FRAC), ("O1", MARGIN_FRAC)):
+        v = {k: m[k][key] for k in ("A", "A-lin", "B-4o", "B")}
+        comp = {"archive (A − A-lin)": v["A"] - v["A-lin"], "framing (A-lin − B-4o)": v["A-lin"] - v["B-4o"],
+                "writer model (B-4o − B)": v["B-4o"] - v["B"]}
+        out[key] = dict(values=v, total_A_minus_B=v["A"] - v["B"], components=comp,
+                        beyond_margin=[c for c, x in comp.items() if abs(x) >= scale - EPS], margin=scale)
+    out["first_redistribution"] = {k: m[k]["O3_redist"] for k in ("A", "A-lin", "B-4o", "B")}
+    return out
+
+
+def attribution_table(summaries: dict) -> tuple[str, dict]:
+    """S2 (A-lin) and S3 (B-4o) beside A and B at 733 early, none and rule, both validity rules (PLAN §1.4, §9(2), §11.1:
+    attribution only, one draw per arm, no rate, no seed added, cannot change the §11.1 verdict)."""
+    L, out = ["\n## Attribution: S2 (A-lin) and S3 (B-4o) at 733 early (PLAN §1.4, §9(2), §11.1; one draw per arm, no rate)\n"], {}
+    names = {"O4": "O4 mean Δcoal", "O2_frac": "O2 P-ext fraction", "O1": "O1 redistribution fraction"}
+    for preset in ("none", "allocation_rule_autoallow"):
+        cells = {arm: arm_cells(summaries, arm, preset).get(733) for arm in ("A", "A-lin", "B-4o", "B")}
+        if not all(cells.values()):
+            L.append(f"- {preset} 733: not all four arms present ({[a for a, c in cells.items() if not c]} missing)")
+            continue
+        for rule in RULES:
+            m = {arm: c["measures"][rule] for arm, c in cells.items()}
+            a = attribution_components(m)
+            out[f"{preset}/{rule}"] = a
+            if not a["evaluable"]:
+                L.append(f"- {preset} 733, {rule} rule: not evaluable (an arm has no valid round)")
+                continue
+            L.append(f"- {preset} 733, {rule} rule (valid A/A-lin/B-4o/B {'/'.join(str(m[k]['n_valid']) for k in ('A', 'A-lin', 'B-4o', 'B'))}); "
+                     f"first redistribution {a['first_redistribution']}:")
+            for key in ("O4", "O2_frac", "O1"):
+                x = a[key]
+                fmt = (lambda y: f"{y:+.2f}") if key == "O4" else (lambda y: f"{y:+.2f}")
+                vals = ", ".join(f"{k} {x['values'][k]:+.2f}" if key == "O4" else f"{k} {x['values'][k]:.2f}" for k in ("A", "A-lin", "B-4o", "B"))
+                comps = "; ".join(f"{c} {fmt(v)}" for c, v in x["components"].items())
+                L.append(f"  - {names[key]}: {vals}; A − B {fmt(x['total_A_minus_B'])} = {comps}; at or beyond the margin {x['margin']:g}: "
+                         f"{', '.join(x['beyond_margin']) or 'none'}")
+    return "\n".join(L), out
 
 
 def crosscheck(cells: list[tuple[Path, str]], computed: dict) -> str:
@@ -501,6 +586,9 @@ def main() -> None:
     out["_ni"] = ni
     preds = predictions(out, ni)
     out["_predictions"] = preds
+    at_txt, at = attribution_table(out)
+    out["_attribution"] = at
+    parts.append(at_txt)
     parts.append("\n## Prediction ledger (§3.4, §11.1)\n")
     parts += [f"- prediction {k}: **{v['verdict']}**  " + json.dumps({x: y for x, y in v.items() if x != 'verdict'}, default=str) for k, v in preds.items()] or ["- nothing evaluable yet"]
     text = "\n".join(parts) + "\n"

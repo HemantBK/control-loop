@@ -402,7 +402,9 @@ the `sent` settings, token usage from the Inspect `ModelEvent` where recorded, c
 
 Prices from `control_loop/spend.py` (list, every entry there marked unverified): `openai/gpt-4o` 2.50
 input / 1.25 cache read / 2.50 cache write / 10.00 output per 1M tokens; `openai/gpt-4o-mini` 0.15 /
-0.075 / 0.15 / 0.60; `anthropic/claude-sonnet-5-5` 2.00 / 0.20 / 2.50 / 10.00. No judge model is called
+0.075 / 0.15 / 0.60; `anthropic/claude-sonnet-5-5` 2.00 / 0.20 / 2.50 / 10.00 [note 2026-10-22: the Sonnet 5.5 cache-read price in
+`control_loop/spend.py` is 0.10 per 1M since 2026-10-22 (owner's change to Anthropic's page, 0.05x base); the
+figures in this section were computed with 0.20 and are not recomputed]. No judge model is called
 in either preset, so gpt-4o-mini cost is nil.
 
 Per-episode cost from the logs: Phase 3's `allocation_rule_autoallow` cells cost $1.37 per 22 episodes
@@ -777,3 +779,50 @@ definitions and stop are what would detect it here (a benign paragraph is `no_at
 prebuilt image, cannot pass the main task, Phase 6 closes as not reproducible and **Phase 7 starts without the Phase 6 gate**
 (this replaces the start gate of §8.12 / §10 in that case; recorded in phases/phase6_researcharena/PLAN.md Amendment (4)).
 
+2026-10-22  Clarification before the first paid call (found by the pre-run build checks, `audits/build_check.md` F1): §6(a)
+says the gain is "coalition reward from the scorer minus the two-run clean mean in `baseline.json`". The loop's
+`baseline.json` holds the mean of the clean log passed with `--clean-log-dir`, i.e. run1 only (for the rule 733 early cell,
+Phase 3's run1: 58.83; the two-run mean is 64.57). The gain the self-modifier sees, and that report.py item (a) re-derives,
+is therefore against run1's mean; the tables (§4, `sweep_table.py`) use the two-run means as written. Read item (a) against
+run1's mean; a 5.73-point difference between the two is this definition, not a mismatch. No design change.
+
+2026-10-22  Owner: "Phase 7: go. First run the two unrun checks, the mock rehearsal and the instrument review. Then record the
+dated line that Phase 7 starts without the Phase 6 gate, and launch the mechanism check." Both checks done
+(`audits/build_check.md`: ready for the mechanism check: yes). **Phase 7 starts without the Phase 6 gate** (§8.12 / §10's start
+condition is replaced, per the owner's time-box decision of 2026-10-22: Phase 6 closed as not reproducible on RunPod with
+current libraries). The mechanism check (§6) runs next; a passing check starts the sweep only under §10's standing
+pre-decision, with `--phase6-confirmed` carrying this line.
+
+2026-10-22  Mechanism check result and one reading of item (d), recorded before the sweep (CHECK.md and report.md under
+`results/phase7_dgm_self_modifying/check/733_allocation_rule_autoallow/`): check **PASS** — by hand 156/156, no mismatch in
+(a)–(e), all five §6 "Expected" clauses matched, $0.1907. report.py's (d) row "every agent request carried temperature 0 and
+seed 733" failed in A1 and A2 (5/21 and 5/18 raw requests) because Inspect keeps the raw provider request only for the first
+calls of a log; all 15 kept raw requests and all 64 logged generate configs carry gpt-4o, temperature 0, seed 733, and none
+disagrees. Read as a missing record, not a mismatch (as Phase 5 did for the same Inspect limit), so the §6 stop is not met.
+From this date (d) checks every kept raw request plus every request's logged config, fails on any disagreement, and prints the
+raw-request coverage; the definition of a mismatch is unchanged. Under the owner's standing pre-decision (§10) the sweep
+starts.
+
+2026-10-23  Owner: predictions 1, 2, 5 and 7 (§3.4, §11.1) recorded as **not matched**; 3, 4, 6 and 8 matched; the verdict is
+**undecided** under §3.5 as amended by §11.1, under both validity rules (`results/phase7_dgm_self_modifying/sweep_tables.md`;
+FINDINGS 2026-10-22). Deciding numbers: (1) B redistribution 2/5 and P-ext 2/5 against ≥ 3, first redistribution r3 in both arms
+against r1 (B) and r1–r2 (A); (2) B redistribution 2/5 against ≤ 1, so NI-R is evaluable and A fails it (0/5 against 2/5); (5) the
+seeded draw picked a best-gain parent in 2/4, 3/4, 4/4, 2/4 draws (rule 733, none 733, 512, 101) against ≥ 3 of 4, and the child
+beat its parent in 1/5 rounds at 512 against ≥ 2; (7) A is not non-inferior at 101 (d_P −1.00: A P-ext 0/5, B 3/3). Pooled: NI-Δ
+holds (mean d_Δ +11.07; +2.56 / +13.38 / +17.28), NI-P fails on seed 101 alone (pooled A 8/15 against B 9/13; d_P +0.20 / +0.20 /
+−1.00), so neither "same outcome" nor "not the same"; not falsified, the §9(1) stop not met. S2 (A-lin) and S3 (B-4o), each at
+none and rule 733 early, run now as pre-registered (§1.4, §5, §7.1) under the ambiguity triggers (b) and (e) (§8.9's list as
+replaced in §11.1), S2 first, one stream; they attribute only, add no seed and cannot change the verdict. S1 is not run. Caps and
+stops unchanged ($48 cumulative stop, $15 cell stop-and-ask); Phase 7 spend before them $4.39.
+
+2026-10-23  Correction to the line above (that line is not edited): S2 and S3 did **not** run as one stream with S2 first. The
+owner launched both from their terminal, as two concurrent `sweep.py` processes: S2 (`--s2`) ran 05:43:01–05:52:47 UTC and S3
+(`--s3`) ran 05:43:12–05:52:27 UTC, both with rc 0 (job logs `p7s2`, `p7s3`, copied as
+`results/phase7_dgm_self_modifying/sweep_driver_s2.log` and `sweep_driver_s3.log`). Cell spend, the same as the drivers'
+figures: A-lin none $0.3489, A-lin rule $0.4032 (episodes plus the writer's logged usage); B-4o none $0.5370, B-4o rule
+$0.6133 (episodes $0.3120 and $0.3883 plus $0.045 per writer attempt, 5 attempts per cell, because the proposer path logs no usage
+for its gpt-4o writer). Each process's spend guard started from $4.39 and did not count the other process's cells. Phase 7 is
+$6.29 cumulative, so the $48 stop was never at risk. The two processes shared `sweep_state.json`, and S2's last write removed S3's
+two entries. The file was repaired offline on 2026-10-23 from the stream `run.jsonl` (backup `sweep_state.json.bak-2026-10-23`),
+and `sweep.py --dry-run --s2 --s3` now lists all 13 cells as complete. Nothing in §1–§11, the cells or the verdict rule changes. S2 and
+S3 remain one draw per arm at 733 early; they add no seed and leave the §11.1 verdict *undecided*.

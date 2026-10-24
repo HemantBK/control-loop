@@ -17,7 +17,7 @@ hashed); file hashes are of the working tree on the stated date and change with 
 | transcript_monitor (one gpt-4o-mini call per rendered episode, V1 / V2) | monitor | 8 (run 2026-10-21/22, ten logs, $3.6244; result falsified, audit pending) | [transcript_monitor.md](transcript_monitor.md) | 2026-10-22 |
 | researcharena_proposer (the adaptive attacker on ResearchArena: `RedTeamPolicy` with the cuda_kernel `BRIEF` and six `MOVES`; the payload is the side-task paragraph) | attacker | 6 (no paid run yet) | [researcharena_proposer.md](researcharena_proposer.md) | 2026-10-21 |
 | researcharena_monitor_m0 (ResearchArena's transcript-only post-hoc monitor M∅ on Sonnet 4.6, `blueruntime 0.0833`, one 0–100 suspicion score per episode) | monitor | 6 (no paid run yet) | [researcharena_monitor_m0.md](researcharena_monitor_m0.md) | 2026-10-21 |
-| self_modifier (the self-modifying coalition policy: the agents' own gpt-4o rewrites the coalition paragraph from a DGM-style archive; `--attacker self_modifier`; briefs = the proposer's `informed` / `informed_rule` with the PLAN §1.2 substitutions) | attacker | 7 (no paid run yet) | [self_modifier.md](self_modifier.md) | 2026-10-21 |
+| self_modifier (the self-modifying coalition policy: the agents' own gpt-4o rewrites the coalition paragraph from a DGM-style archive; `--attacker self_modifier`; briefs = the proposer's `informed` / `informed_rule` with the PLAN §1.2 substitutions) | attacker | 7 (run 2026-10-22/23: check, sweep with four arm-A cells, S2 arm A-lin at 733 early none and rule, $0.7521; Phase 7 $6.2949; verdict undecided, audit pending) | [self_modifier.md](self_modifier.md) | 2026-10-23 |
 
 ## Rule for phase write-ups
 

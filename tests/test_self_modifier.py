@@ -387,8 +387,9 @@ def test_writer_cost_from_rounds(tmp_path):
     assert cost_b == sw.PROPOSER_PER_CELL
 
 
-def test_sweep_dry_run_lists_cells_and_runs_nothing_and_gates_hold(tmp_path):
+def test_sweep_dry_run_lists_cells_and_runs_nothing_and_gates_hold(monkeypatch, tmp_path):
     env = {k: v for k, v in os.environ.items() if k not in ("OPENAI_API_KEY", "ANTHROPIC_API_KEY")}
+    state_before = _snapshot(REPO / "results" / "phase7_dgm_self_modifying" / "sweep_state.json")   # 2026-10-23: the state file exists since the sweep
     r = subprocess.run([sys.executable, str(P7 / "sweep.py"), "--dry-run"], cwd=REPO, env=env, capture_output=True, text=True, timeout=600)
     assert r.returncode == 0, r.stderr[-2000:]
     out = r.stdout
@@ -397,24 +398,147 @@ def test_sweep_dry_run_lists_cells_and_runs_nothing_and_gates_hold(tmp_path):
                                                     "B none 733 early", "A none 512 early", "B none 512 early", "A none 101 early", "B none 101 early"]
     assert "dry run: nothing was run." in out and "--attacker self_modifier --attacker-model openai/gpt-4o --agent-model openai/gpt-4o" in out
     assert "--attacker proposer --attacker-model anthropic/claude-sonnet-5-5" in out and str(REPO) not in out
-    assert not (REPO / "results" / "phase7_dgm_self_modifying" / "sweep_state.json").exists()
+    assert _snapshot(REPO / "results" / "phase7_dgm_self_modifying" / "sweep_state.json") == state_before, "a dry run writes nothing"
+    # 2026-10-23: the two gates are checked in process (sweep.main with the keys stripped, the state file redirected to tmp_path
+    # and every run/write path replaced by a tripwire); sweep.py is never started without --dry-run (README K3, SOP item 9).
+    sw = _load("sweep")
+    _strip_keys_and_trip(monkeypatch, sw, tmp_path)
+    for name in ("run", "run_cell", "save_state", "write_stop", "log_cell", "log_stream"):
+        monkeypatch.setattr(sw, name, _tripwire)
+    monkeypatch.setattr(sw, "spend_so_far", lambda *a, **k: 0.0)
+    monkeypatch.setattr(sw, "ROOT", tmp_path)
+    monkeypatch.setattr(sw, "STATE", tmp_path / "sweep_state.json")
     # gate 1: without the Phase 6 confirmation the stream refuses before touching the keys
-    r2 = subprocess.run([sys.executable, str(P7 / "sweep.py")], cwd=REPO, env=env, capture_output=True, text=True, timeout=600)
-    assert r2.returncode != 0 and "phase6-confirmed" in (r2.stdout + r2.stderr)
+    monkeypatch.setattr(sys, "argv", ["sweep.py"])
+    with pytest.raises(SystemExit) as e1:
+        sw.main()
+    assert "refuses to run" in str(e1.value.code) and "phase6-confirmed" in str(e1.value.code)
     # gate 2: with the confirmation but no keys it refuses on the keys (the value is never read)
-    r3 = subprocess.run([sys.executable, str(P7 / "sweep.py"), "--phase6-confirmed", "2026-10-21 test"], cwd=REPO, env=env, capture_output=True, text=True, timeout=600)
-    assert r3.returncode != 0 and "API keys" in (r3.stdout + r3.stderr)
-    assert not (REPO / "results" / "phase7_dgm_self_modifying").exists() or not (REPO / "results" / "phase7_dgm_self_modifying" / "sweep_state.json").exists()
+    monkeypatch.setattr(sys, "argv", ["sweep.py", "--phase6-confirmed", "2026-10-21 test"])
+    with pytest.raises(SystemExit) as e2:
+        sw.main()
+    assert "refuses to run" in str(e2.value.code) and "API keys" in str(e2.value.code)
+    assert list(tmp_path.iterdir()) == []
 
 
-def test_check_refuses_without_env_file_and_dry_run_prints_the_command():
+def _snapshot(path: Path):
+    return (path.stat().st_mtime_ns, hashlib.sha256(path.read_bytes()).hexdigest()) if path.exists() else None
+
+
+def _tripwire(*a, **k):
+    raise AssertionError("a Phase 7 driver tried to run or write past its refusal gate")
+
+
+def _strip_keys_and_trip(monkeypatch, mod, tmp_path):
+    """No API key in the environment, and no subprocess can start from the driver module (2026-10-23)."""
+    for k in ("OPENAI_API_KEY", "ANTHROPIC_API_KEY"):
+        monkeypatch.delenv(k, raising=False)
+    monkeypatch.setattr(mod.subprocess, "run", _tripwire)
+    monkeypatch.setattr(mod.subprocess, "Popen", _tripwire)
+    monkeypatch.setattr(mod.runlog, "log_step", _tripwire)
+
+
+def test_check_refuses_without_env_file_and_dry_run_prints_the_command(monkeypatch, tmp_path):
     env = {k: v for k, v in os.environ.items() if k not in ("OPENAI_API_KEY", "ANTHROPIC_API_KEY")}
-    r = subprocess.run([sys.executable, str(P7 / "check.py")], cwd=REPO, env=env, capture_output=True, text=True, timeout=600)
-    assert r.returncode != 0 and "OPENAI_API_KEY" in (r.stdout + r.stderr) and "--env-file ../.env" in (r.stdout + r.stderr)
-    assert not (REPO / "results" / "phase7_dgm_self_modifying" / "check").exists()
+    chk = REPO / "results" / "phase7_dgm_self_modifying" / "check"     # 2026-10-22: the real check now exists; a refused run must write nothing
+    before = sorted((str(p), p.stat().st_mtime_ns) for p in chk.rglob("*")) if chk.exists() else None
+    # 2026-10-23: the refusal is checked in process (check.main with the key stripped and subprocess / runlog replaced by a
+    # tripwire); check.py is never started without --dry-run (owner's rule; README K3, SOP item 9).
+    ck = _load("check")
+    _strip_keys_and_trip(monkeypatch, ck, tmp_path)
+    monkeypatch.setattr(sys, "argv", ["check.py"])
+    with pytest.raises(SystemExit) as e:
+        ck.main()
+    msg = str(e.value.code)
+    assert "refuses to run" in msg and "OPENAI_API_KEY" in msg and "--env-file ../.env" in msg
+    monkeypatch.undo()                                                  # the dry run below is a real subprocess
+    after = sorted((str(p), p.stat().st_mtime_ns) for p in chk.rglob("*")) if chk.exists() else None
+    assert after == before
     r2 = subprocess.run([sys.executable, str(P7 / "check.py"), "--dry-run"], cwd=REPO, env=env, capture_output=True, text=True, timeout=600)
     assert r2.returncode == 0 and "--rounds 2" in r2.stdout and "results/phase7_dgm_self_modifying/check/733_allocation_rule_autoallow" in r2.stdout
     assert "--clean-log-dir results/phase3_allocation_monitor/early/baselines/733_allocation_rule_autoallow/run1" in r2.stdout
+
+
+# 2026-10-23, owner's ruling on the in-process gate tests: "the tests should prove the tripwire actually fires. Accepted,
+# provided one test deliberately hits a launch path and asserts the tripwire raises." The two tests below give the drivers
+# dummy keys (useless to any provider) and temporary paths, drive check.main() and sweep.main() past every gate into the
+# subprocess that would start the paid loop, and assert that the tripwire raises there and that nothing ran and nothing
+# under results/ changed. Test-only toggle P7_TRIPWIRE_INERT=1 makes the tripwire record and return rc 1 without raising
+# (still nothing starts): both tests must then FAIL, which shows the assertion depends on the tripwire firing.
+
+class TripwireHit(BaseException):
+    """Raised by the launch tripwire; a BaseException so no `except Exception` in a driver can swallow it."""
+
+
+def _launch_tripwire(calls: list):
+    inert = os.environ.get("P7_TRIPWIRE_INERT") == "1"
+    completed = subprocess.CompletedProcess
+
+    def trip(cmd=None, *a, **k):
+        calls.append(list(cmd) if isinstance(cmd, (list, tuple)) else cmd)
+        if inert:
+            return completed(cmd, 1)      # intercepted all the same; rc 1 makes the driver stop
+        raise TripwireHit(f"launch path reached: {cmd}")
+    return trip
+
+
+def _tree(root: Path):
+    return sorted((str(p), p.stat().st_mtime_ns, p.stat().st_size) for p in root.rglob("*") if p.is_file())
+
+
+def test_tripwire_fires_on_the_check_launch_path(monkeypatch, tmp_path):
+    res = REPO / "results" / "phase7_dgm_self_modifying"
+    before = _tree(res)
+    ck = _load("check")
+    calls, logged = [], []
+    trip = _launch_tripwire(calls)
+    monkeypatch.setenv("OPENAI_API_KEY", "dummy-not-a-key")          # passes the key gate only
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "dummy-not-a-key")
+    monkeypatch.setattr(ck.subprocess, "run", trip)
+    monkeypatch.setattr(ck.subprocess, "Popen", trip)
+    monkeypatch.setattr(ck.runlog, "log_step", lambda *a, **k: logged.append(k))
+    monkeypatch.setattr(ck, "CHECK_ROOT", tmp_path / "check")
+    monkeypatch.setattr(ck, "CELL", tmp_path / "check" / "cell")    # the real check cell exists and would refuse
+    monkeypatch.setattr(ck, "OUT_FILE", tmp_path / "check.out")
+    monkeypatch.setattr(sys, "argv", ["check.py", "--skip-tests"])  # first subprocess = the paid loop, not pytest
+    with pytest.raises(TripwireHit):
+        ck.main()
+    assert len(calls) == 1 and calls[0][1:3] == ["-m", "control_loop.loop"] and "self_modifier" in calls[0]
+    assert [k["step"] for k in logged] == ["clean_run1", "clean_run2", "loop"]
+    assert [p.name for p in tmp_path.iterdir()] == ["check.out"] and (tmp_path / "check.out").read_text() == ""
+    assert _tree(res) == before
+
+
+def test_tripwire_fires_on_the_sweep_launch_path(monkeypatch, tmp_path):
+    import control_loop.adapters.orbit as orbit_adapter
+
+    res = REPO / "results" / "phase7_dgm_self_modifying"
+    before = _tree(res)
+    sw = _load("sweep")
+    calls, logged = [], []
+    trip = _launch_tripwire(calls)
+    monkeypatch.setenv("OPENAI_API_KEY", "dummy-not-a-key")
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "dummy-not-a-key")
+    monkeypatch.setattr(sw.subprocess, "run", trip)
+    monkeypatch.setattr(sw.subprocess, "Popen", trip)
+    monkeypatch.setattr(orbit_adapter, "run_eval", _tripwire)       # the clean-run path (not reached by the first cell)
+    for name in ("save_state", "log_cell", "log_stream"):
+        monkeypatch.setattr(sw, name, lambda *a, **k: logged.append(a[:2]))
+    monkeypatch.setattr(sw.runlog, "log_step", lambda *a, **k: logged.append(k.get("step")))
+    monkeypatch.setattr(sw, "write_stop", _tripwire)
+    monkeypatch.setattr(sw, "spend_so_far", lambda *a, **k: 0.0)
+    monkeypatch.setattr(sw, "ROOT", tmp_path)
+    monkeypatch.setattr(sw, "STATE", tmp_path / "sweep_state.json")
+    monkeypatch.setattr(sw, "CHECK_CELL", tmp_path / "check_cell")
+    monkeypatch.setattr(sw, "check_done", lambda: True)
+    monkeypatch.setattr(sw, "cell_complete", lambda c: False)       # every real cell is complete and would be skipped
+    monkeypatch.setattr(sys, "argv", ["sweep.py", "--phase6-confirmed", "2026-10-23 tripwire test"])
+    with pytest.raises(TripwireHit):
+        sw.main()
+    assert len(calls) == 1 and calls[0][1:3] == ["-m", "control_loop.loop"] and "--resume" in calls[0]
+    out = tmp_path / "early_A_733_allocation_rule_autoallow.out"
+    assert [p.name for p in tmp_path.iterdir()] == [out.name] and out.read_text() == ""
+    assert _tree(res) == before
 
 
 def test_sweep_table_measures_and_ni_rules():
@@ -448,6 +572,46 @@ def test_sweep_table_measures_and_ni_rules():
     assert st.combined("same outcome", "same outcome") == "matched" and st.combined("not the same", "not the same") == "falsified"
     assert st.combined("same outcome", "undecided") == "undecided"
 
+
+def test_sweep_table_tie_and_ni_r_fixes():
+    """2026-10-22 (phase7-tables): a tied best-gain parent counts as best (§3.4(5a)); §3.2 non-inferiority includes NI-R where evaluable."""
+    st = _load("sweep_table")
+    archive = {0: dict(gain=-40.0), 1: dict(gain=1.2), 2: dict(gain=1.2), 3: dict(gain=-3.0)}
+    sel = lambda chosen: dict(rule="dgm_sigmoid_children", eligible=[0, 1, 2, 3], chosen=chosen)
+    assert st.picked_best_eligible(sel(1), archive) is True
+    assert st.picked_best_eligible(sel(2), archive) is True      # tied with entry 1: still a best-gain entry
+    assert st.picked_best_eligible(sel(3), archive) is False
+    assert st.picked_best_eligible(dict(rule="latest"), archive) is None
+    d = dict(determinable=True, d_delta=13.4, d_p=0.2, d_r=-0.4)   # the shape of the 512 none seed
+    assert st.noninferior_at_seed(d, with_r=False) is True
+    assert st.noninferior_at_seed(d, with_r=True) is False        # NI-R evaluable (B ≥ 0.4) and A 0.4 below B
+    assert st.noninferior_at_seed(dict(d, d_r=None), with_r=True) is True   # NI-R not evaluable: decided on NI-Δ and NI-P
+    assert st.noninferior_at_seed(dict(d, d_r=-0.2), with_r=True) is True   # exactly at the margin holds
+    assert st.noninferior_at_seed(dict(determinable=False), with_r=True) is None
+
+
+def test_sweep_table_attribution_components():
+    """2026-10-23 (phase7-tables): A − B splits exactly into archive + framing + writer-model components (§1.4, §9(2))."""
+    st = _load("sweep_table")
+    mk = lambda o4, p, r: dict(n_valid=5, O4=o4, O2_frac=p, O1=r, O3_redist=3)
+    m = {"A": mk(3.0, 0.6, 0.6), "A-lin": mk(14.5, 0.8, 0.8), "B-4o": mk(14.8, 0.8, 0.8), "B": mk(0.8, 0.4, 0.4)}
+    a = st.attribution_components(m)
+    assert a["evaluable"]
+    c = a["O4"]["components"]
+    assert c["archive (A − A-lin)"] == pytest.approx(-11.5) and c["framing (A-lin − B-4o)"] == pytest.approx(-0.3)
+    assert c["writer model (B-4o − B)"] == pytest.approx(14.0) and sum(c.values()) == pytest.approx(a["O4"]["total_A_minus_B"])
+    assert a["O4"]["beyond_margin"] == [] and a["O2_frac"]["beyond_margin"] == ["archive (A − A-lin)", "writer model (B-4o − B)"]
+    assert not st.attribution_components(dict(m, B=dict(m["B"], n_valid=0)))["evaluable"]
+
+
+
+def test_sweep_table_sd_and_floor_labels():
+    """2026-10-23 (phase7-audit-response, audit A8): the clean-line sd is not called a within-run sd; the 733 floor names both values."""
+    st = _load("sweep_table")
+    src = (P7 / "sweep_table.py").read_text()
+    assert "not a within-run sd" in st.SD_LABEL and "; within-run sd {" not in src
+    assert "14.39" in st.FLOOR_LABELS[733] and "15.67" in st.FLOOR_LABELS[733]
+    assert st.FLOOR_LABELS[512] == "14.53" and st.FLOOR_LABELS[101] == "2.40"
 
 def test_report_helpers_on_synthetic_rows():
     rp = _load("report")

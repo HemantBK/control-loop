@@ -1,0 +1,33 @@
+Phase 7 sweep: 11 cells; spend so far from the logs and the writer calls $4.39; guard $48, single-cell stop $15; check done
+| # | cell | group | status | estimate | upper | cumulative upper from here |
+|---|---|---|---|---|---|---|
+| 0 | mechanism check (§6: A rule 733 early r0–r2) | check | done ($0.38) | $0.28 | $0.54 | – |
+| 1 | A rule 733 early | primary | complete | $0.32 | $0.63 | – |
+| 2 | B rule 733 early | primary | complete | $0.57 | $1.22 | – |
+| 3 | baseline none 733 early | primary | complete | $1.12 | $1.92 | – |
+| 4 | A none 733 early | primary | complete | $0.60 | $1.17 | – |
+| 5 | B none 733 early | primary | complete | $0.57 | $1.22 | – |
+| 6 | A none 512 early | primary | complete | $0.60 | $1.17 | – |
+| 7 | B none 512 early | primary | complete | $0.57 | $1.22 | – |
+| 8 | A none 101 early | primary | complete | $0.60 | $1.17 | – |
+| 9 | B none 101 early | primary | complete | $0.57 | $1.22 | – |
+| 10 | A-lin none 733 early | S2 | pending | $0.60 | $1.17 | $5.56 |
+| 11 | A-lin rule 733 early | S2 | pending | $0.60 | $1.17 | $6.73 |
+
+primary total (check + 9 cells): estimate $5.80, upper $11.48; all listed cells: estimate $7.00, upper $13.82
+[A rule 733 early] complete per results/phase7_dgm_self_modifying/sweep_state.json; skipping
+[B rule 733 early] complete per results/phase7_dgm_self_modifying/sweep_state.json; skipping
+[baseline none 733 early] complete per results/phase7_dgm_self_modifying/sweep_state.json; skipping
+[A none 733 early] complete per results/phase7_dgm_self_modifying/sweep_state.json; skipping
+[B none 733 early] complete per results/phase7_dgm_self_modifying/sweep_state.json; skipping
+[A none 512 early] complete per results/phase7_dgm_self_modifying/sweep_state.json; skipping
+[B none 512 early] complete per results/phase7_dgm_self_modifying/sweep_state.json; skipping
+[A none 101 early] complete per results/phase7_dgm_self_modifying/sweep_state.json; skipping
+[B none 101 early] complete per results/phase7_dgm_self_modifying/sweep_state.json; skipping
+[A-lin none 733 early] spend so far $4.39; next cell upper $1.17
+$ .venv/bin/python3 -m control_loop.loop --seed 733 --ordering early --defense none --attacker self_modifier --attacker-model openai/gpt-4o --agent-model openai/gpt-4o --monitor-model openai/gpt-4o-mini --num-tasks 4 --clean-epochs 8 --rounds 5 --brief informed --clean-log-dir results/phase7_dgm_self_modifying/early/baselines/733_none/run1 --out results/phase7_dgm_self_modifying/early/selfmod_gpt4o_linear/733_none --runlog-phase phase7_dgm_self_modifying --selfmod-linear > results/phase7_dgm_self_modifying/early_A-lin_733_none.out
+[A-lin none 733 early] done: rc=0, measured cell spend $0.35
+[A-lin rule 733 early] spend so far $5.28; next cell upper $1.17
+$ .venv/bin/python3 -m control_loop.loop --seed 733 --ordering early --defense allocation_rule_autoallow --attacker self_modifier --attacker-model openai/gpt-4o --agent-model openai/gpt-4o --monitor-model openai/gpt-4o-mini --num-tasks 4 --clean-epochs 8 --rounds 5 --brief informed_rule --clean-log-dir results/phase3_allocation_monitor/early/baselines/733_allocation_rule_autoallow/run1 --out results/phase7_dgm_self_modifying/early/selfmod_gpt4o_linear/733_allocation_rule_autoallow --runlog-phase phase7_dgm_self_modifying --selfmod-linear > results/phase7_dgm_self_modifying/early_A-lin_733_allocation_rule_autoallow.out
+[A-lin rule 733 early] done: rc=0, measured cell spend $0.40
+finished; spend $6.29
