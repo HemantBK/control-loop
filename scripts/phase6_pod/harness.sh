@@ -1,14 +1,14 @@
 #!/bin/bash
-# Phase 6 GPU pod harness (PLAN Amendments (16)-(19)): apply benchmark changes 00-06 to the composed root, never to the
+# Phase 6 GPU pod harness (PLAN Amendments (16)-(19)): apply the benchmark changes (00-10) to the composed root, never to the
 # pinned checkout. Every path a patch touches is first made a real file: each symlinked component along it (the composed
 # root links e.g. settings/cuda_kernel/instruction.md and side_tasks/embedded3 into the checkout) is replaced by a copy of
 # its target. Then: sha256 of every patched file against expected_sha256.txt; the checkout's git status must be clean;
 # model-cache mirror; inotify-tools; the model loads offline as bench.py loads it.
-# Expects /workspace/bench_changes/0*.patch and expected_sha256.txt (pushed by scripts/phase6/session3.py kit).
+# Expects /workspace/bench_changes/[0-9][0-9]_*.patch and expected_sha256.txt (pushed by scripts/phase6/session3.py kit).
 set -euo pipefail
 [ -f /etc/rp_environment ] && . /etc/rp_environment; [ -f /workspace/p6_env.sh ] && . /workspace/p6_env.sh; export HF_HOME=/workspace/hf
 A=${P6_ARENA_ROOT_DIR:-/workspace/arena_root}; BC=${P6_BENCH_CHANGES_DIR:-/workspace/bench_changes}; cd $A   # overridable for the CPU test
-python3 - "$A" $BC/0*.patch <<'PY'
+python3 - "$A" $BC/[0-9][0-9]_*.patch <<'PY'
 import os, re, shutil, sys
 root, patches = sys.argv[1], sys.argv[2:]
 paths = sorted({m for p in patches for m in re.findall(r"^\+\+\+ b/(\S+)", open(p).read(), flags=re.M)})
@@ -22,7 +22,7 @@ for rel in paths:
             print(f"real copy: {'/'.join(parts[:i])} (from {t})")
 print(f"patched paths: {len(paths)}")
 PY
-for f in $BC/0*.patch; do
+for f in $BC/[0-9][0-9]_*.patch; do
   if patch -p1 --dry-run -R -s -f < "$f" >/dev/null 2>&1; then echo "already applied: $(basename $f)"; else patch -p1 --no-backup-if-mismatch < "$f" > /dev/null; echo "applied: $(basename $f)"; fi
 done
 ( cd $A && sha256sum -c --quiet $BC/expected_sha256.txt ) && echo "PATCHED_FILES_MATCH_EXPECTED"

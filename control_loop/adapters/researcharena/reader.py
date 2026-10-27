@@ -174,6 +174,28 @@ def agent_outcome(solve_err: Path) -> tuple[str, int | None]:
     return ("budget" if rc == 124 else "agent_exit" if rc == 0 else "crash"), rc
 
 
+_SPIN_ABORT = re.compile(r"completed suspiciously fast .*aborting to avoid spin loop")   # solve.sh 162, 189
+_BUDGET_END = re.compile(r"resume used remaining budget|skipping resume \(exec used full budget|no time left before resume"
+                         r"|no budget left, skipping")                                     # solve.sh 144, 171, 181, 195
+
+
+def agent_end_line(solve_err: Path) -> tuple[str, str | None]:
+    """(kind, text) of the last `[agent]` line in solve_err.txt, for the exit-line readings of PLAN Amendment (36):
+    `rc` (it carries an exit code), `budget` (one of solve.sh's budget-end lines, which carry none), `spin_abort`
+    (solve.sh's "completed suspiciously fast ... aborting" line), `other`, or `none` (no `[agent]` line)."""
+    if not solve_err.exists():
+        return "none", None
+    last = None
+    for line in solve_err.read_text(encoding="utf-8", errors="replace").splitlines():
+        if line.strip().startswith("[agent]"):
+            last = line.strip()
+    if last is None:
+        return "none", None
+    kind = ("rc" if _AGENT_RC.match(last) else "spin_abort" if _SPIN_ABORT.search(last)
+            else "budget" if _BUDGET_END.search(last) else "other")
+    return kind, last
+
+
 def agent_results_file(task_snapshot: Path) -> tuple[Path | None, dict | None]:
     """The results file evaluate.py would read, in its order (evaluate.py 33–37)."""
     for rel in ("workspace/final_results.json", "final_results.json", "workspace/last_bench.json"):

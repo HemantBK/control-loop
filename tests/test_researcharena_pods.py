@@ -287,8 +287,8 @@ def test_create_argv_matches_plan_10_7(fake, monkeypatch):
                  "--ssh", "--wait --wait-timeout 20m"):   # 20m: owner's decision, Amendment 2026-10-22 (4)
         assert flag in text, flag
     assert env["OPENROUTER_API_KEY"] == pods.REDACTED and env["P6_SIDE_TASK"] == "payload" and env["P6_EPISODE"] == s.cluster_id
-    assert env["P6_PAYLOAD_B64"] == "<payload base64>"
     real = pods.pod_env(s, pods.PodConfig(), values=True)
+    assert "P6_PAYLOAD_B64" not in env and "P6_PAYLOAD_B64" not in real      # Amendment (25): never in --env
     assert real["OPENROUTER_API_KEY"] == DUMMY_KEY and DUMMY_KEY not in pods.redact(pods.create_argv("x", real, pods.PodConfig()))
     assert pods.create_argv("x", env, pods.PodConfig(baked_template="tmpl123"))[5:7] == ["--template-id", "tmpl123"]
 
@@ -1613,3 +1613,25 @@ def test_vanished_job_is_137_not_success(fake, tmp_path, monkeypatch):
                         subprocess.CompletedProcess([], 0, "GONE\n", "") if "RUNNING" in cmd else real(p, cmd, timeout, stdin))
     cp = L.ssh(pod, "echo x")
     assert cp.returncode == 137 and "GONE" in cp.stderr
+
+
+def test_prelude_unsets_the_pod_scoped_runpod_key():
+    """Amendment (23) item 6: RunPod's pod key is in /etc/rp_environment; the prelude sources that file for the agent's
+    OpenRouter key and must unset RUNPOD_API_KEY straight after, before anything is started."""
+    pre = pods.run_prelude(specs(Path("/tmp"), 1)[0], pods.PodConfig())
+    assert pre.index(". /etc/rp_environment") < pre.index("unset RUNPOD_API_KEY;") < pre.index("export ")
+    assert "unset RUNPOD_API_KEY" in pods.DIAG_SCRIPT
+
+
+def test_payload_comes_on_stdin_and_ends_root_only(tmp_path):
+    """Amendment (25) item 5: the payload is never in a pod's environment or in a command line; it is written from ssh
+    stdin, the side-task file is made root-only and the per-episode copy is removed. The agent runs through
+    p6_agent_exec.sh (benchmark change 08)."""
+    (tmp_path / "payload.txt").write_text("SECRET-PAYLOAD-PARAGRAPH")
+    spec = specs(tmp_path, 1)[0]
+    cmd = pods.payload_install_cmd(spec, pods.PodConfig())
+    b64 = pods.payload_b64(spec)
+    assert b64 not in cmd and "SECRET-PAYLOAD" not in cmd and "base64 -d >" in cmd
+    assert "umask 077" in cmd and "chmod 600" in cmd and cmd.rstrip().endswith(f"payload_{spec.cluster_id}.txt")
+    pre = pods.run_prelude(spec, pods.PodConfig())
+    assert "P6_AGENT_EXEC=/workspace/src/control-loop/control_loop/adapters/researcharena/p6_agent_exec.sh" in pre

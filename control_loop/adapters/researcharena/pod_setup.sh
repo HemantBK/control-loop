@@ -47,6 +47,9 @@
 #   P6_BUILD_TMP           where bench.py builds (/tmp, hard-coded in bench.py 126; tests only)
 #   P6_RUN_ONLY            tests only: run this one function (e.g. fuse_setup) and exit, no steps
 set -euo pipefail
+# 2026-10-25 (Amendment (23) item 6): RunPod's /etc/rp_environment carries a pod-scoped RUNPOD_API_KEY that can read
+# every pod of the account, env values included (measured on two CPU test pods). It is 644 by default: make it root-only.
+chmod 600 /etc/rp_environment 2>/dev/null || true
 
 : "${RESEARCHARENA_COMMIT:=58776e09339c1714d0524130590abaf6eac7879d}"
 : "${CONTROL_LOOP_COMMIT:=local}"
@@ -198,6 +201,10 @@ step2() {
   if [ -n "$OPENCODE_VERSION" ]; then npm install -g "opencode-ai@${OPENCODE_VERSION}" >/dev/null
   else npm install -g opencode-ai >/dev/null; fi
   opencode --version
+  # benchmark change 10 (PLAN Amendment (34)) sets the agent's command timeout through this variable: fail if this
+  # opencode does not read it
+  grep -aq OPENCODE_EXPERIMENTAL_BASH_DEFAULT_TIMEOUT_MS "$(readlink -f "$(command -v opencode)")" \
+    || { echo "OPENCODE_IGNORES_TIMEOUT_VAR: change 10 would not reach this opencode"; return 1; }
 }
 
 # Versions the phase requires (Amendment 2026-10-22 (2); transformers exact since Amendment (5)): python, torch,

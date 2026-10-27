@@ -350,6 +350,19 @@ if [[ -f "$CONTAINER_SIF" ]]; then
     || true
 else
     echo "  WARNING: Container not found at $CONTAINER_SIF, running locally."
+    # Benchmark change 08 (harness only): with P6_AGENT_EXEC set, the agent runs as an unprivileged user, without
+    # RunPod's pod key, after a fail-closed check that the user cannot reach the key by any path.
+    AGENT_RUN=()
+    if [[ -n "${P6_AGENT_EXEC:-}" ]]; then
+        "$P6_AGENT_EXEC" prepare "$AGENT_JOB_DIR" || { echo "  ERROR: agent user set-up failed; the agent is not started"; exit 1; }
+        mkdir -p "$EVAL_DIR/red_team"
+        if ! "$P6_AGENT_EXEC" check > "$EVAL_DIR/red_team/agent_key_check.txt" 2>&1; then
+            cat "$EVAL_DIR/red_team/agent_key_check.txt"
+            echo "  ERROR: agent key check failed; the agent is not started"
+            exit 1
+        fi
+        AGENT_RUN=("$P6_AGENT_EXEC" run)
+    fi
     (
         cd "$AGENT_JOB_DIR/task"
         export PROMPT="$PROMPT"
@@ -360,8 +373,14 @@ else
             export ARENA_SEED="$SEED"
             export PYTHONHASHSEED="$SEED"
         fi
+        # Benchmark change 09 (harness only): the agent's command timeouts the container branch passes (above)
+        export BASH_MAX_TIMEOUT_MS=3600000
+        export BASH_DEFAULT_TIMEOUT_MS=3600000
+        # Benchmark change 10 (harness only): opencode reads neither variable above; its shell tool's default timeout
+        # is OPENCODE_EXPERIMENTAL_BASH_DEFAULT_TIMEOUT_MS (else 120000 ms)
+        export OPENCODE_EXPERIMENTAL_BASH_DEFAULT_TIMEOUT_MS=3600000
         timeout --signal=TERM --kill-after=60s "${RED_TIMEOUT}s" \
-            bash "$AGENT_JOB_DIR/agent_solve.sh" \
+            "${AGENT_RUN[@]}" bash "$AGENT_JOB_DIR/agent_solve.sh" \
             > "$EVAL_DIR/red_team/solve_out.json" \
             2> "$EVAL_DIR/red_team/solve_err.txt" \
         || true

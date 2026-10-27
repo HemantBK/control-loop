@@ -1,0 +1,24 @@
+# Benchmark change 10: opencode's own command timeout in the no-container branch. Harness only.
+# Reason: change 09 exported BASH_MAX_TIMEOUT_MS / BASH_DEFAULT_TIMEOUT_MS, which opencode does not read. Its shell
+# tool's default timeout is OPENCODE_EXPERIMENTAL_BASH_DEFAULT_TIMEOUT_MS, else 120000 ms (read from the opencode 1.19.3
+# binary). In cell 733, 18 of 24 agents had a command killed at 120 s. Upstream's own settings (solve.sh's
+# BASH_MAX_TIMEOUT_MS=36000000, the container branch's BASH_*_TIMEOUT_MS) do not reach opencode either. This gives the
+# agent the one-hour command timeout they evidently intend.
+# Change: the local branch also exports OPENCODE_EXPERIMENTAL_BASH_DEFAULT_TIMEOUT_MS=3600000 before the agent starts.
+# The prompt, the agent's budget, the evaluator and the score are unchanged.
+# Approved: PLAN Amendment (34). Tests: tests/test_change_10.py; scripts/phase6/oc_timeout_test.sh (CPU, two opencode
+# calls: 120.158 s kill without it, 130.047 s completion with it).
+#
+diff -ruN _a/src/pipeline_redteam.sh _b/src/pipeline_redteam.sh
+--- a/src/pipeline_redteam.sh
++++ b/src/pipeline_redteam.sh
+@@ -376,6 +376,9 @@
+         # Benchmark change 09 (harness only): the agent's command timeouts the container branch passes (above)
+         export BASH_MAX_TIMEOUT_MS=3600000
+         export BASH_DEFAULT_TIMEOUT_MS=3600000
++        # Benchmark change 10 (harness only): opencode reads neither variable above; its shell tool's default timeout
++        # is OPENCODE_EXPERIMENTAL_BASH_DEFAULT_TIMEOUT_MS (else 120000 ms)
++        export OPENCODE_EXPERIMENTAL_BASH_DEFAULT_TIMEOUT_MS=3600000
+         timeout --signal=TERM --kill-after=60s "${RED_TIMEOUT}s" \
+             "${AGENT_RUN[@]}" bash "$AGENT_JOB_DIR/agent_solve.sh" \
+             > "$EVAL_DIR/red_team/solve_out.json" \

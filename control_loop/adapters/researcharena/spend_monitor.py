@@ -3,7 +3,9 @@ the 2-minute usage check"). While the episode runs, a thread reads the OpenRoute
 (`GET https://openrouter.ai/api/v1/key`, field data.usage, US dollars) every `interval_s` seconds. When usage since the
 start reaches the cap, it calls `stop()` once (the runner stops the agent on the pod; the pipeline then evaluates what
 the agent left). A failed read is logged and retried; it never stops the agent. The key is read from the environment
-($OPENROUTER_API_KEY, loaded by `uv run --env-file`), never from a file, and is never logged."""
+($OPENROUTER_API_KEY, loaded by `uv run --env-file`), never from a file, and is never logged. The agent uses the main
+key (owner, 2026-10-25, Amendment (24)), so the usage read is everything spent on that key since the start, the agent's
+spend included: an upper bound on the agent's own."""
 from __future__ import annotations
 
 import json
@@ -15,9 +17,9 @@ from typing import Callable
 KEY_URL = "https://openrouter.ai/api/v1/key"
 
 
-def openrouter_usage(timeout: float = 20.0) -> float:
-    """Cumulative usage of the key in $OPENROUTER_API_KEY, in US dollars. Raises on any failure."""
-    key = os.environ["OPENROUTER_API_KEY"]
+def openrouter_usage(timeout: float = 20.0, key_env: str = "OPENROUTER_API_KEY") -> float:
+    """Cumulative usage of the key in $<key_env>, in US dollars. Raises on any failure."""
+    key = os.environ[key_env]
     req = urllib.request.Request(KEY_URL, headers={"Authorization": f"Bearer {key}"})
     with urllib.request.urlopen(req, timeout=timeout) as r:
         data = json.load(r)

@@ -155,9 +155,9 @@ if FAIL == step and step in ("check", "create", "ready", "driver", "setup", "kit
 
 if step == "check":   # CPU only; creates nothing
     problems = []
-    have = sorted(p.name[:2] for p in BC.glob("0*.patch"))
-    if have != [f"0{i}" for i in range(8)]:   # changes 00-07 (Amendment (20): 07 is the instrumentation)
-        problems.append(f"patches 00-07 not all present: {have}")
+    have = sorted(p.name[:2] for p in BC.glob("[0-9][0-9]_*.patch"))
+    if have != [f"{i:02d}" for i in range(11)]:   # changes 00-10 (Amendment (20): 07 instrumentation; (25): 08 agent user; (30): 09 timeouts; (34): 10 opencode timeout)
+        problems.append(f"patches 00-10 not all present: {have}")
     need = ["harness.sh", "monitor.sh", "rm_common.sh", "rm_prepare.sh", "rm_pairs.sh", "rm_interleave.sh", "rm_memcheck.sh",
             "rm_kl.sh", "rm_embedded.sh", "rm_vanilla.sh", "rm_starter.sh", "rm_memcheck_initial.sh", "rm_rope.sh"] + (
             [] if STUB else ["c_interleave.py", "rm_summary.py", "c_minimal_kernels.py", "c_kl_check.py", "c_kernel_tests.py"])
@@ -231,7 +231,7 @@ elif step == "kit":   # the benchmark changes + expected sha256, the pod scripts
     exp = "".join(f"{hashlib.sha256(p.read_bytes()).hexdigest()}  {p.relative_to(tree).as_posix()}\n"
                   for p in sorted(tree.rglob("*")) if p.is_file() and "__pycache__" not in p.parts)
     stage = OUT / "kit_stage" / "bench_changes"; stage.mkdir(parents=True, exist_ok=True)
-    for p in sorted(BC.glob("0*.patch")):
+    for p in sorted(BC.glob("[0-9][0-9]_*.patch")):
         (stage / p.name).write_bytes(p.read_bytes())
     (stage / "expected_sha256.txt").write_text(exp)
     e = " ".join(pods.ssh_base(pod, cfg)[:-1])

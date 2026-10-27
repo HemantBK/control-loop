@@ -241,10 +241,13 @@ async def generate_logged_usage(model, messages: list, log_file: Path, record: d
     request, source = _p._sent_request(model, before)
     sent = _p.request_summary(request)
     usage = out.usage.model_dump(exclude_none=True) if out.usage is not None else None
+    # 2026-10-27 (Phase 6 cell 733): the stop reason and the error, so an empty output can be told apart (a refusal,
+    # an API error, or a format problem); two empty outputs in proposal 1 could not be, with usage alone
+    stop_reason = out.choices[0].stop_reason if out.choices else None
     with log_file.open("a", encoding="utf-8") as f:
         f.write(json.dumps(dict(**record, requested_temperature=requested_temperature,
                                 requested_seed=requested_seed, sent=sent, sent_source=source,
-                                usage=usage, system=messages[0].content,
+                                usage=usage, stop_reason=stop_reason, error=out.error, system=messages[0].content,
                                 user=[m.content for m in messages[1:]], raw=raw), default=str) + "\n")
     return raw, sent
 

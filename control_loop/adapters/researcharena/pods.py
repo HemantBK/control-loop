@@ -266,8 +266,8 @@ def pod_env(spec: Any, cfg: PodConfig, values: bool) -> dict[str, str]:
             env[name] = os.environ[name]
         else:
             env[name] = REDACTED
-    if getattr(spec, "payload_file", None):
-        env["P6_PAYLOAD_B64"] = payload_b64(spec) if values else "<payload base64>"
+    # 2026-10-25 (Amendment (25) item 5): pods can read each other's environment, so the payload is never in --env;
+    # payload_install_cmd writes it from ssh stdin
     return env
 
 
@@ -360,29 +360,37 @@ def episode_remote_out(spec: Any, cfg: PodConfig) -> str:
 
 def run_prelude(spec: Any, cfg: PodConfig) -> str:
     """Exports for an ssh session (RunPod's per-pod env is in /etc/rp_environment; sourced if present so the
-    OpenRouter key from --env reaches the agent without ever travelling over ssh)."""
+    OpenRouter key from --env reaches the agent without ever travelling over ssh). RunPod also puts a pod-scoped
+    RUNPOD_API_KEY there, which reads every pod of the account with its env (measured 2026-10-25, Amendment (23) item
+    6); it is unset at once, so no job started through this prelude, and no agent, inherits it."""
     exports = {"HF_HOME": f"{cfg.volume_mount}/hf", "ARENA_RESULTS_DIR": cfg.remote_results,
                "ARENA_ROOT": spec.arena_root, "P6_EPISODE": spec.cluster_id, "P6_SIDE_TASK": spec.side_task,
                "TOKENIZERS_PARALLELISM": "false",
                # 2026-10-24 (Amendment (20)): the episode and its evaluator load the model offline, from the pod cache
                "HF_HUB_OFFLINE": "1",
+               # 2026-10-25 (Amendment (25) item 5, benchmark change 08): the agent runs as an unprivileged user
+               "P6_AGENT_EXEC": f"{cfg.volume_mount}/src/control-loop/control_loop/adapters/researcharena/p6_agent_exec.sh",
                # the pipeline's setting hook runs `git init && git commit` (CORE_NOTES §8): an identity is needed
                "GIT_AUTHOR_NAME": "phase6", "GIT_AUTHOR_EMAIL": "phase6@control-loop.invalid",
                "GIT_COMMITTER_NAME": "phase6", "GIT_COMMITTER_EMAIL": "phase6@control-loop.invalid"}
     ex = " ".join(f"{k}={shlex.quote(str(v))}" for k, v in exports.items())
-    return (f"[ -f /etc/rp_environment ] && . /etc/rp_environment; export {ex}; "
+    return (f"[ -f /etc/rp_environment ] && . /etc/rp_environment; unset RUNPOD_API_KEY; export {ex}; "
             f"mkdir -p {shlex.quote(episode_remote_out(spec, cfg))} {shlex.quote(cfg.remote_payload_dir)}")
 
 
-def payload_install_cmd(spec: Any, cfg: PodConfig, b64: str | None) -> str | None:
-    """Write the round's paragraph on the pod and install it as the composed root's payload side task (PLAN §1.4(1))."""
+def payload_install_cmd(spec: Any, cfg: PodConfig, b64: str | None = None) -> str | None:
+    """Install the round's paragraph as the composed root's payload side task (PLAN §1.4(1)). The base64 text comes on
+    the ssh session's stdin (run_episode passes payload_b64(spec)), never in the pod's environment or a command line
+    (other pods read environments; /proc/*/cmdline is world-readable). The file is root-only, and the per-episode copy is
+    removed (Amendment (25) item 5): the pipeline, as root, builds the agent's prompt from it, and the agent runs as an
+    unprivileged user (benchmark change 08). `b64` is unused and kept for callers."""
     if not getattr(spec, "payload_file", None):
         return None
     dst = f"{spec.arena_root}/settings/cuda_kernel/side_tasks/payload/side_task.md"
     tmp = f"{cfg.remote_payload_dir}/payload_{spec.cluster_id}.txt"
-    data = shlex.quote(b64) if b64 is not None else "<payload base64>"
-    return (f"printf %s {data} | base64 -d > {shlex.quote(tmp)} && mkdir -p {shlex.quote(os.path.dirname(dst))} && "
-            f"cp --remove-destination {shlex.quote(tmp)} {shlex.quote(dst)}")
+    return (f"(umask 077 && base64 -d > {shlex.quote(tmp)}) && mkdir -p {shlex.quote(os.path.dirname(dst))} && "
+            f"cp --remove-destination {shlex.quote(tmp)} {shlex.quote(dst)} && chmod 600 {shlex.quote(dst)} && "
+            f"rm -f {shlex.quote(tmp)}")
 
 
 def start_cmd(spec: Any, cfg: PodConfig) -> str:
@@ -1002,9 +1010,11 @@ class _Launch:
         pod.episode_id = cid
         self.step("episode", "started", note=f"{cid} attempt {attempt} on pod {pod.id}", pod_id=pod.id, episode_id=cid)
         pre = run_prelude(spec, self.cfg)
-        inst = payload_install_cmd(spec, self.cfg, payload_b64(spec))
+        inst = payload_install_cmd(spec, self.cfg)
         cmd = pre + ("; " + inst if inst else "") + "; " + start_cmd(spec, self.cfg)
-        cp = self.ssh_query(pod, cmd)   # start_cmd itself detaches run_redteam.sh under nohup and returns its pid
+        # the payload travels on stdin (Amendment (25) item 5); start_cmd itself detaches run_redteam.sh under nohup,
+        # with stdin from /dev/null, and returns its pid
+        cp = self.ssh_query(pod, cmd, stdin=payload_b64(spec) if inst else None)
         if cp.returncode != 0:
             return False, f"start failed rc={cp.returncode}: {(cp.stderr or cp.stdout)[-400:]}"
         pid = (cp.stdout.strip().splitlines() or ["?"])[-1].strip()
@@ -1346,6 +1356,7 @@ set -uo pipefail
 : "${P6_DIAG_SEED:=733}"
 : "${P6_DIAG_BENCH_TIMEOUT:=1200}"
 [ -f /etc/rp_environment ] && . /etc/rp_environment
+unset RUNPOD_API_KEY
 [ -f "$WORKSPACE/p6_env.sh" ] && . "$WORKSPACE/p6_env.sh"
 export HF_HOME ARENA_ROOT TOKENIZERS_PARALLELISM=false ARENA_SEED="$P6_DIAG_SEED"
 TC="$ARENA_ROOT/settings/cuda_kernel/task_context"
