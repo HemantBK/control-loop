@@ -661,3 +661,49 @@ The cause of the stock-kernel crash is unidentified.
 - V1 is unchanged.
 - **Correction:** the earlier statement that a last-line rule leaves one valid adaptive round was wrong (README §15.4,
   RESPONSE Round 2 F1).
+
+## 2026-10-27: corrections after the SOP check (docs/SOP.md §2.3, §8; no model call, $0)
+
+Each item gives the wrong value, the right value and the source.
+- **"The four stopped r1 episodes, 16 minutes in"** (entry "cell 733, 24 episodes"; README §15.3) is wrong.
+  - Right: each was refused at the agent-cap check the moment its episode step started, so no agent ran. Their pods spent
+    11-16 minutes on create, setup and isolation first.
+  - Source: `lanes/_r1_cap_stop_0303Z/r1L1..4/lane.log` (episode step rc=1 at 03:03:15Z, 03:02:05Z, 02:58:02Z and
+    03:02:03Z) and `steps_out/episode_*.out` ("CAP_REACHED agent: $61.29 of $50").
+- **"$169.94 against $47.22 billed for the cell"** (README §15.9 item 3) compares different scopes.
+  - $169.94 sums the per-episode deltas of 28 episodes, the 4 pilot episodes included.
+  - Like for like: the cell's 24 episodes sum to $165.56 against $47.22 billed for them, and the 28 sum to $169.94 against
+    $51.59.
+  - Source: the episodes' `spend.json`.
+- **The opencode timeout tests cost $0.0561, not $0.0497.**
+  - The earlier figure came from a key reading of 53.4263 that no file recorded.
+  - The recorded reading is 53.43274 (`opencode_timeout_test/key_usage_after_tests.json`, read 2026-10-27T14:19:08Z),
+    against the cell's end of 53.376636. No call used the key in between; OpenRouter's usage settles late.
+- **Missing entry: a diagnostic proposer call** of 2026-10-27 (PLAN Amendment (32)).
+  - Its record is `cell/redteam/proposal1_diagnosis.json`: model `claude-sonnet-5-5`, 4 input, 1,636 cache-write and 590
+    output tokens, stop reason `stop`.
+  - It costs $0.0100 at list price (`control_loop/spend.py`). It is not in the batch's proposer figure ($0.0485, from
+    `proposer_log.jsonl`).
+- **Missing entry: the aborted start** of 2026-10-26T18:44Z.
+  - The pair was first launched on two lanes. One lane's pod create failed; the other's pod (`p6-b733-pairl2`) was
+    deleted during its readiness step. The pair was then relaunched on one lane, `pairL1`, as Amendment (30) specifies.
+  - The pod cost $0.0422 (`cell/watchdog_ledger.jsonl`). The logs were moved to `pilot_glm51/aborted_start/`
+    (`pairL1/lane.log`, `pairL2/lane.log`).
+  - No episode ran. Nothing from it enters a table.
+- **The review and the SOP check** ran as agents on the owner's workstation, not on the project's API keys. They have no
+  project cost.
+
+## 2026-10-27: SOP check and cross-family audit of README §15 (docs/SOP.md §8, §2.6; paid $1.3318)
+
+- **SOP check** (`audits/sop_check.md`): a fresh agent, packet only, no project cost.
+  - 1 pass and 14 checklist gaps, holding 22 tasks.
+  - The 10 tasks that touch a number, a verdict or a pre-registration were fixed before the audit (FINDINGS
+    "corrections after the SOP check"; PLAN Amendment (38); `audits/RESPONSE.md` "SOP check").
+- **Audit** (`audits/audit_cell733_astra.md`): `openai/gpt-6-astra` via OpenRouter, one call.
+  - Settings as sent: max_tokens 16000, seed 8, no temperature. finish_reason `stop`.
+  - Usage: prompt 78,037 tokens, completion 7,126.
+  - Cost: $1.331755 billed (`usage.cost`), $1.136670 at listed prices.
+  - It re-derived τ, all per-round counts, both validity rules under the three exit-line readings, the verdicts and the
+    spend, and found no wrong number.
+  - 10 findings: 7 fixed, 3 disclosed (`audits/RESPONSE.md` Round 3). No number or verdict changed.
+- **Spend reconciliation:** `results/spend_2026-10-27.md`.

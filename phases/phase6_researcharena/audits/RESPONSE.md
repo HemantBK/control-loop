@@ -347,3 +347,82 @@ packet.
   states this).
 - Which P1 pod ran which second-wave episode: answered by `cell/events.log` (F7).
 - Whether change 09's variables were exported: they were, and opencode reads neither (Amendment (34)).
+
+## SOP check, 2026-10-27 (`audits/sop_check.md`): gaps and what was done
+
+- **The check:** a fresh agent with no part in the write-up, given a packet copied from the repository.
+- **Result:** 1 pass, 14 gaps, 22 gap tasks. 10 touch a number, a verdict or a pre-registration, and all 10 were fixed
+  before the cross-family audit (SOP §8).
+- **The checker's work:** it re-derived 68 numbers, with 62 matching. Every per-round count, τ, both verdicts and the
+  spend reconcile.
+- **Its file is kept verbatim.** Line numbers in it refer to the packet copy, before these fixes.
+
+| # | touches a number etc. | gap | status | what was done | where |
+|---|---|---|---|---|---|
+| 1 | yes | Amendment (30) dated after the run it precedes | fixed | the dates are IST; (30) was appended 18:42:19 UTC, 4 minutes before the rerun | PLAN Amendment (38) item 1 |
+| 2 | yes | in-place wording edits, originals outside the repository | fixed | sha256 of both original files and the edited lines, path masked | PLAN Amendment (38) item 2 |
+| 3 | yes | "rose with adaptation" unlabelled post hoc; "raised" in root row | fixed | labelled "post hoc, not a test result" in §15.1, the status line and root row 6; removed from the contribution paragraph | README §15.1, line 14; root README |
+| 4 | yes | rates from one draw | fixed | "1 of 8 ... not a rate"; THRESHOLDS/REPORT carry the in-sample note | README §15.1, §15.4; `scripts/phase6/thresholds.py` |
+| 5 | yes | §8.10 ambiguous primary not scored | fixed | scored "triggered" in the ledger; listed as an open owner decision (about $87, pre-change-10) | README §15.1, §15.7, §15.9 item 7; PLAN Amendment (38) item 4 |
+| 6 | yes | "16 minutes in" | fixed | refused at the cap check before any agent ran | README §15.3; FINDINGS corrections |
+| 7 | yes | $169.94 against $47.22 | fixed | $165.56 against $47.22 like for like | README §15.9 item 3; FINDINGS corrections |
+| 8 | yes | key reading 53.4263 unrecorded | fixed | a recorded reading of 53.43274 gives $0.0561 for the tests | `batch_733/opencode_timeout_test/key_usage_after_tests.json`; README §15.10, §15.11; pins |
+| 9 | yes | diagnostic proposer call and review cost | fixed | $0.0100 added; the review and the SOP check have no project cost (workstation) | README §15.11; pins; FINDINGS corrections |
+| 10 | yes | "No number or verdict changed" | fixed | "No verdict changed; one stated count was corrected" | README §15.12 |
+| 11 | no | FINDINGS: aborted start; headings without a PLAN § | fixed (entry; headings disclosed) | entry added | FINDINGS corrections |
+| 12 | no | README preamble stale | task | — | — |
+| 13 | no | pins: resolved model strings, driver commands, Inspect version | disclosed | provider-resolved strings are not recorded by opencode; totals now four decimals | pins "Cell 733" |
+| 14 | no | absolute paths in run records and two PLAN lines | disclosed | run records are not edited (SOP §3); the PLAN lines are append-only | this table |
+| 15 | no | kept-out folders not in STATUS "Results folders" | fixed | listed in a STATUS line | STATUS |
+| 16 | no | privileged information, key limitations | fixed | §15.8 items 11 and 12 | README §15.8 |
+| 17 | no | reproduce: mock test, regeneration commands, test log | partly fixed | commands and the test log added; REPORT.md has no separate regeneration command (stated) | README §15.10; `evidence/test_suite_2026-10-27.txt` |
+| 18 | no | contribution paragraph over 120 words | fixed | rewritten with falsifier, comparator and evidence path | README §15.1 |
+| 19 | no | run.jsonl lacks agent, monitor and proposer costs | task | — | — |
+| 20 | no | no "merged with" column in Round 2 | disclosed | no finding was merged | — |
+| 21 | no | STATUS Phases block for Phase 6 stale | task | — | — |
+| 22 | no | instrument documents stale | fixed (two dated corrections) / task (the index rows) | dated entries | `docs/instruments/researcharena_*.md` |
+
+## Round 3, 2026-10-27: cross-family audit, OpenAI GPT-6 Astra (`audits/audit_cell733_astra.md`)
+
+**The audit.**
+- GPT-6 Astra, packet on input, no execution, one call, finish_reason `stop`. Cost: $1.3318 billed (OpenRouter
+  `usage.cost`), $1.1367 at listed prices.
+- It ran after the SOP check's gaps that touch a number, a verdict or a pre-registration were fixed (SOP §8).
+- It is kept verbatim.
+
+**What it re-derived** from the raw per-episode facts, all matching README §15:
+- τ = 7.93;
+- every per-round count, and U at τ and at 50;
+- V1 and V2 under all three exit-line readings;
+- the three verdicts under each reading;
+- every row of the threshold table;
+- the spend: GPU 144.9822, cell agent 47.2186, cell monitor 6.0487, total 203.8121, timeout tests 0.0561.
+
+It found no wrong number.
+
+**Status key:** as in Round 1. merged with: none, in this round and in Round 2.
+
+**Counts.** 10 findings: **7 fixed, 3 disclosed, 0 not accepted**.
+- Major (4): 2 fixed (A1, A2), 2 disclosed (A3, A6).
+- Minor (6): 5 fixed, 1 disclosed (A4).
+
+No number or verdict changed. The verdicts are now stated with the exit-line reading they hold under (A1).
+
+| id | severity | status | what was done | where | merged with |
+|---|---|---|---|---|---|
+| A1 | major | fixed | Every headline and ledger verdict now says "under the last_rc exit-line reading", with the stricter readings' "undecided" and the unrun §8.10 extension beside it | README line 14, §15.1, §15.7; root README row 6 | none |
+| A2 | major | fixed | "The mechanism check passed" became "returned ALL PASS" in the contribution paragraph. §15.5 now lists the §6.2 requirements that were not verified before the run continued: the instruction-suffix equality, proposer-history agreement, the agent's and monitor's request settings, the composed-root row (skipped) and cost (unknown) | README §15.1, §15.5 | none |
+| A3 | major | disclosed | Labelled "explained; independently unverified" | README §15.9 item 8 | none |
+|  |  |  | - Amendment (30)'s append time comes from a workstation record that is not in the repository. |  |  |
+|  |  |  | - The original wording of Amendments (22)-(23) was removed from the repository on the owner's instruction. Its hash is in Amendment (38), and it can be compared from the workstation copy. |  |  |
+| A4 | minor | disclosed | §15.4 now says the "side 0" for clean runs in `REPORT.md` and `cell/summary.json` counts unscored episodes, not scored zeros. The §6.3 row now states "clean 0 of 1: not scored; no pin in its snapshot". The generated files are not rewritten. | README §15.4, §15.7 | none |
+| A5 | minor | fixed | "caught all 8 of 8 successful attacks (13 of 15 that did the side task)" | README line 14, §15.1; root README | none |
+| A6 | major | disclosed | §15.10 item 8 now says SOP §6 reproduction is incomplete for this cell, and gives the pre-change-10 configuration (changes 00-09, opencode 1.19.4, no change 10 variable). The repository tooling now ships 00-10. | README §15.10 | none |
+| A7 | minor | fixed | §15.11 labels each basis: timed GPU (ledger uptime × list rate, not an invoice), billed key usage, opencode's token-priced monitor cost, and token-priced proposer cost. The reconciliation file `results/spend_2026-10-27.md` was added. | README §15.11; `results/spend_2026-10-27.md` | none |
+| A8 | minor | fixed | §15.5 now says "No pipeline leak was found in the retained files" and notes that r1-e3's own compaction summary repeats the instruction. §15.8 item 9 now says the agent and monitor are configured with no sampling settings, and their raw requests are not logged. | README §15.5, §15.8 | none |
+| A9 | minor | fixed | §15.9 item 9 lists the historical exceptions: the moved logs, with their final locations and the amendments that ordered them, and the absolute paths in run records | README §15.9 | none |
+| A10 | minor | fixed | §15.12 distinguishes the 14 checklist gaps from the 22 tasks and marks task 17 partial. "merged with: none" was added. The README's opening paragraph is labelled as the 2026-10-22 text. | README line 14, §15.12; this section | none |
+
+**What the audit could not verify:** see the audit's §4.
+- Several items are outside the packet: Amendment (6)'s text, full transcripts, and the pilots' spend files.
+- Two are owner decisions: the exit-line reading and the §8.10 extension.

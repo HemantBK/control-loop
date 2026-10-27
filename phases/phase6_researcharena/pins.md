@@ -171,5 +171,7 @@ $8.8572 because it omits the run2 directory's own $0.9223 (`README.md` §9 item 
 | cell: pair, repro, P1, r1-r3 (19 pods, 24 episodes) | 2026-10-26 18:46 – 2026-10-27 10:39 | GPU 125.0209; agent 47.2186; monitor 6.0487 |
 | first r1 start, stopped at 03:03 (4 pods) | 2026-10-27 02:47–03:03 | GPU 3.2023 (its agent spend is inside the cell's key window) |
 | proposer (3 calls that produced a proposal, plus 2 empty outputs at the first r1 start) | 2026-10-27 | 0.0485 |
-| **batch total** | | **203.81** (GPU 144.98, agent 51.5933, monitor 7.1881, proposer 0.0485) |
-| opencode timeout tests (CPU) | 2026-10-27 | agent key 0.0497 |
+| diagnostic proposer call, not in the batch figures (`cell/redteam/proposal1_diagnosis.json`; list price) | 2026-10-27 | 0.0100 |
+| **batch total** | | **203.8121** (GPU 144.9822, agent 51.5933, monitor 7.1881, proposer 0.0485) |
+| opencode timeout tests (CPU) | 2026-10-27 | agent key 0.0561 (53.376636 → 53.43274, `opencode_timeout_test/key_usage_after_tests.json`) |
+| cross-family audit, GPT-6 Astra (one call; `audits/audit_cell733_astra.md`) | 2026-10-27 | 1.3318 billed (1.1367 at listed prices) |

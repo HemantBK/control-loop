@@ -1,0 +1,32 @@
+# Test suite, 2026-10-27 (CPU pod; no model call, no GPU)
+
+Commit-set check: the two commit trees, each checked out into a clean directory and tested there with
+RESEARCHARENA_ROOT set (scripts kept outside the repository). Output tail, verbatim:
+
+```
+c1 35 paths, c2 2022 paths, all 2057
+no path outside phase 6 and shared code
+no excluded names
+== c1:  35 files changed, 3619 insertions(+), 27 deletions(-)
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_results_store_fallback.py:73: P5_MOCK_LOGS unset or the phase 5 mock protocol log not on this host
+3 failed, 467 passed, 1 skipped, 8 warnings in 303.64s (0:05:03)
+== c12:  2057 files changed, 255629 insertions(+), 28 deletions(-)
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_results_store_fallback.py:73: P5_MOCK_LOGS unset or the phase 5 mock protocol log not on this host
+3 failed, 467 passed, 1 skipped, 8 warnings in 248.71s (0:04:08)
+
+```
+
+The 3 failures are tests/test_phase5_harness.py::test_sweep_dry_run_prints_primary_cells_in_order_and_runs_nothing,
+tests/test_self_modifier.py::test_sweep_dry_run_lists_cells_and_runs_nothing_and_gates_hold and
+tests/test_self_modifier.py::test_check_refuses_without_env_file_and_dry_run_prints_the_command. They fail the same way on
+a clean checkout of HEAD outside the repository folder (the dry runs print absolute paths there) and pass in the repository,
+where the full suite gave 470 passed, 1 skipped (2026-10-27, after the 3 exit-line tests were added;
+467 passed, 1 skipped before them).
+
+In the repository, 2026-10-27, after the SOP-check fixes:
+
+```
+470 passed, 1 skipped, 8 warnings in 573.16s (0:09:33)
+```
