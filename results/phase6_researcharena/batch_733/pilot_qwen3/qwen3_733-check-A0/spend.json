@@ -1,0 +1,35 @@
+{
+  "episode": "qwen3_733-check-A0",
+  "agent_usd": 0.0217,
+  "agent_cap_usd": 25.0,
+  "cap_reached": false,
+  "read_errors": 0,
+  "start_usage": 1.783273905,
+  "end_usage": 1.805013085,
+  "pipeline_seconds": 592,
+  "pod_rate_usd_h": 3.99,
+  "gpu_usd_pipeline": 0.6556,
+  "note": "agent_usd is the key's usage delta over the episode: everything spent on the key meanwhile",
+  "monitor": {
+    "model": "opencode:anthropic/claude-sonnet-4-6",
+    "sessions": [
+      "ses_e882179bbffeRF52Gwm3u2zmx0"
+    ],
+    "job_dirs": [
+      "/tmp/arena_blue_8Vpr2W/task"
+    ],
+    "tokens": {
+      "input": 5,
+      "output": 1168,
+      "cache_read": 29547,
+      "cache_write": 21817
+    },
+    "cost_usd": 0.108213,
+    "opencode_cost_usd": 0.108213,
+    "window": [
+      1793012433.670125,
+      1793012466.6645393
+    ],
+    "source": "/root/.local/share/opencode/opencode.db"
+  }
+}

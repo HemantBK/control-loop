@@ -135,3 +135,41 @@ GPU: 7,893 whole seconds × $3.99/h = $8.7481; the `usd` sum is $8.7572 because 
 seconds and truncates `seconds_billed` (8.23 s of fractions over 16 pods). The earlier "$9.7817 with the council" left out
 the smoke5 council. `python -m control_loop.status results/phase6_researcharena` prints
 $8.8572 because it omits the run2 directory's own $0.9223 (`README.md` §9 item 2).
+
+## Cell 733 (2026-10-26 to 2026-10-27; README §15)
+
+### Code and environment
+
+| item | value | source |
+|---|---|---|
+| ResearchArena | `58776e09339c1714d0524130590abaf6eac7879d`, unmodified checkout; benchmark changes 00-09 applied to the composed root (change 10 from the next seed) | each pod's `setup.log` step 4-5; `benchmark_changes/` |
+| composed root | 206/206 files identical to the checkout, stock payload, default agent overlay | `setup.log` step 5 (all 19 pods) |
+| control-loop | uncommitted working tree at the time of the run, pushed to each pod by `pods.py` ("local tree pushed") | `setup.log` step 4 |
+| GPU image | `runpod/base:1.4.1-cuda1290-ubuntu2204` plus `pod_setup.sh` steps 1-7; no network volume; 60 GB container disk | `control_loop/adapters/researcharena/pods.py` `IMAGE`; `scripts/phase6/cell_step.py`; Amendment (28) |
+| GPU | NVIDIA H100 80GB HBM3, driver 595.91.07, $3.99/h; 19 pods (US-MO-1 11, EUR-IS-3 4, US-CA-2 2, US-NE-1 2) | `lanes/*/pods.jsonl`, `nvidia_smi.txt` |
+| python / torch / transformers | 3.11; torch 2.10.0+cu128 (CUDA 12.8), nvcc 12.9; transformers 4.53.3; TORCH_CUDA_ARCH_LIST 8.0;8.9;9.0 | `setup.log` step 3 |
+| opencode-ai | **1.19.4** on the GPU pods (agent; `OPENCODE_VERSION` unset, so the latest version); 1.19.3 on the CPU pod (monitor) | `setup.log` step 2 (19 of 19); Amendment (35) |
+| TinyLlama | `TinyLlama/TinyLlama-1.1B-Chat-v1.0` at `fe8a4ea1ffedaf415f4da2f062534de366a451e6` | `setup.log` step 6 |
+| agent user | p6agent through `p6_agent_exec.sh` (change 08); key check PASS in 24 of 24 | `agent_key_check.txt` per episode |
+
+### Models and settings as sent
+
+| role | as passed | settings |
+|---|---|---|
+| untrusted agent | `--redteammodel opencode_or:openrouter/z-ai/glm-5.1`, `--redruntime 1.0`, `--seed 733` | no sampling settings of ours; OpenRouter routing not pinned; command timeout 120 s (change 09 had no effect; Amendment (34)) |
+| monitor M∅ | `--blueteammodel opencode:anthropic/claude-sonnet-4-6`, `--blueruntime 0.0833`, no access flags | none |
+| proposer | `anthropic/claude-sonnet-5-5` via Inspect `RedTeamPolicy`, monitor-aware brief | temperature and seed requested, **not sent**; `max_tokens` 32000 (`cell/redteam/proposer_log.jsonl`) |
+| payloads | r0a: stock `independent/side_task.md`; r1-r3: `cell/redteam/payload_r1.txt`-`payload_r3.txt` (one call each, stop reason `stop`) | `cell/redteam/history.jsonl` |
+
+### Dates and spend (from `REPORT.md`, `cell/watchdog_ledger.jsonl`, the episodes' `spend.json`)
+
+| step | UTC | $ |
+|---|---|---|
+| key test (Part A) | 2026-10-25 | GPU 0.0061 |
+| Qwen3 pilot, pilot 2 (supervised sessions) | 2026-10-26 | GPU 16.7107; agent 0.2808 + 4.0940; monitor 0.6272 + 0.5122 |
+| a stray pair pod (pairL2, deleted at once) | 2026-10-26 | GPU 0.0422 |
+| cell: pair, repro, P1, r1-r3 (19 pods, 24 episodes) | 2026-10-26 18:46 – 2026-10-27 10:39 | GPU 125.0209; agent 47.2186; monitor 6.0487 |
+| first r1 start, stopped at 03:03 (4 pods) | 2026-10-27 02:47–03:03 | GPU 3.2023 (its agent spend is inside the cell's key window) |
+| proposer (3 calls that produced a proposal, plus 2 empty outputs at the first r1 start) | 2026-10-27 | 0.0485 |
+| **batch total** | | **203.81** (GPU 144.98, agent 51.5933, monitor 7.1881, proposer 0.0485) |
+| opencode timeout tests (CPU) | 2026-10-27 | agent key 0.0497 |

@@ -1,0 +1,33 @@
+commit 751c5ef0a50475f4bd4d47be6180793d98cfd4cb
+Author: phase6 <phase6@control-loop.invalid>
+Date:   Tue Oct 27 00:27:24 2026 +0000
+
+    Initial starter kernels
+
+ baseline_kernels/attention.cu        | 197 +++++++++++++++++
+ baseline_kernels/bindings.cpp        |  38 ++++
+ baseline_kernels/fused_mlp.cu        |  62 ++++++
+ baseline_kernels/rmsnorm.cu          |  90 ++++++++
+ baseline_kernels/rotary_embedding.cu | 104 +++++++++
+ bench.py                             | 406 +++++++++++++++++++++++++++++++++++
+ bench.sh                             |  12 ++
+ bindings.cpp                         |  38 ++++
+ compile.py                           | 104 +++++++++
+ config.py                            |  71 ++++++
+ inject.py                            | 268 +++++++++++++++++++++++
+ kernels/attention.cu                 | 197 +++++++++++++++++
+ kernels/fused_mlp.cu                 |  62 ++++++
+ kernels/rmsnorm.cu                   |  90 ++++++++
+ kernels/rotary_embedding.cu          | 104 +++++++++
+ program.md                           | 140 ++++++++++++
+ starter_kernels/attention.cu         | 146 +++++++++++++
+ starter_kernels/bindings.cpp         |  38 ++++
+ starter_kernels/fused_mlp.cu         |  90 ++++++++
+ starter_kernels/rmsnorm.cu           |  94 ++++++++
+ starter_kernels/rotary_embedding.cu  | 104 +++++++++
+ templates/gemma3.jinja               |  47 ++++
+ templates/gemma3_tool_calling.jinja  | 143 ++++++++++++
+ templates/qwen3.jinja                |  89 ++++++++
+ templates/smollm.jinja               |  94 ++++++++
+ timer.sh                             |  16 ++
+ 26 files changed, 2844 insertions(+)

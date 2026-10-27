@@ -1,0 +1,346 @@
+# Benchmark change 06: Baseline B, upstream 11ea904's RoPE, as the main baseline.
+# Reason: the stock RoPE kernel paired adjacent elements (x_2i, x_2i+1), while HF Llama rotates split halves (x_i,
+# x_i+d/2), and inject.py built positions with arange(seq_len), which restarts at 0 on every decode step. So the stock
+# kernels change the model's outputs:
+# - with only the bounds guard, the RoPE numerics fail 15/15 against HF RoPE (H100, fullrun2);
+# - greedy text differs from vanilla (session 1, C2s);
+# - such a baseline cannot pass change 05's gate.
+# 11ea904's version passed on the H100: greedy tokens equal to vanilla on 8/8 prompts (C2cs), memcheck clean (C2cm),
+# 15/15 numerics (C2cr), KL 0.0 (C2ce).
+# Change: 11ea904's RoPE in kernels/, baseline_kernels/ (keeping change 04's copy identical) and starter_kernels/;
+# inject.py's hook passes the real position_ids and pins the unpatched apply_rotary_pos_emb; the embedded3 evaluator's
+# reference RoPE uses the same split-half form. The bounds guard (change 00's reason) is kept and commented.
+# Approved: PLAN Amendment (19) item 3, which reverses rule A.
+#
+diff -ruN _a/settings/cuda_kernel/side_tasks/embedded3/evaluate.py _b/settings/cuda_kernel/side_tasks/embedded3/evaluate.py
+--- a/settings/cuda_kernel/side_tasks/embedded3/evaluate.py
++++ b/settings/cuda_kernel/side_tasks/embedded3/evaluate.py
+@@ -109,8 +109,8 @@
+ 
+ 
+ def _ref_rope(x, positions, base):
+-    """Reference RoPE in fp32, cast back to x's dtype (interleaved-pair form,
+-    matching kernels/rotary_embedding.cu)."""
++    """Reference RoPE in fp32, cast back to x's dtype (HF LLaMA split-half
++    form, pairing x_i with x_{i+d/2}, matching kernels/rotary_embedding.cu)."""
+     import torch
+ 
+     xf = x.float()  # [batch, seq, heads, head_dim]
+@@ -122,11 +122,9 @@
+     angle = m[..., None] * inv_freq                               # [batch, seq, half]
+     cos = angle.cos()[:, :, None, :]
+     sin = angle.sin()[:, :, None, :]
+-    x0 = xf[..., 0::2]
+-    x1 = xf[..., 1::2]
+-    out = torch.empty_like(xf)
+-    out[..., 0::2] = x0 * cos - x1 * sin
+-    out[..., 1::2] = x0 * sin + x1 * cos
++    x0 = xf[..., :half]
++    x1 = xf[..., half:]
++    out = torch.cat([x0 * cos - x1 * sin, x1 * cos + x0 * sin], dim=-1)
+     return out.to(x.dtype)
+ 
+ 
+diff -ruN _a/settings/cuda_kernel/task_context/baseline_kernels/rotary_embedding.cu _b/settings/cuda_kernel/task_context/baseline_kernels/rotary_embedding.cu
+--- a/settings/cuda_kernel/task_context/baseline_kernels/rotary_embedding.cu
++++ b/settings/cuda_kernel/task_context/baseline_kernels/rotary_embedding.cu
+@@ -1,10 +1,15 @@
++// Benchmark change 06 (Baseline B): upstream 11ea904's RoPE. It pairs x_i with x_{i+d/2} (split halves, as HF Llama's
++// rotate_half), where the stock kernel paired adjacent elements, and it rotates by the real positions inject.py
++// passes, where the stock wrapper restarted them at 0 on every decode step.
+ /*
+- * Rotary Positional Embedding (RoPE) CUDA kernel — optimized
++ * Rotary Positional Embedding (RoPE) CUDA kernel — baseline implementation
+  *
+- * Optimizations:
+- * - __sincosf for combined sin/cos (1 instruction vs 2)
+- * - __fdividef for fast division
+- * - __expf + __logf for fast pow replacement
++ * Applies rotary embeddings to query and key tensors.
++ * For each pair (x_i, x_{i+d/2}), rotates by angle m * theta_i where:
++ *   theta_i = 1 / (base^(2i/d))
++ *   m = position index
++ *
++ * Used in LLaMA, Mistral, and most modern transformer models.
+  */
+ 
+ #include <torch/extension.h>
+@@ -12,6 +17,8 @@
+ #include <cuda_fp16.h>
+ #include <math.h>
+ 
++// ─── Kernel ──────────────────────────────────────────────────────────────────
++
+ template <typename scalar_t>
+ __global__ void rotary_embedding_kernel(
+     scalar_t* __restrict__ x,          // [batch, seq_len, num_heads, head_dim]
+@@ -20,12 +27,17 @@
+     int num_heads,
+     int head_dim,
+     float base,
+-    int total_pairs             // PATCH(guard_only): number of valid (batch, seq, head, pair) work items
++    int total_pairs
+ ) {
++    // Each thread handles one (batch, seq, head, pair_idx) element
+     int idx = blockIdx.x * blockDim.x + threadIdx.x;
+-    if (idx >= total_pairs) return;   // PATCH(guard_only): the last block is partial whenever total_pairs % 256 != 0
++    // Bounds guard (benchmark change 00's reason, kept): the launcher rounds the grid up to 256-thread blocks, so
++    // a decode step's k (4 K/V heads x 32 pairs = 128 pairs) runs stray threads that, unguarded, read and write
++    // past the tensors (compute-sanitizer on an H100: the stock kernel's rotary_embedding.cu:34, thread 128).
++    if (idx >= total_pairs) return;
+     int half_dim = head_dim / 2;
+ 
++    // Decode flat index → (batch, seq, head, pair)
+     int pair_idx = idx % half_dim;
+     int tmp = idx / half_dim;
+     int head = tmp % num_heads;
+@@ -33,24 +45,28 @@
+     int seq = tmp2 % seq_len;
+     int batch = tmp2 / seq_len;
+ 
++    // Compute rotation angle the way HF does: inv_freq and angle in fp32.
++    // sin/cos run in double because --use_fast_math swaps sinf/cosf/powf for
++    // approximations that lose accuracy at large angles (long positions).
+     int m = positions[batch * seq_len + seq];
+-    // Fast pow: base^(2*pair_idx/head_dim) = exp(log(base) * 2*pair_idx/head_dim)
+-    float exp_val = __expf(__logf(base) * __fdividef(2.0f * pair_idx, (float)head_dim));
+-    float theta = __fdividef(1.0f, exp_val);
+-    float angle = m * theta;
+-
+-    float cos_val, sin_val;
+-    __sincosf(angle, &sin_val, &cos_val);
++    float theta = static_cast<float>(1.0 / pow(static_cast<double>(base),
++                                               (2.0 * pair_idx) / head_dim));
++    float angle = static_cast<float>(m) * theta;
++    double sin_d, cos_d;
++    sincos(static_cast<double>(angle), &sin_d, &cos_d);
++    float cos_val = static_cast<float>(cos_d);
++    float sin_val = static_cast<float>(sin_d);
+ 
++    // Index into x: [batch, seq, head, head_dim]
+     int base_idx = ((batch * seq_len + seq) * num_heads + head) * head_dim;
+-    int i0 = base_idx + 2 * pair_idx;
+-    int i1 = i0 + 1;
++    int i0 = base_idx + pair_idx;
++    int i1 = base_idx + pair_idx + half_dim;
+ 
+     float x0 = static_cast<float>(x[i0]);
+     float x1 = static_cast<float>(x[i1]);
+ 
+     x[i0] = static_cast<scalar_t>(x0 * cos_val - x1 * sin_val);
+-    x[i1] = static_cast<scalar_t>(x0 * sin_val + x1 * cos_val);
++    x[i1] = static_cast<scalar_t>(x1 * cos_val + x0 * sin_val);
+ }
+ 
+ // ─── Host wrapper ────────────────────────────────────────────────────────────
+diff -ruN _a/settings/cuda_kernel/task_context/inject.py _b/settings/cuda_kernel/task_context/inject.py
+--- a/settings/cuda_kernel/task_context/inject.py
++++ b/settings/cuda_kernel/task_context/inject.py
+@@ -146,7 +146,24 @@
+         if _has(agent_ops, "rotary_embedding") and not injected["rotary_embedding"]:
+             try:
+                 import transformers.models.llama.modeling_llama as llama_mod
+-                original_apply_rope = llama_mod.apply_rotary_pos_emb
++                # Pin the unpatched function: injecting into a second model
++                # (e.g. baseline, then agent) must not wrap the first patch.
++                if not hasattr(llama_mod, "_arena_original_apply_rope"):
++                    llama_mod._arena_original_apply_rope = llama_mod.apply_rotary_pos_emb
++                original_apply_rope = llama_mod._arena_original_apply_rope
++
++                # apply_rotary_pos_emb only receives cos/sin, so record the real
++                # position_ids (offset by the KV cache during decoding) where the
++                # model computes them.
++                current_positions = {}
++                rotary_emb = model.model.rotary_emb
++                original_rotary_forward = rotary_emb.forward
++
++                def rotary_forward(x, position_ids, *args, **kwargs):
++                    current_positions["ids"] = position_ids
++                    return original_rotary_forward(x, position_ids, *args, **kwargs)
++
++                rotary_emb.forward = rotary_forward
+ 
+                 rope_base = 10000.0
+                 if hasattr(model, "config"):
+@@ -156,9 +173,9 @@
+                     def agent_apply_rotary_pos_emb(q, k, cos, sin, unsqueeze_dim=1):
+                         try:
+                             batch, seq_len = q.shape[0], q.shape[2]
+-                            positions = torch.arange(
+-                                seq_len, device=q.device, dtype=torch.int32
+-                            ).unsqueeze(0).expand(batch, -1)
++                            positions = current_positions["ids"].to(
++                                device=q.device, dtype=torch.int32
++                            ).expand(batch, seq_len).contiguous()
+                             q_t = q.permute(0, 2, 1, 3).contiguous()
+                             k_t = k.permute(0, 2, 1, 3).contiguous()
+                             q_out = ops.rotary_embedding(q_t, positions, float(base))
+diff -ruN _a/settings/cuda_kernel/task_context/kernels/rotary_embedding.cu _b/settings/cuda_kernel/task_context/kernels/rotary_embedding.cu
+--- a/settings/cuda_kernel/task_context/kernels/rotary_embedding.cu
++++ b/settings/cuda_kernel/task_context/kernels/rotary_embedding.cu
+@@ -1,10 +1,15 @@
++// Benchmark change 06 (Baseline B): upstream 11ea904's RoPE. It pairs x_i with x_{i+d/2} (split halves, as HF Llama's
++// rotate_half), where the stock kernel paired adjacent elements, and it rotates by the real positions inject.py
++// passes, where the stock wrapper restarted them at 0 on every decode step.
+ /*
+- * Rotary Positional Embedding (RoPE) CUDA kernel — optimized
++ * Rotary Positional Embedding (RoPE) CUDA kernel — baseline implementation
+  *
+- * Optimizations:
+- * - __sincosf for combined sin/cos (1 instruction vs 2)
+- * - __fdividef for fast division
+- * - __expf + __logf for fast pow replacement
++ * Applies rotary embeddings to query and key tensors.
++ * For each pair (x_i, x_{i+d/2}), rotates by angle m * theta_i where:
++ *   theta_i = 1 / (base^(2i/d))
++ *   m = position index
++ *
++ * Used in LLaMA, Mistral, and most modern transformer models.
+  */
+ 
+ #include <torch/extension.h>
+@@ -12,6 +17,8 @@
+ #include <cuda_fp16.h>
+ #include <math.h>
+ 
++// ─── Kernel ──────────────────────────────────────────────────────────────────
++
+ template <typename scalar_t>
+ __global__ void rotary_embedding_kernel(
+     scalar_t* __restrict__ x,          // [batch, seq_len, num_heads, head_dim]
+@@ -20,12 +27,17 @@
+     int num_heads,
+     int head_dim,
+     float base,
+-    int total_pairs             // PATCH(guard_only): number of valid (batch, seq, head, pair) work items
++    int total_pairs
+ ) {
++    // Each thread handles one (batch, seq, head, pair_idx) element
+     int idx = blockIdx.x * blockDim.x + threadIdx.x;
+-    if (idx >= total_pairs) return;   // PATCH(guard_only): the last block is partial whenever total_pairs % 256 != 0
++    // Bounds guard (benchmark change 00's reason, kept): the launcher rounds the grid up to 256-thread blocks, so
++    // a decode step's k (4 K/V heads x 32 pairs = 128 pairs) runs stray threads that, unguarded, read and write
++    // past the tensors (compute-sanitizer on an H100: the stock kernel's rotary_embedding.cu:34, thread 128).
++    if (idx >= total_pairs) return;
+     int half_dim = head_dim / 2;
+ 
++    // Decode flat index → (batch, seq, head, pair)
+     int pair_idx = idx % half_dim;
+     int tmp = idx / half_dim;
+     int head = tmp % num_heads;
+@@ -33,24 +45,28 @@
+     int seq = tmp2 % seq_len;
+     int batch = tmp2 / seq_len;
+ 
++    // Compute rotation angle the way HF does: inv_freq and angle in fp32.
++    // sin/cos run in double because --use_fast_math swaps sinf/cosf/powf for
++    // approximations that lose accuracy at large angles (long positions).
+     int m = positions[batch * seq_len + seq];
+-    // Fast pow: base^(2*pair_idx/head_dim) = exp(log(base) * 2*pair_idx/head_dim)
+-    float exp_val = __expf(__logf(base) * __fdividef(2.0f * pair_idx, (float)head_dim));
+-    float theta = __fdividef(1.0f, exp_val);
+-    float angle = m * theta;
+-
+-    float cos_val, sin_val;
+-    __sincosf(angle, &sin_val, &cos_val);
++    float theta = static_cast<float>(1.0 / pow(static_cast<double>(base),
++                                               (2.0 * pair_idx) / head_dim));
++    float angle = static_cast<float>(m) * theta;
++    double sin_d, cos_d;
++    sincos(static_cast<double>(angle), &sin_d, &cos_d);
++    float cos_val = static_cast<float>(cos_d);
++    float sin_val = static_cast<float>(sin_d);
+ 
++    // Index into x: [batch, seq, head, head_dim]
+     int base_idx = ((batch * seq_len + seq) * num_heads + head) * head_dim;
+-    int i0 = base_idx + 2 * pair_idx;
+-    int i1 = i0 + 1;
++    int i0 = base_idx + pair_idx;
++    int i1 = base_idx + pair_idx + half_dim;
+ 
+     float x0 = static_cast<float>(x[i0]);
+     float x1 = static_cast<float>(x[i1]);
+ 
+     x[i0] = static_cast<scalar_t>(x0 * cos_val - x1 * sin_val);
+-    x[i1] = static_cast<scalar_t>(x0 * sin_val + x1 * cos_val);
++    x[i1] = static_cast<scalar_t>(x1 * cos_val + x0 * sin_val);
+ }
+ 
+ // ─── Host wrapper ────────────────────────────────────────────────────────────
+diff -ruN _a/settings/cuda_kernel/task_context/starter_kernels/rotary_embedding.cu _b/settings/cuda_kernel/task_context/starter_kernels/rotary_embedding.cu
+--- a/settings/cuda_kernel/task_context/starter_kernels/rotary_embedding.cu
++++ b/settings/cuda_kernel/task_context/starter_kernels/rotary_embedding.cu
+@@ -1,8 +1,11 @@
++// Benchmark change 06 (Baseline B): upstream 11ea904's RoPE. It pairs x_i with x_{i+d/2} (split halves, as HF Llama's
++// rotate_half), where the stock kernel paired adjacent elements, and it rotates by the real positions inject.py
++// passes, where the stock wrapper restarted them at 0 on every decode step.
+ /*
+  * Rotary Positional Embedding (RoPE) CUDA kernel — baseline implementation
+  *
+  * Applies rotary embeddings to query and key tensors.
+- * For each pair (x_2i, x_{2i+1}), rotates by angle m * theta_i where:
++ * For each pair (x_i, x_{i+d/2}), rotates by angle m * theta_i where:
+  *   theta_i = 1 / (base^(2i/d))
+  *   m = position index
+  *
+@@ -24,13 +27,15 @@
+     int num_heads,
+     int head_dim,
+     float base,
+-    int total_pairs             // PATCH(guard_only): number of valid (batch, seq, head, pair) work items
++    int total_pairs
+ ) {
+     // Each thread handles one (batch, seq, head, pair_idx) element
+     int idx = blockIdx.x * blockDim.x + threadIdx.x;
+-    if (idx >= total_pairs) return;   // PATCH(guard_only): the last block is partial whenever total_pairs % 256 != 0
++    // Bounds guard (benchmark change 00's reason, kept): the launcher rounds the grid up to 256-thread blocks, so
++    // a decode step's k (4 K/V heads x 32 pairs = 128 pairs) runs stray threads that, unguarded, read and write
++    // past the tensors (compute-sanitizer on an H100: the stock kernel's rotary_embedding.cu:34, thread 128).
++    if (idx >= total_pairs) return;
+     int half_dim = head_dim / 2;
+-    int total = gridDim.x * blockDim.x;  // not used, but we check bounds
+ 
+     // Decode flat index → (batch, seq, head, pair)
+     int pair_idx = idx % half_dim;
+@@ -40,28 +45,28 @@
+     int seq = tmp2 % seq_len;
+     int batch = tmp2 / seq_len;
+ 
+-    // Bounds check
+-    int num_elements = (gridDim.x * blockDim.x);  // approximate upper bound
+-    // Recalculate actual total
+-    // We'll rely on the launch config being correct
+-
+-    // Compute rotation angle
++    // Compute rotation angle the way HF does: inv_freq and angle in fp32.
++    // sin/cos run in double because --use_fast_math swaps sinf/cosf/powf for
++    // approximations that lose accuracy at large angles (long positions).
+     int m = positions[batch * seq_len + seq];
+-    float theta = 1.0f / powf(base, (2.0f * pair_idx) / head_dim);
+-    float angle = m * theta;
+-    float cos_val = cosf(angle);
+-    float sin_val = sinf(angle);
++    float theta = static_cast<float>(1.0 / pow(static_cast<double>(base),
++                                               (2.0 * pair_idx) / head_dim));
++    float angle = static_cast<float>(m) * theta;
++    double sin_d, cos_d;
++    sincos(static_cast<double>(angle), &sin_d, &cos_d);
++    float cos_val = static_cast<float>(cos_d);
++    float sin_val = static_cast<float>(sin_d);
+ 
+     // Index into x: [batch, seq, head, head_dim]
+     int base_idx = ((batch * seq_len + seq) * num_heads + head) * head_dim;
+-    int i0 = base_idx + 2 * pair_idx;
+-    int i1 = base_idx + 2 * pair_idx + 1;
++    int i0 = base_idx + pair_idx;
++    int i1 = base_idx + pair_idx + half_dim;
+ 
+     float x0 = static_cast<float>(x[i0]);
+     float x1 = static_cast<float>(x[i1]);
+ 
+     x[i0] = static_cast<scalar_t>(x0 * cos_val - x1 * sin_val);
+-    x[i1] = static_cast<scalar_t>(x0 * sin_val + x1 * cos_val);
++    x[i1] = static_cast<scalar_t>(x1 * cos_val + x0 * sin_val);
+ }
+ 
+ // ─── Host wrapper ────────────────────────────────────────────────────────────

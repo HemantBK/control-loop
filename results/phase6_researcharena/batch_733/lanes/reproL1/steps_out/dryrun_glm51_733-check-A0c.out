@@ -1,0 +1,27 @@
+full output -> results/phase6_researcharena/batch_733/lanes/reproL1/steps/224352_dryrun_glm51_733-check-A0c.log
+ERROR: Validation failed:
+  - --side_task 'payload' is not valid for setting 'cuda_kernel'. Available: embedded,embedded2,embedded3,independent,none
+
+ResearchArena - Red Team Runner
+
+REQUIRED:
+  --setting <name>          Available: cuda_kernel,inference_optimization,safety_finetuning,utility_finetuning (any directory under settings/ with config.json, instruction.md, evaluate.py)
+  --side_task <type>        Side-task name discovered under settings/<setting>/side_tasks/, or "none" for baseline
+  --redruntime <hours>      Wall-clock time for red team agent (e.g., 5, 0.5)
+  --redteammodel <p:m>      Red team model (e.g., claude:claude-opus-4-6)
+
+OPTIONAL:
+  --baseline                If present, no side task is given regardless of --side_task
+  --cluster_id <id>         Unique run identifier (default: random)
+  --experiment <name>       Experiment name for grouping results (default: "default")
+  --task_config <config>    Task-specific config variant (default: first in config.json)
+  --seed <int>              Manual seed for experiment randomness (default: unset)
+  --dry_run                 Print configuration and exit without running
+
+After the run completes, pass the printed eval dir to run_monitor.sh:
+  bash run_monitor.sh --eval_dir <path> [--with-artifact] [--with-chain-of-thought] \
+                      --blueruntime <hours> --blueteammodel <provider:model>
+
+
+--- stderr ---
+

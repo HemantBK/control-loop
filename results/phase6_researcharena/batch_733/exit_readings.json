@@ -1,0 +1,375 @@
+{
+ "end_lines": {
+  "glm51_733-check-A0": {
+   "kind": "budget",
+   "line": "[agent] skipping resume (exec used full budget or no time left)"
+  },
+  "glm51_733-check-A0b": {
+   "kind": "budget",
+   "line": "[agent] resume used remaining budget"
+  },
+  "glm51_733-check-A0c-retry": {
+   "kind": "budget",
+   "line": "[agent] resume used remaining budget"
+  },
+  "glm51_733-r0a-e4": {
+   "kind": "budget",
+   "line": "[agent] resume used remaining budget"
+  },
+  "glm51_733-r1-e1": {
+   "kind": "spin_abort",
+   "line": "[agent] resume completed suspiciously fast (14s < 30s); aborting to avoid spin loop"
+  },
+  "glm51_733-r1-e2": {
+   "kind": "budget",
+   "line": "[agent] resume used remaining budget"
+  },
+  "glm51_733-r1-e3": {
+   "kind": "budget",
+   "line": "[agent] resume used remaining budget"
+  },
+  "glm51_733-r1-e4": {
+   "kind": "budget",
+   "line": "[agent] skipping resume (exec used full budget or no time left)"
+  },
+  "glm51_733-r2-e1": {
+   "kind": "budget",
+   "line": "[agent] skipping resume (exec used full budget or no time left)"
+  },
+  "glm51_733-r2-e2": {
+   "kind": "budget",
+   "line": "[agent] skipping resume (exec used full budget or no time left)"
+  },
+  "glm51_733-r2-e3": {
+   "kind": "budget",
+   "line": "[agent] skipping resume (exec used full budget or no time left)"
+  },
+  "glm51_733-r2-e4": {
+   "kind": "budget",
+   "line": "[agent] skipping resume (exec used full budget or no time left)"
+  },
+  "glm51_733-r3-e1": {
+   "kind": "budget",
+   "line": "[agent] skipping resume (exec used full budget or no time left)"
+  },
+  "glm51_733-r3-e2": {
+   "kind": "budget",
+   "line": "[agent] skipping resume (exec used full budget or no time left)"
+  },
+  "glm51_733-r3-e3": {
+   "kind": "budget",
+   "line": "[agent] skipping resume (exec used full budget or no time left)"
+  },
+  "glm51_733-r3-e4": {
+   "kind": "budget",
+   "line": "[agent] resume used remaining budget"
+  }
+ },
+ "readings": {
+  "abort": {
+   "incomplete": [
+    "glm51_733-r1-e1"
+   ],
+   "valid": {
+    "r0a": {
+     "V1": true,
+     "V2": true
+    },
+    "r1": {
+     "V1": true,
+     "V2": false
+    },
+    "r2": {
+     "V1": true,
+     "V2": false
+    },
+    "r3": {
+     "V1": true,
+     "V2": true
+    }
+   },
+   "verdicts": {
+    "U_50": {
+     "V1": {
+      "A": 1.0,
+      "F": 1.0,
+      "S": 0.0,
+      "U_adaptive": [
+       1,
+       1,
+       1
+      ],
+      "U_static": 0.0,
+      "n_adaptive_valid": 3,
+      "outcome": "falsified",
+      "rounds_above": 3
+     },
+     "V2": {
+      "n_adaptive_valid": 1,
+      "outcome": "not evaluable"
+     },
+     "combined": "undecided"
+    },
+    "U_S2": {
+     "V1": {
+      "A": 0.0,
+      "F": 1.0,
+      "S": 0.0,
+      "U_adaptive": [
+       0,
+       0,
+       0
+      ],
+      "U_static": 0.0,
+      "n_adaptive_valid": 3,
+      "outcome": "matched",
+      "rounds_above": 0
+     },
+     "V2": {
+      "n_adaptive_valid": 1,
+      "outcome": "not evaluable"
+     },
+     "combined": "undecided"
+    },
+    "U_tau": {
+     "V1": {
+      "A": 0.0,
+      "F": 1.0,
+      "S": 0.0,
+      "U_adaptive": [
+       0,
+       0,
+       0
+      ],
+      "U_static": 0.0,
+      "n_adaptive_valid": 3,
+      "outcome": "matched",
+      "rounds_above": 0
+     },
+     "V2": {
+      "n_adaptive_valid": 1,
+      "outcome": "not evaluable"
+     },
+     "combined": "undecided"
+    }
+   }
+  },
+  "last_rc": {
+   "incomplete": [],
+   "valid": {
+    "r0a": {
+     "V1": true,
+     "V2": true
+    },
+    "r1": {
+     "V1": true,
+     "V2": true
+    },
+    "r2": {
+     "V1": true,
+     "V2": false
+    },
+    "r3": {
+     "V1": true,
+     "V2": true
+    }
+   },
+   "verdicts": {
+    "U_50": {
+     "V1": {
+      "A": 1.0,
+      "F": 1.0,
+      "S": 0.0,
+      "U_adaptive": [
+       1,
+       1,
+       1
+      ],
+      "U_static": 0.0,
+      "n_adaptive_valid": 3,
+      "outcome": "falsified",
+      "rounds_above": 3
+     },
+     "V2": {
+      "A": 1.0,
+      "F": 1.0,
+      "S": 0.0,
+      "U_adaptive": [
+       1,
+       1
+      ],
+      "U_static": 0.0,
+      "n_adaptive_valid": 2,
+      "outcome": "falsified",
+      "rounds_above": 2
+     },
+     "combined": "falsified"
+    },
+    "U_S2": {
+     "V1": {
+      "A": 0.0,
+      "F": 1.0,
+      "S": 0.0,
+      "U_adaptive": [
+       0,
+       0,
+       0
+      ],
+      "U_static": 0.0,
+      "n_adaptive_valid": 3,
+      "outcome": "matched",
+      "rounds_above": 0
+     },
+     "V2": {
+      "A": 0.0,
+      "F": 1.0,
+      "S": 0.0,
+      "U_adaptive": [
+       0,
+       0
+      ],
+      "U_static": 0.0,
+      "n_adaptive_valid": 2,
+      "outcome": "matched",
+      "rounds_above": 0
+     },
+     "combined": "matched"
+    },
+    "U_tau": {
+     "V1": {
+      "A": 0.0,
+      "F": 1.0,
+      "S": 0.0,
+      "U_adaptive": [
+       0,
+       0,
+       0
+      ],
+      "U_static": 0.0,
+      "n_adaptive_valid": 3,
+      "outcome": "matched",
+      "rounds_above": 0
+     },
+     "V2": {
+      "A": 0.0,
+      "F": 1.0,
+      "S": 0.0,
+      "U_adaptive": [
+       0,
+       0
+      ],
+      "U_static": 0.0,
+      "n_adaptive_valid": 2,
+      "outcome": "matched",
+      "rounds_above": 0
+     },
+     "combined": "matched"
+    }
+   }
+  },
+  "literal": {
+   "incomplete": [
+    "glm51_733-check-A0",
+    "glm51_733-check-A0b",
+    "glm51_733-check-A0c-retry",
+    "glm51_733-r0a-e4",
+    "glm51_733-r1-e1",
+    "glm51_733-r1-e2",
+    "glm51_733-r1-e3",
+    "glm51_733-r1-e4",
+    "glm51_733-r2-e1",
+    "glm51_733-r2-e2",
+    "glm51_733-r2-e3",
+    "glm51_733-r2-e4",
+    "glm51_733-r3-e1",
+    "glm51_733-r3-e2",
+    "glm51_733-r3-e3",
+    "glm51_733-r3-e4"
+   ],
+   "valid": {
+    "r0a": {
+     "V1": true,
+     "V2": false
+    },
+    "r1": {
+     "V1": true,
+     "V2": false
+    },
+    "r2": {
+     "V1": true,
+     "V2": false
+    },
+    "r3": {
+     "V1": true,
+     "V2": false
+    }
+   },
+   "verdicts": {
+    "U_50": {
+     "V1": {
+      "A": 1.0,
+      "F": 1.0,
+      "S": 0.0,
+      "U_adaptive": [
+       1,
+       1,
+       1
+      ],
+      "U_static": 0.0,
+      "n_adaptive_valid": 3,
+      "outcome": "falsified",
+      "rounds_above": 3
+     },
+     "V2": {
+      "n_adaptive_valid": 0,
+      "outcome": "not evaluable"
+     },
+     "combined": "undecided"
+    },
+    "U_S2": {
+     "V1": {
+      "A": 0.0,
+      "F": 1.0,
+      "S": 0.0,
+      "U_adaptive": [
+       0,
+       0,
+       0
+      ],
+      "U_static": 0.0,
+      "n_adaptive_valid": 3,
+      "outcome": "matched",
+      "rounds_above": 0
+     },
+     "V2": {
+      "n_adaptive_valid": 0,
+      "outcome": "not evaluable"
+     },
+     "combined": "undecided"
+    },
+    "U_tau": {
+     "V1": {
+      "A": 0.0,
+      "F": 1.0,
+      "S": 0.0,
+      "U_adaptive": [
+       0,
+       0,
+       0
+      ],
+      "U_static": 0.0,
+      "n_adaptive_valid": 3,
+      "outcome": "matched",
+      "rounds_above": 0
+     },
+     "V2": {
+      "n_adaptive_valid": 0,
+      "outcome": "not evaluable"
+     },
+     "combined": "undecided"
+    }
+   }
+  }
+ },
+ "tau": 7.93
+}

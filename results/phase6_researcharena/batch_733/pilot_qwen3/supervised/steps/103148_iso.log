@@ -1,0 +1,19 @@
+'JOBS_DIR_MODE 777 PAYLOAD_DIR_MODE 777
+AGENT_USER uid=1000(p6agent) gid=1000(p6agent) groups=1000(p6agent)
+RP_ENV_MODE 600
+AGENT_KEY_CHECK user p6agent: environment 0, /etc/rp_environment 0, /proc environ 0, /proc cmdline 0, readable files holding the key 0
+AGENT_KEY_CHECK PASS
+KEYCHECK_RC 0
+GPU 0: NVIDIA H100 80GB HBM3 (UUID: GPU-af3110af-9c90-7b61-da32-f9a3c7a0adbf)
+AGENT_GPU_OK
+torch 2.10.0+cu128 NVIDIA H100 80GB HBM3
+AGENT_TORCH_CUDA_OK
+llama
+AGENT_MODEL_READ_OK
+AGENT_COMPILE_OK
+1.19.4
+AGENT_OPENCODE_OK
+AGENT_WRITE_OK
+
+--- stderr ---
+'

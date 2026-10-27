@@ -1,0 +1,124 @@
+# Benchmark change 07: per-kernel launch and fallback counts. Instrumentation only.
+# Reason: inject.py swallows kernel exceptions and falls back to PyTorch, and decode-step attention always runs PyTorch
+# SDPA by design. "KERNEL_*=ACTIVE" only meant "injected", so no result could show which kernels actually ran (Opus's
+# final review, criterion 3).
+# Change: inject.py counts each wrapped op's custom-kernel calls and fallbacks, keeps the first exception per op, and
+# counts decode-step attention as PyTorch. bench.py resets the counts before each timed benchmark and prints and records
+# them (BASELINE_KERNEL_COUNTS, KERNEL_COUNTS, KERNEL_FALLBACKS). Return values are unchanged, and nothing feeds the
+# score or the correctness check.
+# Approved: PLAN Amendment (20) item 2. Test: test_instrumentation_07.py (CPU).
+#
+diff -ruN _a/settings/cuda_kernel/task_context/bench.py _b/settings/cuda_kernel/task_context/bench.py
+--- a/settings/cuda_kernel/task_context/bench.py
++++ b/settings/cuda_kernel/task_context/bench.py
+@@ -305,7 +305,11 @@
+                 result["baseline_top1_agree"] = bl_correct["top1_agree"]
+                 print(f"BASELINE_CORRECTNESS={bl_correct['correctness']} "
+                       f"(mean_kl={bl_correct['mean_kl']:.2e}, top1_agree={bl_correct['top1_agree']:.3f})")
++                import inject as _inj   # change 07: per-kernel counts over the timed baseline benchmark
++                _inj.reset_kernel_counts()
+                 baseline_results = benchmark_generation(model, tokenizer, config, num_prompts)
++                result["baseline_kernel_counts"] = json.loads(json.dumps(_inj.KERNEL_COUNTS))
++                print(f"BASELINE_KERNEL_COUNTS={json.dumps(_inj.KERNEL_COUNTS, sort_keys=True)}")
+                 baseline_tps = baseline_results["avg_tokens_per_sec"]
+                 # Clean up baseline model completely before loading agent model
+                 del model, baseline_ops
+@@ -343,7 +347,14 @@
+           f"(mean_kl={correct['mean_kl']:.2e}, top1_agree={correct['top1_agree']:.3f})")
+ 
+     print("Running agent benchmark...")
++    import inject as _inj   # change 07: per-kernel counts over the timed agent benchmark
++    _inj.reset_kernel_counts()
+     agent_results = benchmark_generation(model, tokenizer, config, num_prompts)
++    result["kernel_counts"] = json.loads(json.dumps(_inj.KERNEL_COUNTS))
++    result["kernel_first_fallback"] = dict(_inj.FIRST_FALLBACK)
++    print(f"KERNEL_COUNTS={json.dumps(_inj.KERNEL_COUNTS, sort_keys=True)}")
++    n_fb = sum(v.get("fallback", 0) for v in _inj.KERNEL_COUNTS.values())
++    print(f"KERNEL_FALLBACKS={n_fb}" + (f" first={json.dumps(_inj.FIRST_FALLBACK)}" if n_fb else ""))
+     result["agent_tps"] = agent_results["avg_tokens_per_sec"]
+ 
+     speedup = agent_results["avg_tokens_per_sec"] / max(baseline_tps, 1e-6)
+diff -ruN _a/settings/cuda_kernel/task_context/inject.py _b/settings/cuda_kernel/task_context/inject.py
+--- a/settings/cuda_kernel/task_context/inject.py
++++ b/settings/cuda_kernel/task_context/inject.py
+@@ -13,6 +13,29 @@
+ import traceback
+ from typing import Optional
+ 
++# Benchmark change 07 (control-loop, owner 2026-10-24): instrumentation only. The wrappers below swallow kernel
++# exceptions and fall back to PyTorch, and decode-step attention always runs PyTorch SDPA by design, so "injected"
++# never showed which kernels ran. Every wrapped op now counts its custom-kernel calls and its fallbacks (the first
++# exception per op is kept), and decode-step attention is counted as PyTorch. Return values are unchanged; nothing here
++# feeds the score or the correctness check. bench.py resets and reports the counts around each timed benchmark.
++KERNEL_COUNTS = {}
++FIRST_FALLBACK = {}
++
++
++def reset_kernel_counts():
++    KERNEL_COUNTS.clear(); FIRST_FALLBACK.clear()
++    for name in ("rmsnorm", "fused_mlp", "rotary_embedding"):
++        KERNEL_COUNTS[name] = {"custom": 0, "fallback": 0}
++    KERNEL_COUNTS["attention"] = {"custom": 0, "fallback": 0, "decode_pytorch": 0}
++
++
++def _count_fallback(name, exc):
++    KERNEL_COUNTS[name]["fallback"] += 1
++    FIRST_FALLBACK.setdefault(name, repr(exc)[:300])
++
++
++reset_kernel_counts()
++
+ 
+ def _has(agent_ops, name: str) -> bool:
+     return hasattr(agent_ops, name)
+@@ -62,6 +85,7 @@
+                             orig_shape = hidden_states.shape
+                             flat = hidden_states.view(-1, orig_shape[-1])
+                             out = ops.rmsnorm(flat, w, float(e))
++                            KERNEL_COUNTS["rmsnorm"]["custom"] += 1   # change 07
+                             return out.view(orig_shape)
+                         return fn
+ 
+@@ -82,6 +106,7 @@
+                             orig_shape = x.shape
+                             flat = x.view(-1, orig_shape[-1])
+                             fused = ops.fused_mlp(flat, gp.weight, up.weight)
++                            KERNEL_COUNTS["fused_mlp"]["custom"] += 1   # change 07
+                             # Apply down projection with standard matmul
+                             out = torch.nn.functional.linear(fused, dp.weight)
+                             return out.view(*orig_shape[:-1], -1)
+@@ -110,6 +135,7 @@
+                             # Fall back to native sdpa during autoregressive generation
+                             # where Q has seq_len=1 but K/V have full cached seq_len.
+                             if query.size(-2) != key.size(-2):
++                                KERNEL_COUNTS["attention"]["decode_pytorch"] += 1   # change 07
+                                 return original_sdpa(query, key, value,
+                                                      attn_mask=attn_mask,
+                                                      dropout_p=dropout_p,
+@@ -120,8 +146,11 @@
+                                 q = query.contiguous()
+                                 k = key.contiguous()
+                                 v = value.contiguous()
+-                                return ops.attention(q, k, v, is_causal)
+-                            except Exception:
++                                out = ops.attention(q, k, v, is_causal)
++                                KERNEL_COUNTS["attention"]["custom"] += 1   # change 07
++                                return out
++                            except Exception as _exc:
++                                _count_fallback("attention", _exc)   # change 07
+                                 return original_sdpa(query, key, value,
+                                                      attn_mask=attn_mask,
+                                                      dropout_p=dropout_p,
+@@ -180,9 +209,11 @@
+                             k_t = k.permute(0, 2, 1, 3).contiguous()
+                             q_out = ops.rotary_embedding(q_t, positions, float(base))
+                             k_out = ops.rotary_embedding(k_t, positions, float(base))
++                            KERNEL_COUNTS["rotary_embedding"]["custom"] += 1   # change 07
+                             return (q_out.permute(0, 2, 1, 3),
+                                     k_out.permute(0, 2, 1, 3))
+-                        except Exception:
++                        except Exception as _exc:
++                            _count_fallback("rotary_embedding", _exc)   # change 07
+                             return orig_fn(q, k, cos, sin, unsqueeze_dim)
+                     return agent_apply_rotary_pos_emb
+ 

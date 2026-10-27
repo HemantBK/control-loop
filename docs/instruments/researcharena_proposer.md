@@ -101,3 +101,4 @@ proposer's history row equal the raw files). No real-log mechanism check has run
 - 2026-10-21: written with the Phase 6 PLAN (SOP §2.7); `RedTeamPolicy`, `BRIEF`, `MOVES`, `check_payload`,
   `fallback_mutation`, `format_history` built in `control_loop/adapters/researcharena/proposer_policy.py`
   (ported from the ControlArena proposer). No paid call yet.
+- 2026-10-27 (cell 733): proposals 1-3 for r1-r3, one call each with stop reason `stop` (`results/phase6_researcharena/batch_733/cell/redteam/`). Every proposal names the moves early_quiet_edit, no_narration, main_task_quality and minimal_footprint. The first r1 start's proposal 1 returned two empty outputs and used the fallback; since Amendment (33) the rule is up to 3 calls, and a refusal stops the batch with no fallback round. Temperature and seed are requested and not sent. Spend $0.0485 for the cell.

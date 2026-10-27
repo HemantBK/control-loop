@@ -1,0 +1,63 @@
+[pod_setup 06:27:09] no /etc/p6_image.json: not the prebuilt image, steps 1-6 run
+[pod_setup 06:27:09] step 1_system: start
+[pod_setup 06:27:30] CUDA_HOME=/usr/local/cuda nvcc=/usr/local/cuda/bin/nvcc release 12.9; TORCH_CUDA_ARCH_LIST=8.0;8.9;9.0; env file /workspace/p6_env.sh (sourced from /etc/rp_environment)
+Cuda compilation tools, release 12.9, V12.9.86
+Build cuda_12.9.r12.9/compiler.36037853_0
+NVIDIA H100 80GB HBM3, 81559 MiB, 595.91.07
+[pod_setup 06:27:30] fuse-overlayfs (shim) self-test ok
+[pod_setup 06:27:30] fuse: shim (no /dev/fuse)
+[pod_setup 06:27:30] step 1_system: done in 21 s
+[pod_setup 06:27:30] step 2_node_opencode: start
+v22.23.4
+1.19.4
+[pod_setup 06:27:58] step 2_node_opencode: done in 28 s
+[pod_setup 06:27:58] step 3_python: start
+torch 2.10.0+cu128 cuda 12.8 True transformers 4.53.3 hf_transfer ok
+python 3.11 (/usr/local/bin/python3) torch 2.10.0+cu128 torch.version.cuda 12.8 nvcc 12.9 cpp_extension.CUDA_HOME /usr/local/cuda transformers 4.53.3 TORCH_CUDA_ARCH_LIST=8.0;8.9;9.0
+[pod_setup 06:29:41] step 3_python: done in 103 s
+[pod_setup 06:29:41] step 4_checkouts: start
+[pod_setup 06:29:43] ResearchArena at 58776e09339c1714d0524130590abaf6eac7879d
+[pod_setup 06:29:43] control-loop: local tree pushed by pods.py (52 files)
+[pod_setup 06:29:43] step 4_checkouts: done in 2 s
+[pod_setup 06:29:43] step 5_arena_root: start
+/workspace/arena_root
+{"checkout_head": "58776e09339c1714d0524130590abaf6eac7879d", "files_identical": 206, "payload_is_stock": true, "overlay_agent_is_default": true, "task_context_files": 16, "generated_ignored": 0}
+[pod_setup 06:29:44] step 5_arena_root: done in 1 s
+[pod_setup 06:29:44] step 6_tinyllama: start
+TinyLlama at /workspace/hf/hub/models--TinyLlama--TinyLlama-1.1B-Chat-v1.0/snapshots/fe8a4ea1ffedaf415f4da2f062534de366a451e6 HF_HOME /workspace/hf
+[pod_setup 06:29:55] step 6_tinyllama: done in 11 s
+[pod_setup 06:29:55] step 7_smoke: start
+ Cluster ID:       setup
+ Experiment:       phase6_setup_dryrun
+ Seed:             733
+============================================================
+[DRY RUN] Exiting without execution.
+compile ok: /tmp/arena_build_6884/agent_ops.so (1157912 bytes; bench rc=0; full log /workspace/p6_setup_compile.log)
+[pod_setup 06:33:00] step 7_smoke: done in 185 s
+[pod_setup 06:33:00] setup complete in 351 s
+
+--- stderr ---
+debconf: delaying package configuration, since apt-utils is not installed
+fuse-overlayfs(shim): no /dev/fuse; COPIED /tmp/tmp.eM7kEP5yxa/lower -> /tmp/tmp.eM7kEP5yxa/merged (0 MiB in 0 s); writes stay in the copy, teardown is rm -rf; marker /tmp/tmp.eM7kEP5yxa/.shim_overlay
+
+WARNING: apt does not have a stable CLI interface. Use with caution in scripts.
+
+
+WARNING: apt does not have a stable CLI interface. Use with caution in scripts.
+
+debconf: delaying package configuration, since apt-utils is not installed
+
+WARNING: apt does not have a stable CLI interface. Use with caution in scripts.
+
+debconf: delaying package configuration, since apt-utils is not installed
+npm notice
+npm notice New major version of npm available! 10.9.9 -> 12.2.1
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.1
+npm notice To update run: npm install -g npm@12.2.1
+npm notice
+<frozen runpy>:128: RuntimeWarning: 'control_loop.adapters.researcharena.arena_root' found in sys.modules after import of package 'control_loop.adapters.researcharena', but prior to execution of 'control_loop.adapters.researcharena.arena_root'; this may result in unpredictable behaviour
+<frozen runpy>:128: RuntimeWarning: 'control_loop.adapters.researcharena.arena_root' found in sys.modules after import of package 'control_loop.adapters.researcharena', but prior to execution of 'control_loop.adapters.researcharena.arena_root'; this may result in unpredictable behaviour
+
+Fetching 10 files:   0%|          | 0/10 [00:00<?, ?it/s]
+Fetching 10 files:  80%|████████  | 8/10 [00:01<00:00,  7.16it/s]
+Fetching 10 files: 100%|██████████| 10/10 [00:11<00:00,  1.10s/it]

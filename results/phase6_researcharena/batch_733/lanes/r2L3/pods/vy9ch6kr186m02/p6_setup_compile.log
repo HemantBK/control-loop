@@ -1,0 +1,11 @@
+# compile_check 2026-10-27T07:54:22Z: cd /workspace/arena_root/settings/cuda_kernel/task_context && bash bench.sh --compile-only
+# CUDA_HOME=/usr/local/cuda TORCH_CUDA_ARCH_LIST=8.0;8.9;9.0 python3=/usr/local/bin/python3
+COMPILE_STATUS=PASS
+COMPILE_FUNCTIONS=attention,fused_mlp,rmsnorm,rotary_embedding
+--- task_context/workspace/last_bench.json ---
+{
+  "compile_status": "PASS",
+  "injected": {},
+  "speedup": 1.0
+}
+--- compile_check: bench.sh rc=0, artefact /tmp/arena_build_6995/agent_ops.so ---

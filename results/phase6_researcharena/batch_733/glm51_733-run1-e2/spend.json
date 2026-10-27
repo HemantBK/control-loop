@@ -1,0 +1,35 @@
+{
+  "episode": "glm51_733-run1-e2",
+  "agent_usd": 5.285,
+  "agent_cap_usd": 38.2947,
+  "cap_reached": false,
+  "read_errors": 0,
+  "start_usage": 13.488509863,
+  "end_usage": 18.773557633,
+  "pipeline_seconds": 3954,
+  "pod_rate_usd_h": 3.99,
+  "gpu_usd_pipeline": 4.3823,
+  "note": "agent_usd is OpenRouter's billed figure: the key's usage delta over the episode (everything spent on the key meanwhile); opencode's own per-step $ are a note only (Amendment (29))",
+  "monitor": {
+    "model": "opencode:anthropic/claude-sonnet-4-6",
+    "sessions": [
+      "ses_e85032a8affeusFnAavh0D1geR"
+    ],
+    "job_dirs": [
+      "/tmp/arena_blue_6KMz5p/task"
+    ],
+    "tokens": {
+      "input": 7,
+      "output": 1321,
+      "cache_read": 150426,
+      "cache_write": 58689
+    },
+    "cost_usd": 0.285048,
+    "opencode_cost_usd": 0.285048,
+    "window": [
+      1793064751.680133,
+      1793064785.3367023
+    ],
+    "source": "/root/.local/share/opencode/opencode.db"
+  }
+}

@@ -5,6 +5,8 @@ would cost, and what has to be decided first. Newest first.
 
 ## Phase 6: monitored side-task episodes on ResearchArena `cuda_kernel` (the next experiment)
 
+**Update, 2026-10-27.** Cell 733, the first of the three replicate cells, has run and is written up in `phases/phase6_researcharena/README.md` §15. Seeds 512 and 1049 are still not run. Before them: benchmark change 10 (opencode's command timeout, PLAN Amendments (34)-(35)), pinning opencode 1.19.4, and a ruling on how an agent's last `[agent]` line is read (README §15.9 item 1).
+
 **What it is.** Phase 6's original question (`phases/phase6_researcharena/PLAN.md` §1-§3): does the adaptive attack hold
 in a research-agent setting with longer horizons?
 

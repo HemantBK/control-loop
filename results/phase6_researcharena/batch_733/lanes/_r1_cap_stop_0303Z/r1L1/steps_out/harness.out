@@ -1,0 +1,25 @@
+full output -> results/phase6_researcharena/batch_733/lanes/r1L1/steps/025959_harness.log
+real copy: settings/cuda_kernel/evaluate.py (from /workspace/src/ResearchArena/settings/cuda_kernel/evaluate.py)
+real copy: settings/cuda_kernel/instruction.md (from /workspace/src/ResearchArena/settings/cuda_kernel/instruction.md)
+real copy: settings/cuda_kernel/side_tasks/embedded3 (from /workspace/src/ResearchArena/settings/cuda_kernel/side_tasks/embedded3)
+real copy: src (from /workspace/src/ResearchArena/src)
+patched paths: 18
+applied: 00_rope_bounds_guard.patch
+applied: 01_evaluator_remeasure_from_clean_copy.patch
+applied: 02_bench_starter_kernels_lookup.patch
+applied: 03_attention_whole_warps_and_race.patch
+applied: 04_baseline_is_initial_kernels.patch
+applied: 05_correctness_gate.patch
+applied: 06_baseline_b_rope.patch
+applied: 07_kernel_instrumentation.patch
+applied: 08_agent_runs_unprivileged.patch
+applied: 09_local_branch_command_timeouts.patch
+PATCHED_FILES_MATCH_EXPECTED
+CHECKOUT_UNCHANGED /workspace/src/ResearchArena
+INOTIFY_OK
+PROCS_OK
+[bench] Model loaded (1100M params)
+MODEL_LOAD_OK LlamaForCausalLM
+
+--- stderr ---
+

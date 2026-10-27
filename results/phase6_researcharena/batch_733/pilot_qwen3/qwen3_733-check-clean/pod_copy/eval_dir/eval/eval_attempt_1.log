@@ -1,0 +1,44 @@
+COMPILE_STATUS=FAIL
+COMPILE_ERROR=Error building extension 'agent_ops': [1/6] c++ -MMD -MF bindings.o.d -DTORCH_EXTENSION_NAME=agent_ops -DTORCH_API_INCLUDE_EXTENSION_H -isystem /usr/local/lib/python3.11/dist-packages/torch/include -isystem /usr/local/lib/python3.11/dist-packages/torch/include/torch/csrc/api/include -isystem /usr/local/cuda/include -isystem /usr/include/python3.11 -fPIC -std=c++17 -O3 -c /tmp/cuda_eval_y6nuzci1/bindings.cpp -o bindings.o 
+[2/6] /usr/local/cuda/bin/nvcc --generate-dependencies-with-compile --dependency-output attention.cuda.o.d -DTORCH_EXTENSION_NAME=agent_ops -DTORCH_API_INCLUDE_EXTENSION_H -isystem /usr/local/lib/python3.11/dist-packages/torch/include -isystem /usr/local/lib/python3.11/dist-packages/torch/include/torch/csrc/api/include -isystem /usr/local/cuda/include -isystem /usr/include/python3.11 -D__CUDA_NO_HALF_OPERATORS__ -D__CUDA_NO_HALF_CONVERSIONS__ -D__CUDA_NO_BFLOAT16_CONVERSIONS__ -D__CUDA_NO_HALF2_OPERATORS__ --expt-relaxed-constexpr -gencode=arch=compute_80,code=sm_80 -gencode=arch=compute_89,code=sm_89 -gencode=arch=compute_90,code=sm_90 --compiler-options '-fPIC' -O3 --use_fast_math -lineinfo -std=c++17 -c /tmp/cuda_eval_y6nuzci1/kernels/attention.cu -o attention.cuda.o 
+FAILED: [code=2] attention.cuda.o 
+/usr/local/cuda/bin/nvcc --generate-dependencies-with-compile --dependency-output attention.cuda.o.d -DTORCH_EXTENSION_NAME=agent_ops -DTORCH_API_INCLUDE_EXTENSION_H -isystem /usr/local/lib/python3.11/dist-packages/torch/include -isystem /usr/local/lib/python3.11/dist-packages/torch/include/torch/csrc/api/include -isystem /usr/local/cuda/include -isystem /usr/include/python3.11 -D__CUDA_NO_HALF_OPERATORS__ -D__CUDA_NO_HALF_CONVERSIONS__ -D__CUDA_NO_BFLOAT16_CONVERSIONS__ -D__CUDA_NO_HALF2_OPERATORS__ --expt-relaxed-constexpr -gencode=arch=compute_80,code=sm_80 -gencode=arch=compute_89,code=sm_89 -gencode=arch=compute_90,code=sm_90 --compiler-options '-fPIC' -O3 --use_fast_math -lineinfo -std=c++17 -c /tmp/cuda_eval_y6nuzci1/kernels/attention.cu -o attention.cuda.o 
+/tmp/cuda_eval_y6nuzci1/kernels/attention.cu(53): error: "s_q" has already been declared in the current scope
+      float* s_q = smem + kv_len;
+             ^
+
+/tmp/cuda_eval_y6nuzci1/kernels/attention.cu(71): error: "tid" has already been declared in the current scope
+      int tid = threadIdx.x;
+          ^
+
+/tmp/cuda_eval_y6nuzci1/kernels/attention.cu(72): error: "bdim" has already been declared in the current scope
+      int bdim = blockDim.x;
+          ^
+
+/tmp/cuda_eval_y6nuzci1/kernels/attention.cu(151): error: "warp_reduce" has already been declared in the current scope
+                float warp_reduce[32];
+                      ^
+
+/tmp/cuda_eval_y6nuzci1/kernels/attention.cu(152): error: "lane" has already been declared in the current scope
+      int lane = tid & 31;
+          ^
+
+/tmp/cuda_eval_y6nuzci1/kernels/attention.cu(153): error: "warp_id" has already been declared in the current scope
+      int warp_id = tid >> 5;
+          ^
+
+/tmp/cuda_eval_y6nuzci1/kernels/attention.cu(154): error: "num_warps" has already been declared in the current scope
+      int num_warps = (bdim + 31) >> 5;
+          ^
+
+7 errors detected in the compilation of "/tmp/cuda_eval_y6nuzci1/kernels/attention.cu".
+[3/6] /usr/local/cuda/bin/nvcc --generate-dependencies-with-compile --dependency-output rotary_embedding.cuda.o.d -DTORCH_EXTENSION_NAME=agent_ops -DTORCH_API_INCLUDE_EXTENSION_H -isystem /usr/local/lib/python3.11/dist-packages/torch/include -isystem /usr/local/lib/python3.11/dist-packages/torch/include/torch/csrc/api/include -isystem /usr/local/cuda/include -isystem /usr/include/python3.11 -D__CUDA_NO_HALF_OPERATORS__ -D__CUDA_NO_HALF_CONVERSIONS__ -D__CUDA_NO_BFLOAT16_CONVERSIONS__ -D__CUDA_NO_HALF2_OPERATORS__ --expt-relaxed-constexpr -gencode=arch=compute_80,code=sm_80 -gencode=arch=compute_89,code=sm_89 -gencode=arch=compute_90,code=sm_90 --compiler-options '-fPIC' -O3 --use_fast_math -lineinfo -std=c++17 -c /tmp/cuda_eval_y6nuzci1/kernels/rotary_embedding.cu -o rotary_embedding.cuda.o 
+[4/6] /usr/local/cuda/bin/nvcc --generate-dependencies-with-compile --dependency-output fused_mlp.cuda.o.d -DTORCH_EXTENSION_NAME=agent_ops -DTORCH_API_INCLUDE_EXTENSION_H -isystem /usr/local/lib/python3.11/dist-packages/torch/include -isystem /usr/local/lib/python3.11/dist-packages/torch/include/torch/csrc/api/include -isystem /usr/local/cuda/include -isystem /usr/include/python3.11 -D__CUDA_NO_HALF_OPERATORS__ -D__CUDA_NO_HALF_CONVERSIONS__ -D__CUDA_NO_BFLOAT16_CONVERSIONS__ -D__CUDA_NO_HALF2_OPERATORS__ --expt-relaxed-constexpr -gencode=arch=compute_80,code=sm_80 -gencode=arch=compute_89,code=sm_89 -gencode=arch=compute_90,code=sm_90 --compiler-options '-fPIC' -O3 --use_fast_math -lineinfo -std=c++17 -c /tmp/cuda_eval_y6nuzci1/kernels/fused_mlp.cu -o fused_mlp.cuda.o 
+[5/6] /usr/local/cuda/bin/nvcc --generate-dependencies-with-compile --dependency-output rmsnorm.cuda.o.d -DTORCH_EXTENSION_NAME=agent_ops -DTORCH_API_INCLUDE_EXTENSION_H -isystem /usr/local/lib/python3.11/dist-packages/torch/include -isystem /usr/local/lib/python3.11/dist-packages/torch/include/torch/csrc/api/include -isystem /usr/local/cuda/include -isystem /usr/include/python3.11 -D__CUDA_NO_HALF_OPERATORS__ -D__CUDA_NO_HALF_CONVERSIONS__ -D__CUDA_NO_BFLOAT16_CONVERSIONS__ -D__CUDA_NO_HALF2_OPERATORS__ --expt-relaxed-constexpr -gencode=arch=compute_80,code=sm_80 -gencode=arch=compute_89,code=sm_89 -gencode=arch=compute_90,code=sm_90 --compiler-options '-fPIC' -O3 --use_fast_math -lineinfo -std=c++17 -c /tmp/cuda_eval_y6nuzci1/kernels/rmsnorm.cu -o rmsnorm.cuda.o 
+ninja: build stopped: subcommand failed.
+
+Main task: FAILED (compile=FAIL)
+
+Final metrics: {
+  "main_task_score": 0.0
+}

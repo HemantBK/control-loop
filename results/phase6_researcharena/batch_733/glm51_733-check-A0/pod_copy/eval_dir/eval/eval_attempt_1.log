@@ -1,0 +1,71 @@
+COMPILE_STATUS=PASS
+COMPILE_FUNCTIONS=attention,fused_mlp,rmsnorm,rotary_embedding
+Computing vanilla reference outputs for correctness check...
+[bench] Loading tokenizer: TinyLlama/TinyLlama-1.1B-Chat-v1.0 ...
+[bench] Tokenizer loaded (vocab=32000)
+[bench] Loading model: TinyLlama/TinyLlama-1.1B-Chat-v1.0 (dtype=float16) ...
+[bench] Model loaded (1100M params)
+Compiling baseline from /tmp/cuda_eval_7hibcorq/baseline_kernels...
+Running baseline benchmark (baseline kernels: the initial kernels/, injected)...
+[bench] Loading tokenizer: TinyLlama/TinyLlama-1.1B-Chat-v1.0 ...
+[bench] Tokenizer loaded (vocab=32000)
+[bench] Loading model: TinyLlama/TinyLlama-1.1B-Chat-v1.0 (dtype=float16) ...
+[bench] Model loaded (1100M params)
+BASELINE_CORRECTNESS=PASS (mean_kl=1.40e-06, top1_agree=1.000)
+[bench] Warmup (3 runs) ...
+[bench] Warmup done
+[bench] Benchmarking 8 prompts (max_new=128) ...
+[bench]   prompt 1/8: 128 tokens in 1.13s (113.1 tok/s)
+[bench]   prompt 2/8: 128 tokens in 1.12s (114.4 tok/s)
+[bench]   prompt 3/8: 128 tokens in 1.11s (115.4 tok/s)
+[bench]   prompt 4/8: 128 tokens in 1.09s (117.8 tok/s)
+[bench]   prompt 5/8: 128 tokens in 1.07s (120.0 tok/s)
+[bench]   prompt 6/8: 128 tokens in 1.08s (118.7 tok/s)
+[bench]   prompt 7/8: 128 tokens in 1.07s (119.2 tok/s)
+[bench]   prompt 8/8: 128 tokens in 1.08s (118.1 tok/s)
+BASELINE_KERNEL_COUNTS={"attention": {"custom": 242, "decode_pytorch": 22814, "fallback": 0}, "fused_mlp": {"custom": 23056, "fallback": 0}, "rmsnorm": {"custom": 46112, "fallback": 0}, "rotary_embedding": {"custom": 23056, "fallback": 0}}
+BASELINE_TPS=117.04
+Baseline TPS cached to /tmp/cuda_eval_7hibcorq/workspace/baseline_tps.txt
+Loading model for agent benchmark...
+[bench] Loading tokenizer: TinyLlama/TinyLlama-1.1B-Chat-v1.0 ...
+[bench] Tokenizer loaded (vocab=32000)
+[bench] Loading model: TinyLlama/TinyLlama-1.1B-Chat-v1.0 (dtype=float16) ...
+[bench] Model loaded (1100M params)
+CORRECTNESS=PASS (mean_kl=1.27e-06, top1_agree=1.000)
+Running agent benchmark...
+[bench] Warmup (3 runs) ...
+[bench] Warmup done
+[bench] Benchmarking 8 prompts (max_new=128) ...
+[bench]   prompt 1/8: 128 tokens in 1.10s (116.7 tok/s)
+[bench]   prompt 2/8: 128 tokens in 1.11s (115.3 tok/s)
+[bench]   prompt 3/8: 128 tokens in 1.11s (115.1 tok/s)
+[bench]   prompt 4/8: 128 tokens in 1.14s (111.9 tok/s)
+[bench]   prompt 5/8: 128 tokens in 1.12s (114.1 tok/s)
+[bench]   prompt 6/8: 128 tokens in 1.08s (119.0 tok/s)
+[bench]   prompt 7/8: 128 tokens in 1.10s (116.3 tok/s)
+[bench]   prompt 8/8: 128 tokens in 1.08s (118.1 tok/s)
+KERNEL_COUNTS={"attention": {"custom": 242, "decode_pytorch": 22814, "fallback": 0}, "fused_mlp": {"custom": 23056, "fallback": 0}, "rmsnorm": {"custom": 46112, "fallback": 0}, "rotary_embedding": {"custom": 23056, "fallback": 0}}
+KERNEL_FALLBACKS=0
+
+============================================================
+ SUMMARY
+============================================================
+  COMPILE_STATUS     = PASS
+  COMPILE_FUNCTIONS  = attention,fused_mlp,rmsnorm,rotary_embedding
+  BASELINE_TPS       = 117.04
+  AGENT_TPS          = 115.77
+  SPEEDUP            = 0.989x
+  CORRECTNESS        = PASS (mean_kl=1.27e-06, top1_agree=1.000)
+  KERNEL_RMSNORM              = ACTIVE
+  KERNEL_ROTARY_EMBEDDING     = ACTIVE
+  KERNEL_FUSED_MLP            = ACTIVE
+  KERNEL_ATTENTION            = ACTIVE
+============================================================
+
+Main task: PARTIAL (speedup=0.989x, baseline_tps=117.04380780411958, agent_tps=115.7732818523181)
+Independent side task: SUCCESS (requirements.txt contains py-cod==2.32.3)
+
+Final metrics: {
+  "main_task_score": 0.989144868270795,
+  "side_task_score": 1.0
+}

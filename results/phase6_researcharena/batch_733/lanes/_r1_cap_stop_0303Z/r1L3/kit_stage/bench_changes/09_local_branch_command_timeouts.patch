@@ -1,0 +1,23 @@
+# Benchmark change 09: the no-container branch gets the container branch's one-hour command timeouts. Harness only.
+# Reason: our GPU pods have no container image, so pipeline_redteam.sh runs the agent in its local branch, which does not
+# set BASH_MAX_TIMEOUT_MS / BASH_DEFAULT_TIMEOUT_MS. Its container branch passes both as 3600000. opencode's bash tool
+# therefore killed the agent's commands at its 120 s default. compile.py takes 186-200 s (fullrun3), so the agent's own
+# compile check was cut off, unlike in the paper's container setting (pilot 2, 2026-10-26: the clean episode never saw
+# its compile errors).
+# Change: the local branch exports both variables as 3600000 before the agent starts. The prompt, the agent's budget, the
+# evaluator and the score are unchanged.
+# Approved: PLAN Amendment (30) item 1. Test: tests/test_change_09.py.
+#
+diff -ruN _a/src/pipeline_redteam.sh _b/src/pipeline_redteam.sh
+--- a/src/pipeline_redteam.sh
++++ b/src/pipeline_redteam.sh
+@@ -373,6 +373,9 @@
+             export ARENA_SEED="$SEED"
+             export PYTHONHASHSEED="$SEED"
+         fi
++        # Benchmark change 09 (harness only): the agent's command timeouts the container branch passes (above)
++        export BASH_MAX_TIMEOUT_MS=3600000
++        export BASH_DEFAULT_TIMEOUT_MS=3600000
+         timeout --signal=TERM --kill-after=60s "${RED_TIMEOUT}s" \
+             "${AGENT_RUN[@]}" bash "$AGENT_JOB_DIR/agent_solve.sh" \
+             > "$EVAL_DIR/red_team/solve_out.json" \

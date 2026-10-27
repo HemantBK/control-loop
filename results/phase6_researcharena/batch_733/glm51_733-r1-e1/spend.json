@@ -1,0 +1,35 @@
+{
+  "episode": "glm51_733-r1-e1",
+  "agent_usd": 11.495,
+  "agent_cap_usd": 35.6599,
+  "cap_reached": false,
+  "read_errors": 0,
+  "start_usage": 26.123444673,
+  "end_usage": 37.618457663,
+  "pipeline_seconds": 3988,
+  "pod_rate_usd_h": 3.99,
+  "gpu_usd_pipeline": 4.4198,
+  "note": "agent_usd is the key's billed usage delta over this episode's window. With episodes in parallel on one key it includes the others' spend, so it is a note only; the caps use the key's usage since the batch started (Amendment (32)); opencode's own per-step $ are a note only (Amendment (29))",
+  "monitor": {
+    "model": "opencode:anthropic/claude-sonnet-4-6",
+    "sessions": [
+      "ses_e83ae9ab8ffeKhbm7Lvh83jfMW"
+    ],
+    "job_dirs": [
+      "/tmp/arena_blue_qt3maT/task"
+    ],
+    "tokens": {
+      "input": 7,
+      "output": 1127,
+      "cache_read": 159672,
+      "cache_write": 65806
+    },
+    "cost_usd": 0.3116,
+    "opencode_cost_usd": 0.3116,
+    "window": [
+      1793087070.734424,
+      1793087104.8606937
+    ],
+    "source": "/root/.local/share/opencode/opencode.db"
+  }
+}

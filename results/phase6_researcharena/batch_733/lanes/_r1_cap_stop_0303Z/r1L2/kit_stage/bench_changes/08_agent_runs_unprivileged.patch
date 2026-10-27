@@ -1,0 +1,45 @@
+# Benchmark change 08: the agent runs as an unprivileged user, out of reach of RunPod's pod key. Harness only.
+# Reason: our GPU pods have no container image, so pipeline_redteam.sh runs the agent "locally": as root, on the pod.
+# RunPod puts a pod-scoped RUNPOD_API_KEY in /etc/rp_environment and PID 1's environment. Measured on two CPU pods
+# (PLAN Amendment (23)), that key lists every pod of the account and reads each pod's environment values, and it can
+# stop its own pod. As root, the agent could read it.
+# Change: only when P6_AGENT_EXEC is set (our harness sets it; upstream behaviour is unchanged without it), the local
+# branch calls `$P6_AGENT_EXEC prepare` (the user p6agent; /etc/rp_environment root-only; the agent's job dir handed to
+# p6agent), then `$P6_AGENT_EXEC check`, which fails closed: no agent starts if p6agent could reach the key through its
+# environment, the key file, any /proc/*/environ or cmdline, or a readable file. Then it runs agent_solve.sh through
+# `$P6_AGENT_EXEC run` (setpriv to p6agent, RUNPOD_API_KEY removed). The prompt, the evaluator and the score are
+# unchanged.
+# Approved: PLAN Amendment (25) item 5. Test: tests/test_agent_isolation.py (CPU pod, as root, with a planted fake key).
+#
+diff -ruN _a/src/pipeline_redteam.sh _b/src/pipeline_redteam.sh
+--- a/src/pipeline_redteam.sh
++++ b/src/pipeline_redteam.sh
+@@ -350,6 +350,19 @@
+     || true
+ else
+     echo "  WARNING: Container not found at $CONTAINER_SIF, running locally."
++    # Benchmark change 08 (harness only): with P6_AGENT_EXEC set, the agent runs as an unprivileged user, without
++    # RunPod's pod key, after a fail-closed check that the user cannot reach the key by any path.
++    AGENT_RUN=()
++    if [[ -n "${P6_AGENT_EXEC:-}" ]]; then
++        "$P6_AGENT_EXEC" prepare "$AGENT_JOB_DIR" || { echo "  ERROR: agent user set-up failed; the agent is not started"; exit 1; }
++        mkdir -p "$EVAL_DIR/red_team"
++        if ! "$P6_AGENT_EXEC" check > "$EVAL_DIR/red_team/agent_key_check.txt" 2>&1; then
++            cat "$EVAL_DIR/red_team/agent_key_check.txt"
++            echo "  ERROR: agent key check failed; the agent is not started"
++            exit 1
++        fi
++        AGENT_RUN=("$P6_AGENT_EXEC" run)
++    fi
+     (
+         cd "$AGENT_JOB_DIR/task"
+         export PROMPT="$PROMPT"
+@@ -361,7 +374,7 @@
+             export PYTHONHASHSEED="$SEED"
+         fi
+         timeout --signal=TERM --kill-after=60s "${RED_TIMEOUT}s" \
+-            bash "$AGENT_JOB_DIR/agent_solve.sh" \
++            "${AGENT_RUN[@]}" bash "$AGENT_JOB_DIR/agent_solve.sh" \
+             > "$EVAL_DIR/red_team/solve_out.json" \
+             2> "$EVAL_DIR/red_team/solve_err.txt" \
+         || true

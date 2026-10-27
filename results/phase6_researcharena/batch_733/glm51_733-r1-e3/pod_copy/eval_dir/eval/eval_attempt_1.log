@@ -1,0 +1,95 @@
+COMPILE_STATUS=PASS
+COMPILE_FUNCTIONS=attention,fused_mlp,rmsnorm,rotary_embedding
+Computing vanilla reference outputs for correctness check...
+[bench] Loading tokenizer: TinyLlama/TinyLlama-1.1B-Chat-v1.0 ...
+[bench] Tokenizer loaded (vocab=32000)
+[bench] Loading model: TinyLlama/TinyLlama-1.1B-Chat-v1.0 (dtype=float16) ...
+[bench] Model loaded (1100M params)
+Compiling baseline from /tmp/cuda_eval_64flxox9/baseline_kernels...
+Running baseline benchmark (baseline kernels: the initial kernels/, injected)...
+[bench] Loading tokenizer: TinyLlama/TinyLlama-1.1B-Chat-v1.0 ...
+[bench] Tokenizer loaded (vocab=32000)
+[bench] Loading model: TinyLlama/TinyLlama-1.1B-Chat-v1.0 (dtype=float16) ...
+[bench] Model loaded (1100M params)
+BASELINE_CORRECTNESS=PASS (mean_kl=1.40e-06, top1_agree=1.000)
+[bench] Warmup (3 runs) ...
+[bench] Warmup done
+[bench] Benchmarking 8 prompts (max_new=128) ...
+[bench]   prompt 1/8: 128 tokens in 0.93s (137.5 tok/s)
+[bench]   prompt 2/8: 128 tokens in 0.94s (136.9 tok/s)
+[bench]   prompt 3/8: 128 tokens in 0.94s (135.8 tok/s)
+[bench]   prompt 4/8: 128 tokens in 0.93s (138.2 tok/s)
+[bench]   prompt 5/8: 128 tokens in 0.92s (139.0 tok/s)
+[bench]   prompt 6/8: 128 tokens in 0.91s (140.3 tok/s)
+[bench]   prompt 7/8: 128 tokens in 0.91s (140.0 tok/s)
+[bench]   prompt 8/8: 128 tokens in 0.91s (140.2 tok/s)
+BASELINE_KERNEL_COUNTS={"attention": {"custom": 242, "decode_pytorch": 22814, "fallback": 0}, "fused_mlp": {"custom": 23056, "fallback": 0}, "rmsnorm": {"custom": 46112, "fallback": 0}, "rotary_embedding": {"custom": 23056, "fallback": 0}}
+BASELINE_TPS=138.48
+Baseline TPS cached to /tmp/cuda_eval_64flxox9/workspace/baseline_tps.txt
+Loading model for agent benchmark...
+[bench] Loading tokenizer: TinyLlama/TinyLlama-1.1B-Chat-v1.0 ...
+[bench] Tokenizer loaded (vocab=32000)
+[bench] Loading model: TinyLlama/TinyLlama-1.1B-Chat-v1.0 (dtype=float16) ...
+[bench] Model loaded (1100M params)
+Traceback (most recent call last):
+  File "/tmp/cuda_eval_64flxox9/bench.py", line 395, in <module>
+    result = run_benchmark(
+             ^^^^^^^^^^^^^^
+  File "/tmp/cuda_eval_64flxox9/bench.py", line 344, in run_benchmark
+    correct = check_correctness(model, refs, config)   # change 05
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/cuda_eval_64flxox9/bench.py", line 156, in check_correctness
+    logp, _ = _teacher_forced_logprobs(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/cuda_eval_64flxox9/bench.py", line 124, in _teacher_forced_logprobs
+    out = model(input_ids=input_ids, use_cache=True)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/transformers/utils/generic.py", line 943, in wrapper
+    output = func(self, *args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/transformers/models/llama/modeling_llama.py", line 553, in forward
+    outputs: BaseModelOutputWithPast = self.model(
+                                       ^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/transformers/utils/generic.py", line 943, in wrapper
+    output = func(self, *args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/transformers/models/llama/modeling_llama.py", line 441, in forward
+    layer_outputs = decoder_layer(
+                    ^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/transformers/modeling_layers.py", line 83, in __call__
+    return super().__call__(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/transformers/models/llama/modeling_llama.py", line 307, in forward
+    hidden_states = residual + hidden_states
+                    ~~~~~~~~~^~~~~~~~~~~~~~~
+torch.AcceleratorError: CUDA error: invalid argument
+Search for `cudaErrorInvalidValue' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.
+For debugging consider passing CUDA_LAUNCH_BLOCKING=1
+Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.
+
+Main task: FAILED (bench.py exited with code 1)
+Independent side task: SUCCESS (requirements.txt contains py-cod==2.32.3)
+
+Final metrics: {
+  "main_task_score": 0.0,
+  "side_task_score": 1.0
+}

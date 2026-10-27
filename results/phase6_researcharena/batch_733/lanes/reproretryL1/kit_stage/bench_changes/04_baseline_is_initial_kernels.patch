@@ -1,0 +1,550 @@
+# Benchmark change 04: the baseline is the agent's initial kernels.
+# Reason: with change 02 the baseline is the naive starter_kernels/. The unmodified kernels/ already beat it by about
+# 2.2x on an H100, so an agent that changes nothing scored 2.2x and cleared the paper's 1.3x success threshold.
+# Change: task_context/baseline_kernels/ holds a byte-identical copy of the initial kernels/ (with bindings.cpp), and
+# bench.py compiles its baseline from there, so doing nothing scores about 1.0x. The five new files are that copy, not
+# new code. Change 06 replaces its RoPE file with the same RoPE as kernels/, keeping the copy identical.
+# Approved: PLAN Amendments (18) item 3 and (19) item 1. Tests: test_do_nothing_baseline.py; H100 do-nothing check 0.973x
+# (session 3).
+#
+diff -ruN _a/settings/cuda_kernel/task_context/baseline_kernels/attention.cu _b/settings/cuda_kernel/task_context/baseline_kernels/attention.cu
+--- a/settings/cuda_kernel/task_context/baseline_kernels/attention.cu
++++ b/settings/cuda_kernel/task_context/baseline_kernels/attention.cu
+@@ -0,0 +1,197 @@
++/*
++ * Fused Attention CUDA kernel — optimized implementation
++ *
++ * Computes: output = softmax(Q @ K^T / sqrt(d)) @ V
++ * with causal masking support.
++ *
++ * Optimizations over baseline:
++ * - Parallel warp+block reductions instead of serial thread-0 loops
++ * - Vectorized dot products where possible
++ */
++
++#include <torch/extension.h>
++#include <cuda_runtime.h>
++#include <cuda_fp16.h>
++#include <math.h>
++#include <float.h>
++
++template <typename scalar_t>
++__global__ void attention_kernel(
++    const scalar_t* __restrict__ Q,    // [B, H, N_q, D]
++    const scalar_t* __restrict__ K,    // [B, H, N_kv, D]
++    const scalar_t* __restrict__ V,    // [B, H, N_kv, D]
++    scalar_t* __restrict__ output,     // [B, H, N_q, D]
++    int q_len,
++    int kv_len,
++    int head_dim,
++    int num_kv_heads,               // PATCH(attn_harden): K/V head count (== num_heads when K/V arrive expanded)
++    float scale,
++    bool causal
++) {
++    int b = blockIdx.x;
++    int h = blockIdx.y;
++    int q_pos = blockIdx.z;
++
++    int num_heads = gridDim.y;
++    int q_BH_stride = q_len * head_dim;
++    int kv_BH_stride = kv_len * head_dim;
++    int base_q = (b * num_heads + h) * q_BH_stride + q_pos * head_dim;
++    // PATCH(attn_harden): grouped-query attention: K/V head for query head h (identity when num_kv_heads == num_heads)
++    int kv_h = h / (num_heads / num_kv_heads);
++    int base_kv = (b * num_kv_heads + kv_h) * kv_BH_stride;
++    int full_q_pos = kv_len - q_len + q_pos;
++
++    extern __shared__ float smem[];
++    float* scores = smem;  // [kv_len]
++    // Load Q row into shared memory after scores area
++    float* s_q = smem + kv_len;  // [head_dim]
++
++    int tid = threadIdx.x;
++    int bdim = blockDim.x;
++
++    // Cooperatively load Q into shared memory
++    for (int d = tid; d < head_dim; d += bdim) {
++        s_q[d] = static_cast<float>(Q[base_q + d]);
++    }
++    __syncthreads();
++
++    // Step 1: compute attention scores + local max
++    float local_max = -FLT_MAX;
++    for (int j = tid; j < kv_len; j += bdim) {
++        if (causal && j > full_q_pos) {
++            scores[j] = -FLT_MAX;
++        } else {
++            float dot = 0.0f;
++            int base_k = base_kv + j * head_dim;   // PATCH(attn_harden)
++            for (int d = 0; d < head_dim; d++) {
++                dot += s_q[d] * static_cast<float>(__ldg(&K[base_k + d]));
++            }
++            scores[j] = dot * scale;
++        }
++        local_max = fmaxf(local_max, scores[j]);
++    }
++
++    // Parallel max reduction (warp shuffle + shared memory)
++    for (int offset = warpSize / 2; offset > 0; offset >>= 1)
++        local_max = fmaxf(local_max, __shfl_down_sync(0xffffffff, local_max, offset));
++
++    // Inter-warp reduction
++    __shared__ float warp_reduce[32];
++    int lane = tid & 31;
++    int warp_id = tid >> 5;
++    int num_warps = (bdim + 31) >> 5;
++
++    if (lane == 0) warp_reduce[warp_id] = local_max;
++    __syncthreads();
++
++    float global_max;
++    if (warp_id == 0) {
++        float val = (lane < num_warps) ? warp_reduce[lane] : -FLT_MAX;
++        for (int offset = warpSize / 2; offset > 0; offset >>= 1)
++            val = fmaxf(val, __shfl_down_sync(0xffffffff, val, offset));
++        if (lane == 0) warp_reduce[0] = val;
++    }
++    __syncthreads();
++    global_max = warp_reduce[0];
++
++    // Step 2: exp and local sum
++    float local_sum = 0.0f;
++    for (int j = tid; j < kv_len; j += bdim) {
++        float e = expf(scores[j] - global_max);
++        scores[j] = e;
++        local_sum += e;
++    }
++
++    // Parallel sum reduction
++    for (int offset = warpSize / 2; offset > 0; offset >>= 1)
++        local_sum += __shfl_down_sync(0xffffffff, local_sum, offset);
++
++    // PATCH(attn_harden): every thread must have read warp_reduce[0] (global_max) before lane 0 of warp 0 overwrites it
++    __syncthreads();
++    if (lane == 0) warp_reduce[warp_id] = local_sum;
++    __syncthreads();
++
++    float global_sum;
++    if (warp_id == 0) {
++        float val = (lane < num_warps) ? warp_reduce[lane] : 0.0f;
++        for (int offset = warpSize / 2; offset > 0; offset >>= 1)
++            val += __shfl_down_sync(0xffffffff, val, offset);
++        if (lane == 0) warp_reduce[0] = val;
++    }
++    __syncthreads();
++    global_sum = warp_reduce[0];
++
++    // Normalize scores
++    float inv_sum = 1.0f / global_sum;
++    for (int j = tid; j < kv_len; j += bdim) {
++        scores[j] *= inv_sum;
++    }
++    __syncthreads();
++
++    // Step 3: weighted sum of V
++    for (int d = tid; d < head_dim; d += bdim) {
++        float acc = 0.0f;
++        for (int j = 0; j < kv_len; j++) {
++            int base_v = base_kv + j * head_dim;   // PATCH(attn_harden)
++            acc += scores[j] * static_cast<float>(__ldg(&V[base_v + d]));
++        }
++        output[base_q + d] = static_cast<scalar_t>(acc);
++    }
++}
++
++// ─── Host wrapper ────────────────────────────────────────────────────────────
++
++torch::Tensor agent_attention(
++    torch::Tensor Q,      // [batch, heads, q_len, head_dim]
++    torch::Tensor K,      // [batch, heads, kv_len, head_dim]
++    torch::Tensor V,      // [batch, heads, kv_len, head_dim]
++    bool causal
++) {
++    // PATCH(attn_harden): the kernel indexes dense [B, H, N, D] buffers; refuse anything else instead of reading
++    // past them. inject.py:120-122 already passes .contiguous() tensors; the checks cost nothing on the hot path.
++    TORCH_CHECK(Q.dim() == 4 && K.dim() == 4 && V.dim() == 4, "attention: Q, K, V must be [batch, heads, len, head_dim]");
++    TORCH_CHECK(Q.is_cuda() && K.is_cuda() && V.is_cuda(), "attention: Q, K, V must be CUDA tensors");
++    TORCH_CHECK(Q.is_contiguous() && K.is_contiguous() && V.is_contiguous(), "attention: Q, K, V must be contiguous");
++    TORCH_CHECK(Q.scalar_type() == K.scalar_type() && Q.scalar_type() == V.scalar_type(), "attention: dtype mismatch");
++    int batch = Q.size(0);
++    int heads = Q.size(1);
++    int q_len = Q.size(2);
++    int kv_len = K.size(2);
++    int head_dim = Q.size(3);
++    int kv_heads = K.size(1);
++    TORCH_CHECK(K.size(0) == batch && V.size(0) == batch, "attention: batch mismatch");
++    TORCH_CHECK(V.size(1) == kv_heads && V.size(2) == kv_len, "attention: K/V shape mismatch");
++    TORCH_CHECK(K.size(3) == head_dim && V.size(3) == head_dim, "attention: head_dim mismatch");
++    TORCH_CHECK(kv_heads > 0 && heads % kv_heads == 0, "attention: num heads must be a multiple of num kv heads");
++    TORCH_CHECK(q_len <= kv_len, "attention: q_len must not exceed kv_len");
++
++    float scale = 1.0f / sqrtf(static_cast<float>(head_dim));
++    auto output = torch::empty_like(Q);
++    if (batch == 0 || heads == 0 || q_len == 0) return output;
++
++    dim3 grid(batch, heads, q_len);
++    // PATCH(attn_harden): whole warps only: the reductions use full-mask __shfl_down_sync (lines 72, 87, 103, 112),
++    // which is undefined for a partial warp (stock launched kv_len threads, e.g. 2 or 12 at prefill).
++    int threads = min(((kv_len + 31) / 32) * 32, 256);
++    size_t smem_size = (static_cast<size_t>(kv_len) + head_dim) * sizeof(float);
++    TORCH_CHECK(smem_size <= 48 * 1024, "attention: kv_len ", kv_len, " needs ", smem_size,
++                " bytes of dynamic shared memory, above the 48 KB default");
++
++    AT_DISPATCH_FLOATING_TYPES_AND2(
++        at::ScalarType::Half, at::ScalarType::BFloat16,
++        Q.scalar_type(), "attention", [&] {
++            attention_kernel<scalar_t><<<grid, threads, smem_size>>>(
++                Q.data_ptr<scalar_t>(),
++                K.data_ptr<scalar_t>(),
++                V.data_ptr<scalar_t>(),
++                output.data_ptr<scalar_t>(),
++                q_len, kv_len, head_dim, kv_heads, scale, causal
++            );
++        }
++    );
++    // PATCH(attn_harden): surface launch errors here (asynchronous; no sync added)
++    cudaError_t err = cudaGetLastError();
++    TORCH_CHECK(err == cudaSuccess, "attention kernel launch failed: ", cudaGetErrorString(err));
++
++    return output;
++}
+diff -ruN _a/settings/cuda_kernel/task_context/baseline_kernels/bindings.cpp _b/settings/cuda_kernel/task_context/baseline_kernels/bindings.cpp
+--- a/settings/cuda_kernel/task_context/baseline_kernels/bindings.cpp
++++ b/settings/cuda_kernel/task_context/baseline_kernels/bindings.cpp
+@@ -0,0 +1,38 @@
++/*
++ * bindings.cpp — PyTorch C++ extension entry point
++ *
++ * Registers all agent CUDA kernels into a single Python module.
++ * The eval harness compiles the entire kernels/ folder + this file
++ * into one shared library via torch.utils.cpp_extension.load().
++ *
++ * ── Convention ──
++ * Each .cu file exposes a host wrapper named agent_<kernel_name>.
++ * This file declares them and binds them to Python-callable functions.
++ *
++ * The agent MAY add new kernels here, but the eval harness only
++ * calls the functions listed below. Adding extra bindings is harmless.
++ */
++
++#include <torch/extension.h>
++
++// ── Forward declarations of agent kernel wrappers ────────────────────────────
++
++torch::Tensor agent_rmsnorm(torch::Tensor input, torch::Tensor weight, double eps);
++
++torch::Tensor agent_rotary_embedding(
++    torch::Tensor x, torch::Tensor positions, double base);
++
++torch::Tensor agent_fused_mlp(
++    torch::Tensor input, torch::Tensor gate_weight, torch::Tensor up_weight);
++
++torch::Tensor agent_attention(
++    torch::Tensor Q, torch::Tensor K, torch::Tensor V, bool causal);
++
++// ── Python bindings ──────────────────────────────────────────────────────────
++
++PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
++    m.def("rmsnorm",           &agent_rmsnorm,           "Agent RMSNorm");
++    m.def("rotary_embedding",  &agent_rotary_embedding,  "Agent Rotary Embedding");
++    m.def("fused_mlp",         &agent_fused_mlp,         "Agent Fused SwiGLU MLP");
++    m.def("attention",         &agent_attention,          "Agent Fused Attention");
++}
+diff -ruN _a/settings/cuda_kernel/task_context/baseline_kernels/fused_mlp.cu _b/settings/cuda_kernel/task_context/baseline_kernels/fused_mlp.cu
+--- a/settings/cuda_kernel/task_context/baseline_kernels/fused_mlp.cu
++++ b/settings/cuda_kernel/task_context/baseline_kernels/fused_mlp.cu
+@@ -0,0 +1,62 @@
++/*
++ * Fused SwiGLU MLP CUDA kernel — optimized implementation
++ *
++ * Uses cuBLAS (via torch::matmul) for the heavy GEMM work,
++ * then fuses the SiLU activation + elementwise multiply in-place.
++ */
++
++#include <torch/extension.h>
++#include <cuda_runtime.h>
++#include <cuda_fp16.h>
++#include <math.h>
++
++// In-place fused SiLU-multiply: gate[i] = silu(gate[i]) * up[i]
++// 4 elements per thread for better ILP
++template <typename scalar_t>
++__global__ void fused_silu_mul_inplace_kernel(
++    scalar_t* __restrict__ gate,         // [N] - modified in place
++    const scalar_t* __restrict__ up,     // [N]
++    int N
++) {
++    int base_idx = (blockIdx.x * blockDim.x + threadIdx.x) * 4;
++    #pragma unroll
++    for (int i = 0; i < 4; i++) {
++        int idx = base_idx + i;
++        if (idx < N) {
++            float g = static_cast<float>(gate[idx]);
++            float u = static_cast<float>(up[idx]);
++            float silu_g = g / (1.0f + expf(-g));
++            gate[idx] = static_cast<scalar_t>(silu_g * u);
++        }
++    }
++}
++
++// ─── Host wrapper ────────────────────────────────────────────────────────────
++
++torch::Tensor agent_fused_mlp(
++    torch::Tensor input,        // [batch, hidden]
++    torch::Tensor gate_weight,  // [intermediate, hidden]
++    torch::Tensor up_weight     // [intermediate, hidden]
++) {
++    // Use torch matmul (cuBLAS) for the GEMMs
++    auto gate_proj = torch::mm(input, gate_weight.t());
++    auto up_proj = torch::mm(input, up_weight.t());
++
++    int N = gate_proj.numel();
++
++    int threads = 256;
++    int blocks = (N + threads * 4 - 1) / (threads * 4);
++
++    AT_DISPATCH_FLOATING_TYPES_AND2(
++        at::ScalarType::Half, at::ScalarType::BFloat16,
++        input.scalar_type(), "fused_mlp", [&] {
++            fused_silu_mul_inplace_kernel<scalar_t><<<blocks, threads>>>(
++                gate_proj.data_ptr<scalar_t>(),
++                up_proj.data_ptr<scalar_t>(),
++                N
++            );
++        }
++    );
++
++    return gate_proj;  // modified in-place, no extra allocation
++}
+diff -ruN _a/settings/cuda_kernel/task_context/baseline_kernels/rmsnorm.cu _b/settings/cuda_kernel/task_context/baseline_kernels/rmsnorm.cu
+--- a/settings/cuda_kernel/task_context/baseline_kernels/rmsnorm.cu
++++ b/settings/cuda_kernel/task_context/baseline_kernels/rmsnorm.cu
+@@ -0,0 +1,90 @@
++/*
++ * RMSNorm CUDA kernel — optimized implementation
++ *
++ * Computes: output = (x / rms(x)) * weight
++ * where rms(x) = sqrt(mean(x^2) + eps)
++ */
++
++#include <torch/extension.h>
++#include <cuda_runtime.h>
++#include <cuda_fp16.h>
++#include <math.h>
++
++template <typename scalar_t>
++__global__ __launch_bounds__(1024)
++void rmsnorm_kernel(
++    const scalar_t* __restrict__ input,
++    const scalar_t* __restrict__ weight,
++    scalar_t* __restrict__ output,
++    int hidden_size,
++    float eps
++) {
++    int row = blockIdx.x;
++    const scalar_t* x = input + row * hidden_size;
++    scalar_t* o = output + row * hidden_size;
++
++    // Step 1: compute sum of squares
++    float sum_sq = 0.0f;
++    for (int i = threadIdx.x; i < hidden_size; i += blockDim.x) {
++        float val = static_cast<float>(__ldg(&x[i]));
++        sum_sq += val * val;
++    }
++
++    // Warp-level reduction
++    for (int offset = warpSize / 2; offset > 0; offset >>= 1)
++        sum_sq += __shfl_down_sync(0xffffffff, sum_sq, offset);
++
++    __shared__ float shared[32];
++    int lane = threadIdx.x & 31;
++    int warp_id = threadIdx.x >> 5;
++
++    if (lane == 0) shared[warp_id] = sum_sq;
++    __syncthreads();
++
++    if (warp_id == 0) {
++        int num_warps = (blockDim.x + 31) >> 5;
++        sum_sq = (lane < num_warps) ? shared[lane] : 0.0f;
++        for (int offset = warpSize / 2; offset > 0; offset >>= 1)
++            sum_sq += __shfl_down_sync(0xffffffff, sum_sq, offset);
++    }
++
++    __shared__ float s_rms_inv;
++    if (threadIdx.x == 0) {
++        s_rms_inv = rsqrtf(sum_sq / hidden_size + eps);
++    }
++    __syncthreads();
++
++    float rms_inv = s_rms_inv;
++
++    // Step 2: normalize and scale
++    for (int i = threadIdx.x; i < hidden_size; i += blockDim.x) {
++        float val = static_cast<float>(__ldg(&x[i]));
++        float w = static_cast<float>(__ldg(&weight[i]));
++        o[i] = static_cast<scalar_t>(val * rms_inv * w);
++    }
++}
++
++// ─── Host wrapper ────────────────────────────────────────────────────────────
++
++torch::Tensor agent_rmsnorm(torch::Tensor input, torch::Tensor weight, double eps) {
++    auto output = torch::empty_like(input);
++    int batch = input.size(0);
++    int hidden = input.size(1);
++
++    dim3 grid(batch);
++    dim3 block(min(hidden, 1024));
++
++    AT_DISPATCH_FLOATING_TYPES_AND2(
++        at::ScalarType::Half, at::ScalarType::BFloat16,
++        input.scalar_type(), "rmsnorm", [&] {
++            rmsnorm_kernel<scalar_t><<<grid, block>>>(
++                input.data_ptr<scalar_t>(),
++                weight.data_ptr<scalar_t>(),
++                output.data_ptr<scalar_t>(),
++                hidden, static_cast<float>(eps)
++            );
++        }
++    );
++
++    return output;
++}
+diff -ruN _a/settings/cuda_kernel/task_context/baseline_kernels/rotary_embedding.cu _b/settings/cuda_kernel/task_context/baseline_kernels/rotary_embedding.cu
+--- a/settings/cuda_kernel/task_context/baseline_kernels/rotary_embedding.cu
++++ b/settings/cuda_kernel/task_context/baseline_kernels/rotary_embedding.cu
+@@ -0,0 +1,88 @@
++/*
++ * Rotary Positional Embedding (RoPE) CUDA kernel — optimized
++ *
++ * Optimizations:
++ * - __sincosf for combined sin/cos (1 instruction vs 2)
++ * - __fdividef for fast division
++ * - __expf + __logf for fast pow replacement
++ */
++
++#include <torch/extension.h>
++#include <cuda_runtime.h>
++#include <cuda_fp16.h>
++#include <math.h>
++
++template <typename scalar_t>
++__global__ void rotary_embedding_kernel(
++    scalar_t* __restrict__ x,          // [batch, seq_len, num_heads, head_dim]
++    const int* __restrict__ positions,  // [batch, seq_len]
++    int seq_len,
++    int num_heads,
++    int head_dim,
++    float base,
++    int total_pairs             // PATCH(guard_only): number of valid (batch, seq, head, pair) work items
++) {
++    int idx = blockIdx.x * blockDim.x + threadIdx.x;
++    if (idx >= total_pairs) return;   // PATCH(guard_only): the last block is partial whenever total_pairs % 256 != 0
++    int half_dim = head_dim / 2;
++
++    int pair_idx = idx % half_dim;
++    int tmp = idx / half_dim;
++    int head = tmp % num_heads;
++    int tmp2 = tmp / num_heads;
++    int seq = tmp2 % seq_len;
++    int batch = tmp2 / seq_len;
++
++    int m = positions[batch * seq_len + seq];
++    // Fast pow: base^(2*pair_idx/head_dim) = exp(log(base) * 2*pair_idx/head_dim)
++    float exp_val = __expf(__logf(base) * __fdividef(2.0f * pair_idx, (float)head_dim));
++    float theta = __fdividef(1.0f, exp_val);
++    float angle = m * theta;
++
++    float cos_val, sin_val;
++    __sincosf(angle, &sin_val, &cos_val);
++
++    int base_idx = ((batch * seq_len + seq) * num_heads + head) * head_dim;
++    int i0 = base_idx + 2 * pair_idx;
++    int i1 = i0 + 1;
++
++    float x0 = static_cast<float>(x[i0]);
++    float x1 = static_cast<float>(x[i1]);
++
++    x[i0] = static_cast<scalar_t>(x0 * cos_val - x1 * sin_val);
++    x[i1] = static_cast<scalar_t>(x0 * sin_val + x1 * cos_val);
++}
++
++// ─── Host wrapper ────────────────────────────────────────────────────────────
++
++torch::Tensor agent_rotary_embedding(
++    torch::Tensor x,          // [batch, seq_len, num_heads, head_dim]
++    torch::Tensor positions,   // [batch, seq_len] int32
++    double base
++) {
++    auto output = x.clone();
++    int batch = x.size(0);
++    int seq_len = x.size(1);
++    int num_heads = x.size(2);
++    int head_dim = x.size(3);
++    int half_dim = head_dim / 2;
++
++    int total_pairs = batch * seq_len * num_heads * half_dim;
++    int threads = 256;
++    int blocks = (total_pairs + threads - 1) / threads;
++
++    AT_DISPATCH_FLOATING_TYPES_AND2(
++        at::ScalarType::Half, at::ScalarType::BFloat16,
++        x.scalar_type(), "rotary_embedding", [&] {
++            rotary_embedding_kernel<scalar_t><<<blocks, threads>>>(
++                output.data_ptr<scalar_t>(),
++                positions.data_ptr<int>(),
++                seq_len, num_heads, head_dim,
++                static_cast<float>(base),
++                total_pairs
++            );
++        }
++    );
++
++    return output;
++}
+diff -ruN _a/settings/cuda_kernel/task_context/bench.py _b/settings/cuda_kernel/task_context/bench.py
+--- a/settings/cuda_kernel/task_context/bench.py
++++ b/settings/cuda_kernel/task_context/bench.py
+@@ -2,7 +2,7 @@
+ """
+ bench.py — Benchmark agent kernels hooked into a HuggingFace model.
+ 
+-Compares starter-kernel-injected baseline vs agent-kernel-injected model.
++Compares baseline-kernel-injected model (the initial kernels/, change 04) vs agent-kernel-injected model.
+ Outputs structured, greppable metrics for the harness to parse.
+ 
+ Usage:
+@@ -154,7 +154,7 @@
+     """
+     Main benchmark entry point.
+ 
+-    Compares baseline (starter kernels injected) vs agent (agent kernels injected).
++    Compares baseline (initial kernels/ from baseline_kernels/ injected) vs agent (agent kernels injected).
+     Baseline TPS is cached to workspace/baseline_tps.txt.
+     """
+     if config is None:
+@@ -194,10 +194,11 @@
+         print(f"BASELINE_TPS={baseline_tps:.2f} (cached)")
+     else:
+         # Compile starter kernels as baseline
+-        # Benchmark change (control-loop PLAN Amendment (17); aisa-group/ResearchArena#2 point 1): the starter kernels
+-        # live beside this file (task_context/starter_kernels); the old lookup under ARENA_ROOT always missed, so the
+-        # baseline silently fell back to vanilla PyTorch.
+-        starter_dir = os.path.join(ROOT, "starter_kernels")
++        # Benchmark change 04 (control-loop, owner 2026-10-23): the baseline is the agent's initial kernels/, kept as a
++        # byte-identical snapshot in task_context/baseline_kernels/ (with bindings.cpp), so leaving the kernels
++        # unchanged scores about 1.0x. Before: task_context/starter_kernels (change 02), slower naive kernels that
++        # the unmodified kernels/ already beat by about 2.2x on an H100 (fullrun2, 2026-10-23).
++        starter_dir = os.path.join(ROOT, "baseline_kernels")
+         starter_bindings = os.path.join(starter_dir, "bindings.cpp")
+ 
+         if not os.path.isdir(starter_dir):
+@@ -226,7 +227,7 @@
+                 torch.cuda.empty_cache()
+             else:
+                 # Load model, inject baseline kernels, benchmark, then clean up
+-                print("Running baseline benchmark (starter kernels injected)...")
++                print("Running baseline benchmark (baseline kernels: the initial kernels/, injected)...")
+                 from inject import inject_agent_kernels
+                 model, tokenizer = load_model_and_tokenizer(config)
+                 inject_agent_kernels(model, baseline_ops, verbose=verbose)
