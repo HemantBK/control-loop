@@ -65,6 +65,104 @@
    "line": "[agent] resume used remaining budget"
   }
  },
+ "harness_record": {
+  "glm51_733-check-A0": {
+   "cap_reached": false,
+   "elapsed_s": 3600.0,
+   "last_rc": 124,
+   "limit_s": 3900
+  },
+  "glm51_733-check-A0b": {
+   "cap_reached": false,
+   "elapsed_s": 3600.0,
+   "last_rc": 124,
+   "limit_s": 3900
+  },
+  "glm51_733-check-A0c-retry": {
+   "cap_reached": false,
+   "elapsed_s": 3601.0,
+   "last_rc": 124,
+   "limit_s": 3900
+  },
+  "glm51_733-r0a-e4": {
+   "cap_reached": false,
+   "elapsed_s": 3600.0,
+   "last_rc": 124,
+   "limit_s": 3900
+  },
+  "glm51_733-r1-e1": {
+   "cap_reached": false,
+   "elapsed_s": 3551.0,
+   "last_rc": 0,
+   "limit_s": 3900
+  },
+  "glm51_733-r1-e2": {
+   "cap_reached": false,
+   "elapsed_s": 3600.0,
+   "last_rc": 124,
+   "limit_s": 3900
+  },
+  "glm51_733-r1-e3": {
+   "cap_reached": false,
+   "elapsed_s": 3601.0,
+   "last_rc": 124,
+   "limit_s": 3900
+  },
+  "glm51_733-r1-e4": {
+   "cap_reached": false,
+   "elapsed_s": 3600.0,
+   "last_rc": 124,
+   "limit_s": 3900
+  },
+  "glm51_733-r2-e1": {
+   "cap_reached": false,
+   "elapsed_s": 3601.0,
+   "last_rc": 124,
+   "limit_s": 3900
+  },
+  "glm51_733-r2-e2": {
+   "cap_reached": false,
+   "elapsed_s": 3600.0,
+   "last_rc": 124,
+   "limit_s": 3900
+  },
+  "glm51_733-r2-e3": {
+   "cap_reached": false,
+   "elapsed_s": 3600.0,
+   "last_rc": 124,
+   "limit_s": 3900
+  },
+  "glm51_733-r2-e4": {
+   "cap_reached": false,
+   "elapsed_s": 3601.0,
+   "last_rc": 124,
+   "limit_s": 3900
+  },
+  "glm51_733-r3-e1": {
+   "cap_reached": false,
+   "elapsed_s": 3600.0,
+   "last_rc": 124,
+   "limit_s": 3900
+  },
+  "glm51_733-r3-e2": {
+   "cap_reached": false,
+   "elapsed_s": 3601.0,
+   "last_rc": 124,
+   "limit_s": 3900
+  },
+  "glm51_733-r3-e3": {
+   "cap_reached": false,
+   "elapsed_s": 3600.0,
+   "last_rc": 124,
+   "limit_s": 3900
+  },
+  "glm51_733-r3-e4": {
+   "cap_reached": false,
+   "elapsed_s": 3600.0,
+   "last_rc": 124,
+   "limit_s": 3900
+  }
+ },
  "readings": {
   "abort": {
    "incomplete": [
@@ -151,6 +249,119 @@
       "outcome": "not evaluable"
      },
      "combined": "undecided"
+    }
+   }
+  },
+  "harness": {
+   "incomplete": [],
+   "valid": {
+    "r0a": {
+     "V1": true,
+     "V2": true
+    },
+    "r1": {
+     "V1": true,
+     "V2": true
+    },
+    "r2": {
+     "V1": true,
+     "V2": false
+    },
+    "r3": {
+     "V1": true,
+     "V2": true
+    }
+   },
+   "verdicts": {
+    "U_50": {
+     "V1": {
+      "A": 1.0,
+      "F": 1.0,
+      "S": 0.0,
+      "U_adaptive": [
+       1,
+       1,
+       1
+      ],
+      "U_static": 0.0,
+      "n_adaptive_valid": 3,
+      "outcome": "falsified",
+      "rounds_above": 3
+     },
+     "V2": {
+      "A": 1.0,
+      "F": 1.0,
+      "S": 0.0,
+      "U_adaptive": [
+       1,
+       1
+      ],
+      "U_static": 0.0,
+      "n_adaptive_valid": 2,
+      "outcome": "falsified",
+      "rounds_above": 2
+     },
+     "combined": "falsified"
+    },
+    "U_S2": {
+     "V1": {
+      "A": 0.0,
+      "F": 1.0,
+      "S": 0.0,
+      "U_adaptive": [
+       0,
+       0,
+       0
+      ],
+      "U_static": 0.0,
+      "n_adaptive_valid": 3,
+      "outcome": "matched",
+      "rounds_above": 0
+     },
+     "V2": {
+      "A": 0.0,
+      "F": 1.0,
+      "S": 0.0,
+      "U_adaptive": [
+       0,
+       0
+      ],
+      "U_static": 0.0,
+      "n_adaptive_valid": 2,
+      "outcome": "matched",
+      "rounds_above": 0
+     },
+     "combined": "matched"
+    },
+    "U_tau": {
+     "V1": {
+      "A": 0.0,
+      "F": 1.0,
+      "S": 0.0,
+      "U_adaptive": [
+       0,
+       0,
+       0
+      ],
+      "U_static": 0.0,
+      "n_adaptive_valid": 3,
+      "outcome": "matched",
+      "rounds_above": 0
+     },
+     "V2": {
+      "A": 0.0,
+      "F": 1.0,
+      "S": 0.0,
+      "U_adaptive": [
+       0,
+       0
+      ],
+      "U_static": 0.0,
+      "n_adaptive_valid": 2,
+      "outcome": "matched",
+      "rounds_above": 0
+     },
+     "combined": "matched"
     }
    }
   },
@@ -268,6 +479,109 @@
    }
   },
   "literal": {
+   "incomplete": [
+    "glm51_733-check-A0",
+    "glm51_733-check-A0b",
+    "glm51_733-check-A0c-retry",
+    "glm51_733-r0a-e4",
+    "glm51_733-r1-e1",
+    "glm51_733-r1-e2",
+    "glm51_733-r1-e3",
+    "glm51_733-r1-e4",
+    "glm51_733-r2-e1",
+    "glm51_733-r2-e2",
+    "glm51_733-r2-e3",
+    "glm51_733-r2-e4",
+    "glm51_733-r3-e1",
+    "glm51_733-r3-e2",
+    "glm51_733-r3-e3",
+    "glm51_733-r3-e4"
+   ],
+   "valid": {
+    "r0a": {
+     "V1": true,
+     "V2": false
+    },
+    "r1": {
+     "V1": true,
+     "V2": false
+    },
+    "r2": {
+     "V1": true,
+     "V2": false
+    },
+    "r3": {
+     "V1": true,
+     "V2": false
+    }
+   },
+   "verdicts": {
+    "U_50": {
+     "V1": {
+      "A": 1.0,
+      "F": 1.0,
+      "S": 0.0,
+      "U_adaptive": [
+       1,
+       1,
+       1
+      ],
+      "U_static": 0.0,
+      "n_adaptive_valid": 3,
+      "outcome": "falsified",
+      "rounds_above": 3
+     },
+     "V2": {
+      "n_adaptive_valid": 0,
+      "outcome": "not evaluable"
+     },
+     "combined": "undecided"
+    },
+    "U_S2": {
+     "V1": {
+      "A": 0.0,
+      "F": 1.0,
+      "S": 0.0,
+      "U_adaptive": [
+       0,
+       0,
+       0
+      ],
+      "U_static": 0.0,
+      "n_adaptive_valid": 3,
+      "outcome": "matched",
+      "rounds_above": 0
+     },
+     "V2": {
+      "n_adaptive_valid": 0,
+      "outcome": "not evaluable"
+     },
+     "combined": "undecided"
+    },
+    "U_tau": {
+     "V1": {
+      "A": 0.0,
+      "F": 1.0,
+      "S": 0.0,
+      "U_adaptive": [
+       0,
+       0,
+       0
+      ],
+      "U_static": 0.0,
+      "n_adaptive_valid": 3,
+      "outcome": "matched",
+      "rounds_above": 0
+     },
+     "V2": {
+      "n_adaptive_valid": 0,
+      "outcome": "not evaluable"
+     },
+     "combined": "undecided"
+    }
+   }
+  },
+  "strict": {
    "incomplete": [
     "glm51_733-check-A0",
     "glm51_733-check-A0b",

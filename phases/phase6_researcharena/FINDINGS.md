@@ -707,3 +707,18 @@ Each item gives the wrong value, the right value and the source.
     spend, and found no wrong number.
   - 10 findings: 7 fixed, 3 disclosed (`audits/RESPONSE.md` Round 3). No number or verdict changed.
 - **Spend reconciliation:** `results/spend_2026-10-27.md`.
+
+## 2026-10-27: the exit rule and cell 733 re-stated (PLAN Amendment (39); no model call, $0)
+
+- **Rule:** complete means the harness recorded the agent ending with no timeout kill, crash or cap stop. The last line
+  with an exit code is the fallback, and the strict last line is a sensitivity check.
+- **Record for cell 733:**
+  - the pipeline discarded the exit status (`|| true`);
+  - elapsed time was 3,551-3,601 s against the 3,900 s outer limit;
+  - `cap_reached` was false in all 24;
+  - "pipeline rc 0" in all 24;
+  - the last exit codes were 0 or 124.
+- **Result:** all 24 episodes are complete (`batch_733/EXIT_READINGS.md`).
+  - Verdicts under the rule: matched / falsified / matched (primary / S1 / S2); V2-valid rounds r0a, r1, r3.
+  - Strict sensitivity: undecided on all three.
+  - Cell 733 is ambiguous under V2 (§8.10 (c)). The extension is not run, and the cell is superseded by Phase 6b.
